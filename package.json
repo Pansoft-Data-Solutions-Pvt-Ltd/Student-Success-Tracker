@@ -1,7 +1,7 @@
 {
-  "name": "my_success_tracker",
-  "version": "1.0.7",
-  "description": "Description of MySuccessTracker",
+  "name": "PansoftStudentSuccessTracker",
+  "version": "1.1.0",
+  "description": "A dashboard which provides a consolidated place for a student to check his academic progress for a given term.",
   "main": "index.js",
   "license": "UNLICENSED",
   "scripts": {
@@ -44,3 +44,4 @@
     "webpack-dev-server": "4.15.2"
   }
 }
+ 

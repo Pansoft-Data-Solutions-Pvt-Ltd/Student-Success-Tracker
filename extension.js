@@ -1,64 +1,103 @@
 module.exports = {
-    name: 'My Success Tracker',
-    publisher: 'Sample',
-    cards: [{
-        type: 'My Success Tracker',
-        source: './src/cards/MySuccessTrackerCard',
-        title: 'My Success Tracker',
-        displayCardType: 'My Success Tracker Card',
-        description: 'This is an introductory card to the Ellucian Experience SDK',
-        configuration: {
-            client: [{
-                key: 'goodAttendanceColorCode',
-                label: 'Hex color code for good attendance',
-                type: 'text',
-                required: false
+    name: "Student Success Tracker",
+    publisher: "Pansoft",
+    cards: [
+        {
+            type: "Academic",
+            source: "./src/cards/StudentSuccessTrackerCard",
+            title: "Student Success Tracker",
+            displayCardType: "Student Success Tracker Card",
+            description:
+                "An Experience extension which provides a consolidated view of a student's academic perforamnce for a given term.",
+            configuration: {
+                client: [
+                    {
+                        key: "excellent_performance_color_code",
+                        label: "Hex color code for excellent performance",
+                        type: "text",
+                        required: false,
+                    },
+                    {
+                        key: "satisfactory_performance_color_code",
+                        label: "Hex color code for satisfactory performance",
+                        type: "text",
+                        required: false,
+                    },
+                    {
+                        key: "poor_performance_color_code",
+                        label: "Hex color code for poor performance",
+                        type: "text",
+                        required: false,
+                    },
+                    {
+                        key: "minimum_threshold_for_excellent_performance",
+                        label: "Minimum threshold for excellent performance",
+                        type: "text",
+                        required: true
+                    },
+                    {
+                        key: "minimum_threshold_for_satisfactory_performance",
+                        label: "Minimum threshold for satisfactory performance",
+                        type: "text",
+                        required: true
+                    },
+                    {
+                        key: "minimum_threshold_for_excellent_attendance",
+                        label: "Minimum threshold for excellent attendance",
+                        type: "text",
+                        required: true
+                    },
+                    {
+                        key: "minimum_threshold_for_satisfactory_attendance",
+                        label: "Minimum threshold for satisfactory attendance",
+                        type: "text",
+                        required: true
+                    },
+                    {
+                        key: "academic_performance_pipeline",
+                        label: "Serverless API name for academic performance pipeline",
+                        type: "text",
+                        required: true,
+                    },
+                    {
+                        key: "latest_term_information_pipeline",
+                        label: "Serverless API name for latest term information pipeline",
+                        type: "text",
+                        required: true,
+                    },
+                    {
+                        key: "term_information_pipeline",
+                        label: "Serverless API name for term information pipeline",
+                        type: "text",
+                        required: true,
+                    },
+                    {
+                        key: "term_codes_pipeline",
+                        label: "Serverless API name for term codes pipeline",
+                        type: "text",
+                        required: true,
+                    }
+                ],
+                server: [
+                    {
+                        key: "ethosApiKey",
+                        label: "Ethos API Key",
+                        type: "password",
+                        require: true,
+                        default: "",
+                    },
+                ],
             },
-            {
-                key: 'decentAttendanceColorCode',
-                label: 'Hex color code for decent attendance',
-                type: 'text',
-                required: false
-            },            
-            {
-                key: 'poorAttendanceColorCode',
-                label: 'Hex color code for bad attendance',
-                type: 'text',
-                required: false
-            },            
-            {
-                key: 'gpaIncreaseChevronColorCode',
-                label: 'Hex color code for chevron when GPA has increased',
-                type: 'text',
-                required: false
-            },            
-            {
-                key: 'gpaDecreaseChevronColorCode',
-                label: 'Hex color code for chevron when GPA has decreased',
-                type: 'text',
-                required: false
-            },            
-            {
-                key: 'gpaCircleColorCode',
-                label: 'Hex color code for the GPA circle',
-                type: 'text',
-                required: false
-            }],
-            server: [{
-                key: 'ethosApiKey',
-                label: 'Ethos API Key',
-                type: 'password',
-                require: true,
-                default:''
-            }]
+            pageRoute: {
+                route: "/",
+                excludeClickSelectors: ["a"],
+            },
         },
-        pageRoute: {
-            route: '/',
-            excludeClickSelectors: ['a']
-        }
-    }],
+    ],
     page: {
-        source: './src/page/router.jsx',
-        fullWidth: true
-    }
+        source: "./src/page/router.jsx",
+        fullWidth: true,
+    },
 };
+
+ 
