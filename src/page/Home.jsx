@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
-import useStudentTermCodes from "../hooks/useTermCodes";
-import useGetTermInformation from "../hooks/useGetTermInformation";
-import useGetAcademicPerformance from "../hooks/useGetAcademicPerformance";
+import useFetch from "../hooks/useFetch";
 import TermGpaBar from "../components/TermGpaBar";
 import HomeHeader from "../components/HomeHeader";
 import GpaMetrics from "../components/GpaMetrics";
@@ -49,6 +47,9 @@ const MySuccessTrackerTable = () => {
     minimum_threshold_for_satisfactory_performance,
     minimum_threshold_for_excellent_attendance,
     minimum_threshold_for_satisfactory_attendance,
+    academic_performance_pipeline,
+    term_information_pipeline,
+    term_codes_pipeline,
   } = cardConfiguration;
 
   // Parse config thresholds once — they arrive as strings from cardConfiguration
@@ -99,67 +100,75 @@ const TABLE_CONFIG = {
   // Defined as a constant outside render cycle to avoid stale closure issues
   const blockedTermCodes = useMemo(() => ["199610", "199510", "199520"], []);
 
-  const { getStudentTermCodes, loadingTermCodes, termCodesResult } =
-    useStudentTermCodes(authenticatedEthosFetch, cardId);
-
-  const { getStudentDetails, loadingTermInformation } = useGetTermInformation(
+  const { data: rawTermCodes, loading: loadingTermCodes } = useFetch(
     authenticatedEthosFetch,
     cardId,
+    null,
+    term_codes_pipeline,
+    {}
   );
 
-  const { getAcademicPerformance } = useGetAcademicPerformance(
+  const termCodesResult = useMemo(() => {
+    return rawTermCodes?.termCodeDetails?.filter(
+      (item) => !blockedTermCodes.includes(item.termCode)
+    ) || [];
+  }, [rawTermCodes, blockedTermCodes]);
+
+  const termInfoParams = useMemo(() => {
+    return currentTermCode ? { termCode: currentTermCode } : null;
+  }, [currentTermCode]);
+
+  const { data: termInformationData, loading: loadingTermInformation } = useFetch(
     authenticatedEthosFetch,
     cardId,
+    null,
+    currentTermCode ? term_information_pipeline : null,
+    termInfoParams
   );
 
   // Fetch and filter term codes
   useEffect(() => {
-    getStudentTermCodes().then((data) => {
-      if (Array.isArray(data) && data.length > 0) {
-        const filteredTerms = data
-          .filter((item) => !blockedTermCodes.includes(item.termCode))
-          .sort((a, b) => a.termCode.localeCompare(b.termCode));
-
-        setTermData(filteredTerms.map((term) => term.term));
-        setCurrentTerm(filteredTerms[filteredTerms.length - 1]?.term);
-        setCurrentTermCode(filteredTerms[filteredTerms.length - 1]?.termCode);
-        setLatestTermCode(filteredTerms[filteredTerms.length - 1]?.termCode);
-        setCurrentBannerId(filteredTerms[filteredTerms.length - 1]?.bannerId);
-      }
-    });
-  }, [getStudentTermCodes]);
+    if (termCodesResult && termCodesResult.length > 0 && !currentTermCode) {
+      const sortedTerms = [...termCodesResult].sort((a, b) => a.termCode.localeCompare(b.termCode));
+      setTermData(sortedTerms.map((term) => term.term));
+      const latestTerm = sortedTerms[sortedTerms.length - 1];
+      setCurrentTerm(latestTerm?.term);
+      setCurrentTermCode(latestTerm?.termCode);
+      setLatestTermCode(latestTerm?.termCode);
+      setCurrentBannerId(latestTerm?.bannerId);
+    }
+  }, [termCodesResult, currentTermCode]);
 
   // Fetch current term details
   useEffect(() => {
     if (!currentTermCode) return;
 
-    getStudentDetails({ termCode: currentTermCode })
-      .then((data) => {
-        const cumGpa = parseFloat(data?.cumulativeGpa) || 0;
-        const trmGpa = data?.termGpa;
-        setCurrentGpa(cumGpa);
-        setTermGpa(trmGpa);
-        setCurrentBannerId(data?.bannerId);
-        setGpaDelta(data?.cgpaDifference);
-        setAvgAttendance(data?.averageAttendancePercentage ?? null);
-        setDiffAttendance(data?.differenceInAttendance ?? null);
-        setIsFirstTermFlag(data?.firstTermFlag ?? false);
+    if (termInformationData) {
+      const data = termInformationData;
+      const cumGpa = parseFloat(data?.cumulativeGpa) || 0;
+      const trmGpa = data?.termGpa;
+      setCurrentGpa(cumGpa);
+      setTermGpa(trmGpa);
+      setCurrentBannerId(data?.bannerId);
+      setGpaDelta(data?.cgpaDifference);
+      setAvgAttendance(data?.averageAttendancePercentage ?? null);
+      setDiffAttendance(data?.differenceInAttendance ?? null);
+      setIsFirstTermFlag(data?.firstTermFlag ?? false);
 
-        if (Array.isArray(data?.termInformation)) {
-          setInitialCourseData(data.termInformation);
-        } else {
-          setInitialCourseData([]);
-        }
-      })
-      .catch(() => {
-        setCurrentGpa(0);
-        setTermGpa(0);
-        setAvgAttendance(null);
-        setDiffAttendance(null);
-        setIsFirstTermFlag(false);
+      if (Array.isArray(data?.termInformation)) {
+        setInitialCourseData(data.termInformation);
+      } else {
         setInitialCourseData([]);
-      });
-  }, [currentTermCode, currentTerm, getStudentDetails, termCodesResult]);
+      }
+    } else if (!loadingTermInformation) {
+      setCurrentGpa(0);
+      setTermGpa(0);
+      setAvgAttendance(null);
+      setDiffAttendance(null);
+      setIsFirstTermFlag(false);
+      setInitialCourseData([]);
+    }
+  }, [termInformationData, loadingTermInformation, currentTermCode, currentTerm, termCodesResult]);
 
   // Fetch all term GPAs at once
   useEffect(() => {
@@ -174,7 +183,14 @@ const TABLE_CONFIG = {
 
         const allTermGpaPromises = filteredTerms.map(async (term) => {
           try {
-            const data = await getStudentDetails({ termCode: term.termCode });
+            const qs = new URLSearchParams({ cardId, termCode: term.termCode }).toString();
+            const response = await authenticatedEthosFetch(`${term_information_pipeline}?${qs}`, {
+              method: 'GET',
+              headers: { Accept: 'application/json' }
+            });
+            if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+            const data = await response.json();
+
             return {
               term: term.term,
               termCode: term.termCode,
@@ -205,7 +221,7 @@ const TABLE_CONFIG = {
     };
 
     fetchAllTermGpas();
-  }, [termCodesResult, getStudentDetails]);
+  }, [termCodesResult, authenticatedEthosFetch, cardId, term_information_pipeline]);
 
   // Fetch academic performance data for each course
   useEffect(() => {
@@ -224,11 +240,19 @@ const TABLE_CONFIG = {
       try {
         const performancePromises = initialCourseData.map(async (course) => {
           try {
-            const performanceData = await getAcademicPerformance({
-              termCode: currentTermCode,
-              crn: course.crn,
-              bannerId: currentBannerId,
+            const qs = new URLSearchParams({ 
+              cardId, 
+              termCode: currentTermCode, 
+              crn: course.crn, 
+              bannerId: currentBannerId 
+            }).toString();
+            const response = await authenticatedEthosFetch(`${academic_performance_pipeline}?${qs}`, {
+              method: 'GET',
+              headers: { Accept: 'application/json' }
             });
+            if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+            const performanceData = await response.json();
+
             return {
               courseNumber: course.courseNumber,
               subjectCode: course.subjectCode,
@@ -273,7 +297,9 @@ const TABLE_CONFIG = {
     initialCourseData,
     currentTermCode,
     currentBannerId,
-    getAcademicPerformance,
+    authenticatedEthosFetch,
+    cardId,
+    academic_performance_pipeline
   ]);
 
   const getStatusColor = (value) => {

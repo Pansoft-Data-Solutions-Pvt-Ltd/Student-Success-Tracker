@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
 const useFetch = (authenticatedEthosFetch, cardId, cardPrefix, url, params) => {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
   const [data, setData]       = useState(null);
   const [counter, setCounter] = useState(0);
@@ -14,6 +14,8 @@ const useFetch = (authenticatedEthosFetch, cardId, cardPrefix, url, params) => {
   }, [stringifiedParams]);
 
   useEffect(() => {
+    if (!url || !cardId) return;
+
     const controller = new AbortController();
 
     const makeApiCall = async () => {
@@ -22,7 +24,11 @@ const useFetch = (authenticatedEthosFetch, cardId, cardPrefix, url, params) => {
       setError(null);
 
       try {
-        const queryString  = new URLSearchParams({ cardId, cardPrefix, ...stableParams }).toString();
+        const queryParams = { cardId, ...stableParams };
+        if (cardPrefix != null) {
+          queryParams.cardPrefix = cardPrefix;
+        }
+        const queryString = new URLSearchParams(queryParams).toString();
         const resourcePath = `${url}?${queryString}`;
         const options      = {
           method  : 'GET',
