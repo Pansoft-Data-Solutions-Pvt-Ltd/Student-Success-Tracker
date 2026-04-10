@@ -15,67 +15,78 @@ module.exports = {
             key: "excellent_performance_color_code",
             label: "Hex color code for excellent performance",
             type: "text",
-            required: false,
+            require: false,
+            default: "#079C34"
           },
           {
             key: "satisfactory_performance_color_code",
             label: "Hex color code for satisfactory performance",
             type: "text",
-            required: false,
+            require: false,
+            default: "#F5A327"
           },
           {
             key: "poor_performance_color_code",
             label: "Hex color code for poor performance",
             type: "text",
-            required: false,
+            require: false,
+            default: "#F54927"
           },
           {
             key: "minimum_threshold_for_excellent_performance",
             label: "Minimum threshold for excellent performance",
             type: "text",
-            required: true,
+            require: true,
+            default: "3"
           },
           {
             key: "minimum_threshold_for_satisfactory_performance",
             label: "Minimum threshold for satisfactory performance",
             type: "text",
-            required: true,
+            require: true,
+            default: "2"
           },
           {
             key: "minimum_threshold_for_excellent_attendance",
             label: "Minimum threshold for excellent attendance",
             type: "text",
-            required: true,
+            require: true,
+            default: "80"
           },
           {
             key: "minimum_threshold_for_satisfactory_attendance",
             label: "Minimum threshold for satisfactory attendance",
             type: "text",
-            required: true,
+            require: true,
+            default: "60"
           },
           {
             key: "academic_performance_pipeline",
             label: "Serverless API name for academic performance pipeline",
             type: "text",
-            required: true,
+            require: true,
+            default: "x-pansoft-get-student-academic-performance"
           },
           {
             key: "latest_term_information_pipeline",
             label: "Serverless API name for latest term information pipeline",
             type: "text",
-            required: true,
+            require: true,
+            default: "x-pansoft-get-student-latest-term-information"
           },
           {
             key: "term_information_pipeline",
             label: "Serverless API name for term information pipeline",
             type: "text",
-            required: true,
+            require: true,
+            default: "x-pansoft-get-student-term-information"
           },
           {
             key: "term_codes_pipeline",
             label: "Serverless API name for term codes pipeline",
             type: "text",
-            required: true,
+            require: true,
+            default: "x-pansoft-get-student-term-codes"
           },
         ],
         server: [
