@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import PropTypes from "prop-types";
 import useFetch from "../hooks/useFetch";
 import TermGpaBar from "../components/TermGpaBar";
@@ -27,6 +27,8 @@ const MySuccessTrackerTable = () => {
   const [loadingCourseData, setLoadingCourseData] = useState(false);
   const [termGpaData, setTermGpaData] = useState([]);
   const [loadingAllTermGpas, setLoadingAllTermGpas] = useState(false);
+  const hasFetchedGpasRef = useRef(false);
+  const fetchingTermRef = useRef(null);
   const [initialCourseData, setInitialCourseData] = useState([]);
   const [avgAttendance, setAvgAttendance] = useState(null);
   const [diffAttendance, setDiffAttendance] = useState(null);
@@ -90,12 +92,11 @@ const MySuccessTrackerTable = () => {
     CRITICAL: poor_performance_color_code,
   };
 
-const TABLE_CONFIG = {
-  attendanceGood: minimum_threshold_for_excellent_attendance,
-  attendanceWarning: minimum_threshold_for_satisfactory_attendance,
-  lowGrades: ["F"],
-};
-
+  const TABLE_CONFIG = {
+    attendanceGood: minimum_threshold_for_excellent_attendance,
+    attendanceWarning: minimum_threshold_for_satisfactory_attendance,
+    lowGrades: ["F"],
+  };
 
   // Defined as a constant outside render cycle to avoid stale closure issues
   const blockedTermCodes = useMemo(() => ["199610", "199510", "199520"], []);
@@ -105,31 +106,36 @@ const TABLE_CONFIG = {
     cardId,
     null,
     term_codes_pipeline,
-    {}
+    {},
   );
 
   const termCodesResult = useMemo(() => {
-    return rawTermCodes?.termCodeDetails?.filter(
-      (item) => !blockedTermCodes.includes(item.termCode)
-    ) || [];
+    return (
+      rawTermCodes?.termCodeDetails?.filter(
+        (item) => !blockedTermCodes.includes(item.termCode),
+      ) || []
+    );
   }, [rawTermCodes, blockedTermCodes]);
 
   const termInfoParams = useMemo(() => {
     return currentTermCode ? { termCode: currentTermCode } : null;
   }, [currentTermCode]);
 
-  const { data: termInformationData, loading: loadingTermInformation } = useFetch(
-    authenticatedEthosFetch,
-    cardId,
-    null,
-    currentTermCode ? term_information_pipeline : null,
-    termInfoParams
-  );
+  const { data: termInformationData, loading: loadingTermInformation } =
+    useFetch(
+      authenticatedEthosFetch,
+      cardId,
+      null,
+      currentTermCode ? term_information_pipeline : null,
+      termInfoParams,
+    );
 
   // Fetch and filter term codes
   useEffect(() => {
     if (termCodesResult && termCodesResult.length > 0 && !currentTermCode) {
-      const sortedTerms = [...termCodesResult].sort((a, b) => a.termCode.localeCompare(b.termCode));
+      const sortedTerms = [...termCodesResult].sort((a, b) =>
+        a.termCode.localeCompare(b.termCode),
+      );
       setTermData(sortedTerms.map((term) => term.term));
       const latestTerm = sortedTerms[sortedTerms.length - 1];
       setCurrentTerm(latestTerm?.term);
@@ -168,11 +174,20 @@ const TABLE_CONFIG = {
       setIsFirstTermFlag(false);
       setInitialCourseData([]);
     }
-  }, [termInformationData, loadingTermInformation, currentTermCode, currentTerm, termCodesResult]);
+  }, [
+    termInformationData,
+    loadingTermInformation,
+    currentTermCode,
+    currentTerm,
+    termCodesResult,
+  ]);
 
   // Fetch all term GPAs at once
   useEffect(() => {
     if (!termCodesResult || termCodesResult.length === 0) return;
+    if (hasFetchedGpasRef.current) return;
+
+    hasFetchedGpasRef.current = true;
 
     const fetchAllTermGpas = async () => {
       setLoadingAllTermGpas(true);
@@ -183,11 +198,17 @@ const TABLE_CONFIG = {
 
         const allTermGpaPromises = filteredTerms.map(async (term) => {
           try {
-            const qs = new URLSearchParams({ cardId, termCode: term.termCode }).toString();
-            const response = await authenticatedEthosFetch(`${term_information_pipeline}?${qs}`, {
-              method: 'GET',
-              headers: { Accept: 'application/json' }
-            });
+            const qs = new URLSearchParams({
+              cardId,
+              termCode: term.termCode,
+            }).toString();
+            const response = await authenticatedEthosFetch(
+              `${term_information_pipeline}?${qs}`,
+              {
+                method: "GET",
+                headers: { Accept: "application/json" },
+              },
+            );
             if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
             const data = await response.json();
 
@@ -221,7 +242,12 @@ const TABLE_CONFIG = {
     };
 
     fetchAllTermGpas();
-  }, [termCodesResult, authenticatedEthosFetch, cardId, term_information_pipeline]);
+  }, [
+    termCodesResult,
+    authenticatedEthosFetch,
+    cardId,
+    term_information_pipeline,
+  ]);
 
   // Fetch academic performance data for each course
   useEffect(() => {
@@ -235,21 +261,28 @@ const TABLE_CONFIG = {
       return;
     }
 
+    if (fetchingTermRef.current === currentTermCode) return;
+    fetchingTermRef.current = currentTermCode;
+
+    console.log("------->", initialCourseData);
     const fetchAcademicPerformanceData = async () => {
       setLoadingCourseData(true);
       try {
         const performancePromises = initialCourseData.map(async (course) => {
           try {
-            const qs = new URLSearchParams({ 
-              cardId, 
-              termCode: currentTermCode, 
-              crn: course.crn, 
-              bannerId: currentBannerId 
+            const qs = new URLSearchParams({
+              cardId,
+              termCode: currentTermCode,
+              crn: course.crn,
+              bannerId: currentBannerId,
             }).toString();
-            const response = await authenticatedEthosFetch(`${academic_performance_pipeline}?${qs}`, {
-              method: 'GET',
-              headers: { Accept: 'application/json' }
-            });
+            const response = await authenticatedEthosFetch(
+              `${academic_performance_pipeline}?${qs}`,
+              {
+                method: "GET",
+                headers: { Accept: "application/json" },
+              },
+            );
             if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
             const performanceData = await response.json();
 
@@ -299,7 +332,7 @@ const TABLE_CONFIG = {
     currentBannerId,
     authenticatedEthosFetch,
     cardId,
-    academic_performance_pipeline
+    academic_performance_pipeline,
   ]);
 
   const getStatusColor = (value) => {
@@ -323,6 +356,7 @@ const TABLE_CONFIG = {
   };
 
   const handleTermChange = (term) => {
+    fetchingTermRef.current = null;
     setCourseData([]);
     setCurrentTerm(term.term);
     setCurrentTermCode(term.termCode);
