@@ -11,7 +11,7 @@ http:
       value: application/json
   params:
     - name: id
-      value: ""
+      value: 288b2553-bf5b-4338-ac77-df88aa3ed216
       type: path
   auth: inherit
 

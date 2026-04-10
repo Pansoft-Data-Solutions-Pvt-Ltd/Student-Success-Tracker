@@ -13,7 +13,7 @@ http:
       value: application/vnd.hedtech.integration.logic-specifications.v1+json
   params:
     - name: id
-      value: ""
+      value: 288b2553-bf5b-4338-ac77-df88aa3ed216
       type: path
   body:
     type: json
@@ -21,7 +21,7 @@ http:
       {
         "contextInitialize": {
           "pipeline": [
-            "setRequestValuesInContext"
+            "frstcretRequestValuesInContext"
           ]
         },
         "pipelines": [
@@ -105,28 +105,14 @@ http:
             "class": "sql:query:ethosFilterCompiler",
             "config": {
               "contextTarget": "getQuerySQL",
-              "statement": "SELECT spr.spriden_id, s.sfrstcr_crn, s.sfrstcr_term_code, s.sfrstcr_credit_hr, sec.ssbsect_subj_code, sec.ssbsect_crse_numb, c.scbcrse_title AS course_name, c.scbcrse_crse_numb, c.scbcrse_subj_code, NVL(s.sfrstcr_attend_hr,0) AS sfrstcr_attend_hr, meet.total_meet_days, CASE WHEN meet.total_meet_days > 0 THEN LEAST(100, ROUND((NVL(s.sfrstcr_attend_hr,0) * 100) / meet.total_meet_days, 2)) ELSE 0 END AS attendance_percentage FROM spriden spr JOIN sfrstcr s ON spr.spriden_pidm = s.sfrstcr_pidm JOIN ssbsect sec ON sec.ssbsect_crn = s.sfrstcr_crn AND sec.ssbsect_term_code = s.sfrstcr_term_code JOIN (SELECT ssbsect_term_code, ssbsect_crn, F_CALC_MEET_DAYS(ssbsect_term_code, ssbsect_crn, ssbsect_ptrm_code) AS total_meet_days FROM ssbsect) meet ON meet.ssbsect_term_code = sec.ssbsect_term_code AND meet.ssbsect_crn = sec.ssbsect_crn JOIN scbcrse c ON c.scbcrse_subj_code = sec.ssbsect_subj_code AND c.scbcrse_crse_numb = sec.ssbsect_crse_numb AND c.scbcrse_eff_term = (SELECT MAX(c2.scbcrse_eff_term) FROM scbcrse c2 WHERE c2.scbcrse_subj_code = sec.ssbsect_subj_code AND c2.scbcrse_crse_numb = sec.ssbsect_crse_numb AND c2.scbcrse_eff_term <= s.sfrstcr_term_code) WHERE spr.spriden_change_ind IS NULL %%AND_FILTER%%",
+              "statement": "SELECT * FROM (SELECT spriden_id, SHRTCKN_CRN crn, SHRTCKN_term_code term_code, SHRTCKN_SUBJ_CODE subj_code, SHRTCKN_CRSE_NUMB crse_numb, SHRTCKN_CRSE_TITLE COURSE_NAME, SHRTCKG_GRDE_CODE_FINAL FINAL_GRADE, SHRTCKG_CREDIT_HOURS CREDIT_HOURS, NVL(MEET.SFRSTCR_ATTEND_HR,0) AS ATTEND_HR, meet.total_meet_days, CASE WHEN meet.total_meet_days > 0 THEN LEAST(100, ROUND((NVL(MEET.SFRSTCR_ATTEND_HR,0) * 100) / meet.total_meet_days, 2)) ELSE 0 END AS attendance_percentage FROM spriden, SHRTCKN, SHRTCKG C1, (SELECT ssbsect_term_code, ssbsect_crn, SFRSTCR_PIDM, SFRSTCR_ATTEND_HR, F_CALC_MEET_DAYS(ssbsect_term_code, ssbsect_crn, ssbsect_ptrm_code) AS total_meet_days FROM ssbsect, SFRSTCR WHERE SFRSTCR_TERM_CODE = SSBSECT_TERM_CODE AND SFRSTCR_CRN = SSBSECT_CRN) meet WHERE spriden_pidm = SHRTCKN_pidm AND SPRIDEN_CHANGE_IND IS NULL AND SHRTCKN_PIDM = SHRTCKG_PIDM AND SHRTCKG_TERM_CODE = SHRTCKN_TERM_CODE AND SHRTCKG_TCKN_SEQ_NO = SHRTCKN_SEQ_NO AND SHRTCKG_SEQ_NO = (SELECT MAX(SHRTCKG_SEQ_NO) FROM SHRTCKG C2 WHERE C2.SHRTCKG_PIDM = C1.SHRTCKG_PIDM AND C2.SHRTCKG_TERM_CODE = C1.SHRTCKG_TERM_CODE AND C2.SHRTCKG_TCKN_SEQ_NO = C1.SHRTCKG_TCKN_SEQ_NO) AND meet.ssbsect_term_code(+) = SHRTCKN_TERM_CODE AND meet.ssbsect_crn(+) = SHRTCKN_CRN AND MEET.SFRSTCR_PIDM(+) = SHRTCKN_PIDM UNION SELECT spriden_id, sfrstcr_crn, sfrstcr_term_code, MEET.ssbsect_subj_code, MEET.ssbsect_crse_numb, c.scbcrse_title AS course_name, SFRSTCR_GRDE_CODE, SFRSTCR_CREDIT_HR, NVL(sfrstcr_attend_hr,0) AS sfrstcr_attend_hr, meet.total_meet_days, CASE WHEN meet.total_meet_days > 0 THEN LEAST(100, ROUND((NVL(sfrstcr_attend_hr,0) * 100) / meet.total_meet_days, 2)) ELSE 0 END AS attendance_percentage FROM spriden, SFRSTCR, STVRSTS, SCBCRSE C, (SELECT ssbsect_term_code, ssbsect_crn, ssbsect_subj_code, ssbsect_crse_numb, F_CALC_MEET_DAYS(ssbsect_term_code, ssbsect_crn, ssbsect_ptrm_code) AS total_meet_days FROM ssbsect) meet WHERE SPRIDEN_CHANGE_IND IS NULL AND spriden_pidm = sfrstcr_pidm AND meet.ssbsect_term_code = SFRSTCR_term_code AND SFRSTCR_RSTS_CODE = STVRSTS_CODE AND STVRSTS_INCL_SECT_ENRL = 'Y' AND meet.ssbsect_crn = SFRSTCR_crn AND c.scbcrse_subj_code = MEET.ssbsect_subj_code AND c.scbcrse_crse_numb = MEET.ssbsect_crse_numb AND c.scbcrse_eff_term = (SELECT MAX(c2.scbcrse_eff_term) FROM scbcrse c2 WHERE c2.scbcrse_subj_code = MEET.ssbsect_subj_code AND c2.scbcrse_crse_numb = MEET.ssbsect_crse_numb AND c2.scbcrse_eff_term <= sfrstcr_term_code) AND SFRSTCR_CRN NOT IN (SELECT SHRTCKN_CRN FROM SHRTCKN WHERE SHRTCKN_PIDM = SFRSTCR_PIDM AND SHRTCKN_TERM_CODE = SFRSTCR_TERM_CODE AND SHRTCKN_CRN = SFRSTCR_CRN)) %%WHERE_FILTER%%",
               "propertyMaps": [
                 {
                   "sourcePropertyType": "varchar",
-                  "sourceProperty": "spr.spriden_id",
+                  "sourceProperty": "spriden_id",
                   "jsonPath": "/",
                   "jsonType": "S",
                   "jsonLabel": "bannerId"
-                },
-                {
-                  "sourcePropertyType": "varchar",
-                  "sourceProperty": "s.sfrstcr_term_code",
-                  "jsonPath": "/",
-                  "jsonType": "S",
-                  "jsonLabel": "termCode"
-                },
-                {
-                  "sourcePropertyType": "varchar",
-                  "sourceProperty": "s.sfrstcr_crn",
-                  "jsonPath": "/",
-                  "jsonType": "S",
-                  "jsonLabel": "crn"
                 }
               ]
             }
@@ -155,21 +141,21 @@ http:
                 },
                 {
                   "sourcePropertyType": "varchar",
-                  "sourceProperty": "sfrstcr_crn",
+                  "sourceProperty": "crn",
                   "jsonPath": "/",
                   "jsonType": "S",
                   "jsonLabel": "crn"
                 },
                 {
                   "sourcePropertyType": "varchar",
-                  "sourceProperty": "sfrstcr_term_code",
+                  "sourceProperty": "term_code",
                   "jsonPath": "/",
                   "jsonType": "S",
                   "jsonLabel": "termCode"
                 },
                 {
                   "sourcePropertyType": "varchar",
-                  "sourceProperty": "sfrstcr_credit_hr",
+                  "sourceProperty": "credit_hours",
                   "jsonPath": "/",
                   "jsonType": "S",
                   "jsonLabel": "creditHours"
@@ -183,21 +169,28 @@ http:
                 },
                 {
                   "sourcePropertyType": "varchar",
-                  "sourceProperty": "scbcrse_crse_numb",
+                  "sourceProperty": "final_grade",
+                  "jsonPath": "/",
+                  "jsonType": "S",
+                  "jsonLabel": "finalGrade"
+                },
+                {
+                  "sourcePropertyType": "varchar",
+                  "sourceProperty": "crse_numb",
                   "jsonPath": "/",
                   "jsonType": "S",
                   "jsonLabel": "courseNumber"
                 },
                 {
                   "sourcePropertyType": "varchar",
-                  "sourceProperty": "scbcrse_subj_code",
+                  "sourceProperty": "subj_code",
                   "jsonPath": "/",
                   "jsonType": "S",
                   "jsonLabel": "subjectCode"
                 },
                 {
                   "sourcePropertyType": "varchar",
-                  "sourceProperty": "sfrstcr_attend_hr",
+                  "sourceProperty": "attend_hr",
                   "jsonPath": "/",
                   "jsonType": "S",
                   "jsonLabel": "attendHr"

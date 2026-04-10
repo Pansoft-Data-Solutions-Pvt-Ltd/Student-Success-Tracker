@@ -2,7 +2,7 @@ name: P026
 variables:
   - secret: true
     name: apiKey
-  - name: tenantUrl
-    value: https://integrate.elluciancloud.com.au
   - name: token
     value: ""
+  - name: tenantUrl
+    value: https://integrate.elluciancloud.com.au

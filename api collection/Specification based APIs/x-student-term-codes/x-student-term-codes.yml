@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: '{{tenantUrl}}/api/x-student-term-codes?criteria={"bannerId": ""}'
+  url: "{{tenantUrl}}/api/x-student-term-codes"
   headers:
     - name: Accept
       value: application/json
@@ -13,6 +13,7 @@ http:
     - name: criteria
       value: '{"bannerId": ""}'
       type: query
+      disabled: true
   auth: inherit
 
 settings:
