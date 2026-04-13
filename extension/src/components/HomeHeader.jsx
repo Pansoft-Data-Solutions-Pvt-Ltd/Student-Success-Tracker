@@ -9,7 +9,6 @@ import {
 const HomeHeader = ({
   currentTerm,
   termCodesResult,
-  blockedTermCodes,
   loadingTermCodes,
   handleTermChange,
 }) => {
@@ -49,8 +48,7 @@ const HomeHeader = ({
           <Button
             disabled={loadingTermCodes || !termCodesResult}
             dropdown={termCodesResult
-              ?.filter((item) => !blockedTermCodes.includes(item.termCode))
-              .sort((a, b) => a.termCode.localeCompare(b.termCode))
+              ?.sort((a, b) => a.termCode.localeCompare(b.termCode))
               .map((term) => (
                 <DropdownButtonItem
                   key={term.termCode}
@@ -71,7 +69,6 @@ const HomeHeader = ({
 HomeHeader.propTypes = {
   currentTerm: PropTypes.string,
   termCodesResult: PropTypes.array,
-  blockedTermCodes: PropTypes.array.isRequired,
   loadingTermCodes: PropTypes.bool.isRequired,
   handleTermChange: PropTypes.func.isRequired,
 };

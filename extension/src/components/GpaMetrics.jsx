@@ -73,7 +73,7 @@ const GpaMetrics = ({
                           fontWeight: 700,
                         }}
                       >
-                        {gpaDelta}
+                        {gpaDelta != null ? Number(gpaDelta).toFixed(2) : gpaDelta}
                       </span>
                       <span style={{ marginLeft: 3, color: "#6B7280" }}>
                         {" "}
@@ -128,7 +128,7 @@ const GpaMetrics = ({
               color: termGpaCircleColor,
             }}
           >
-            {loadingTermInformation ? "..." : termGpa}
+            {loadingTermInformation ? "..." : (termGpa != null && !isNaN(termGpa) ? Number(termGpa).toFixed(2) : termGpa)}
           </div>
         </Card>
 
@@ -192,7 +192,7 @@ const GpaMetrics = ({
                           fontWeight: 700,
                         }}
                       >
-                        {Math.abs(diffAttendance)}%
+                        {Math.abs(diffAttendance).toFixed(2)}%
                       </span>
                       <span style={{ marginLeft: 3, color: "#6B7280" }}>
                         {" "}
@@ -214,7 +214,7 @@ const GpaMetrics = ({
             {loadingTermInformation
               ? "..."
               : avgAttendance != null
-                ? `${avgAttendance}%`
+                ? `${avgAttendance.toFixed(2)}%`
                 : "N/A"}
           </div>
         </Card>
