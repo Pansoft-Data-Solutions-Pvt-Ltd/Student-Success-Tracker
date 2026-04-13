@@ -13,7 +13,7 @@ http:
       value: application/vnd.hedtech.integration.logic-specifications.v1+json
   params:
     - name: id
-      value: ""
+      value: 62fb6887-5c19-45c3-b1c0-e059e9b0bcd5
       type: path
   body:
     type: json
@@ -34,7 +34,7 @@ http:
             ]
           }
         ],
-        "resource": "x-student-gpa",
+        "resource": "x-student-term-courses-2",
         "supports": {
           "accepts": [
             "application/vnd.hedtech.integration.v1+json",
@@ -105,28 +105,14 @@ http:
             "class": "sql:query:ethosFilterCompiler",
             "config": {
               "contextTarget": "getQuerySQL",
-              "statement": "SELECT SPRIDEN_ID, SHRTGPA_TERM_CODE, SHRTGPA_LEVL_CODE, SHRTGPA_GPA, SHRTGPA_QUALITY_POINTS, SHRTGPA_GPA_HOURS FROM SPRIDEN, SHRTGPA WHERE SPRIDEN_CHANGE_IND IS NULL AND SHRTGPA_PIDM = SPRIDEN_PIDM %%AND_FILTER%%",
+              "statement": "SELECT spriden_id,term_code,t.stvterm_desc as term_name,crn,subj_code,crse_numb,COURSE_NAME,FINAL_GRADE,CREDIT_HOURS,attend_hr,total_meet_days,attendance_percentage FROM (SELECT shrtckn_pidm pidm, SHRTCKN_CRN crn, SHRTCKN_term_code term_code, SHRTCKN_SUBJ_CODE subj_code, SHRTCKN_CRSE_NUMB crse_numb, SHRTCKN_CRSE_TITLE COURSE_NAME, SHRTCKG_GRDE_CODE_FINAL FINAL_GRADE, SHRTCKG_CREDIT_HOURS CREDIT_HOURS, NVL(MEET.SFRSTCR_ATTEND_HR,0) AS ATTEND_HR, meet.total_meet_days, CASE WHEN meet.total_meet_days > 0 THEN LEAST(100, ROUND((NVL(MEET.SFRSTCR_ATTEND_HR,0) * 100) / meet.total_meet_days, 2)) ELSE 0 END AS attendance_percentage FROM  SHRTCKN, SHRTCKG C1, (SELECT ssbsect_term_code, ssbsect_crn, SFRSTCR_PIDM, SFRSTCR_ATTEND_HR, F_CALC_MEET_DAYS(ssbsect_term_code, ssbsect_crn, ssbsect_ptrm_code) AS total_meet_days FROM ssbsect, SFRSTCR WHERE SFRSTCR_TERM_CODE = SSBSECT_TERM_CODE AND SFRSTCR_CRN = SSBSECT_CRN) meet WHERE  SHRTCKN_PIDM = SHRTCKG_PIDM AND SHRTCKG_TERM_CODE = SHRTCKN_TERM_CODE AND SHRTCKG_TCKN_SEQ_NO = SHRTCKN_SEQ_NO AND SHRTCKG_SEQ_NO = (SELECT MAX(SHRTCKG_SEQ_NO) FROM SHRTCKG C2 WHERE C2.SHRTCKG_PIDM = C1.SHRTCKG_PIDM AND C2.SHRTCKG_TERM_CODE = C1.SHRTCKG_TERM_CODE AND C2.SHRTCKG_TCKN_SEQ_NO = C1.SHRTCKG_TCKN_SEQ_NO) AND meet.ssbsect_term_code(+) = SHRTCKN_TERM_CODE AND meet.ssbsect_crn(+) = SHRTCKN_CRN AND MEET.SFRSTCR_PIDM(+) = SHRTCKN_PIDM UNION SELECT sfrstcr_pidm, sfrstcr_crn, sfrstcr_term_code, MEET.ssbsect_subj_code, MEET.ssbsect_crse_numb, c.scbcrse_title AS course_name, SFRSTCR_GRDE_CODE, SFRSTCR_CREDIT_HR, NVL(sfrstcr_attend_hr,0) AS sfrstcr_attend_hr, meet.total_meet_days, CASE WHEN meet.total_meet_days > 0 THEN LEAST(100, ROUND((NVL(sfrstcr_attend_hr,0) * 100) / meet.total_meet_days, 2)) ELSE 0 END AS attendance_percentage  FROM  SFRSTCR, STVRSTS, SCBCRSE C, (SELECT ssbsect_term_code, ssbsect_crn, ssbsect_subj_code, ssbsect_crse_numb, F_CALC_MEET_DAYS(ssbsect_term_code, ssbsect_crn, ssbsect_ptrm_code) AS total_meet_days FROM ssbsect) meet WHERE   meet.ssbsect_term_code = SFRSTCR_term_code AND SFRSTCR_RSTS_CODE = STVRSTS_CODE AND STVRSTS_INCL_SECT_ENRL = 'Y' AND meet.ssbsect_crn = SFRSTCR_crn AND c.scbcrse_subj_code = MEET.ssbsect_subj_code AND c.scbcrse_crse_numb = MEET.ssbsect_crse_numb AND c.scbcrse_eff_term = (SELECT MAX(c2.scbcrse_eff_term) FROM scbcrse c2 WHERE c2.scbcrse_subj_code = MEET.ssbsect_subj_code AND c2.scbcrse_crse_numb = MEET.ssbsect_crse_numb AND c2.scbcrse_eff_term <= sfrstcr_term_code) AND SFRSTCR_CRN NOT IN (SELECT SHRTCKN_CRN FROM SHRTCKN WHERE SHRTCKN_PIDM = SFRSTCR_PIDM AND SHRTCKN_TERM_CODE = SFRSTCR_TERM_CODE AND SHRTCKN_CRN = SFRSTCR_CRN)) A, SPRIDEN, STVTERM t WHERE spriden_pidm = a.pidm and spriden_change_ind is null and t.stvterm_code = a.term_code %%AND_FILTER%%",
               "propertyMaps": [
                 {
                   "sourcePropertyType": "varchar",
-                  "sourceProperty": "SPRIDEN_ID",
+                  "sourceProperty": "spriden_id",
                   "jsonPath": "/",
                   "jsonType": "S",
                   "jsonLabel": "bannerId"
-                },
-                {
-                  "sourcePropertyType": "varchar",
-                  "sourceProperty": "SHRTGPA_TERM_CODE",
-                  "jsonPath": "/",
-                  "jsonType": "S",
-                  "jsonLabel": "termCode"
-                },
-                {
-                  "sourcePropertyType": "varchar",
-                  "sourceProperty": "SHRTGPA_LEVL_CODE",
-                  "jsonPath": "/",
-                  "jsonType": "S",
-                  "jsonLabel": "levlCode"
                 }
               ]
             }
@@ -144,49 +130,91 @@ http:
             "config": {
               "sqlPagingWrapper": "SELECT T.* FROM (SELECT T.*, rowNum as rowIndex FROM (%%STATEMENT%%)T)T WHERE rowIndex > %%START_INDEX%% and rowIndex <= %%END_INDEX%%",
               "statement": "::getQuerySQL::",
-              "contextResourceName": "x-student-gpa",
+              "contextResourceName": "x-student-term-courses-2",
               "propertyMaps": [
                 {
                   "sourcePropertyType": "varchar",
-                  "sourceProperty": "SPRIDEN_ID",
+                  "sourceProperty": "spriden_id",
                   "jsonPath": "/",
                   "jsonType": "S",
                   "jsonLabel": "bannerId"
                 },
                 {
                   "sourcePropertyType": "varchar",
-                  "sourceProperty": "SHRTGPA_TERM_CODE",
+                  "sourceProperty": "crn",
+                  "jsonPath": "/",
+                  "jsonType": "S",
+                  "jsonLabel": "crn"
+                },
+                {
+                  "sourcePropertyType": "varchar",
+                  "sourceProperty": "term_code",
                   "jsonPath": "/",
                   "jsonType": "S",
                   "jsonLabel": "termCode"
                 },
                 {
                   "sourcePropertyType": "varchar",
-                  "sourceProperty": "SHRTGPA_LEVL_CODE",
+                  "sourceProperty": "term_name",
                   "jsonPath": "/",
                   "jsonType": "S",
-                  "jsonLabel": "levlCode"
+                  "jsonLabel": "termName"
                 },
                 {
                   "sourcePropertyType": "varchar",
-                  "sourceProperty": "SHRTGPA_GPA",
+                  "sourceProperty": "credit_hours",
                   "jsonPath": "/",
                   "jsonType": "S",
-                  "jsonLabel": "gpa"
+                  "jsonLabel": "creditHours"
                 },
                 {
                   "sourcePropertyType": "varchar",
-                  "sourceProperty": "SHRTGPA_QUALITY_POINTS",
+                  "sourceProperty": "course_name",
                   "jsonPath": "/",
                   "jsonType": "S",
-                  "jsonLabel": "qualityPoints"
+                  "jsonLabel": "courseTitle"
                 },
                 {
                   "sourcePropertyType": "varchar",
-                  "sourceProperty": "SHRTGPA_GPA_HOURS",
+                  "sourceProperty": "final_grade",
                   "jsonPath": "/",
                   "jsonType": "S",
-                  "jsonLabel": "gpaHours"
+                  "jsonLabel": "finalGrade"
+                },
+                {
+                  "sourcePropertyType": "varchar",
+                  "sourceProperty": "crse_numb",
+                  "jsonPath": "/",
+                  "jsonType": "S",
+                  "jsonLabel": "courseNumber"
+                },
+                {
+                  "sourcePropertyType": "varchar",
+                  "sourceProperty": "subj_code",
+                  "jsonPath": "/",
+                  "jsonType": "S",
+                  "jsonLabel": "subjectCode"
+                },
+                {
+                  "sourcePropertyType": "varchar",
+                  "sourceProperty": "attend_hr",
+                  "jsonPath": "/",
+                  "jsonType": "S",
+                  "jsonLabel": "attendHr"
+                },
+                {
+                  "sourcePropertyType": "varchar",
+                  "sourceProperty": "total_meet_days",
+                  "jsonPath": "/",
+                  "jsonType": "S",
+                  "jsonLabel": "meetingDays"
+                },
+                {
+                  "sourcePropertyType": "varchar",
+                  "sourceProperty": "attendance_percentage",
+                  "jsonPath": "/",
+                  "jsonType": "S",
+                  "jsonLabel": "attendancePercentage"
                 }
               ]
             }

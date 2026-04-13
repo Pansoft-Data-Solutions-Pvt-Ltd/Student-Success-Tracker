@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: '{{tenantUrl}}/api/x-term-information?criteria={"bannerId": "BANNERADM"}'
+  url: '{{tenantUrl}}/api/x-student-term-courses?criteria={"bannerId": "BANNERADM"}'
   headers:
     - name: Accept
       value: application/json
