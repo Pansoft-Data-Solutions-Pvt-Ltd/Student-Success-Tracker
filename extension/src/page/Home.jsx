@@ -132,7 +132,7 @@ const TABLE_CONFIG = {
     if (!termInfo) return;
 
     setCurrentGpa(termInfo.cumulative_gpa || 0);
-    setTermGpa(termInfo.term_gpa || 0);
+    setTermGpa(termInfo.gpa_available ? (termInfo.term_gpa || 0) : "N/A");
 
     // Calculate avg attendance
     const courses = termInfo.courses || [];
