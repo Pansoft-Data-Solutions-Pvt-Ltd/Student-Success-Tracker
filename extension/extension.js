@@ -73,6 +73,13 @@ module.exports = {
             type: "text",
             require: true,
             default: "pansoft-x-get-student-term-courses"
+          },
+          {
+            key: "student_gpa_recommendation_pipeline",
+            label: "Serverless API name for student GPA recommendation",
+            type: "text",
+            require: true,
+            default: "pansoft-x-get-student-gpa-recommendation"
           }
         ],
         server: [

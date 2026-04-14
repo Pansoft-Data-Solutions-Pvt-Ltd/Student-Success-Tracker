@@ -45,7 +45,8 @@ const MySuccessTrackerTable = () => {
     minimum_threshold_for_satisfactory_performance,
     minimum_threshold_for_excellent_attendance,
     minimum_threshold_for_satisfactory_attendance,
-    student_term_courses_pipeline
+    student_term_courses_pipeline,
+    student_gpa_recommendation_pipeline
   } = cardConfiguration;
 
   // Parse config thresholds once — they arrive as strings from cardConfiguration
