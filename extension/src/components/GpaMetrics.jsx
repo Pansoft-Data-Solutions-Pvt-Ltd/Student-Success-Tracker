@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
-import { Card, Typography } from "@ellucian/react-design-system/core";
+import { Card, Typography, TextField, Button } from "@ellucian/react-design-system/core";
 import DoubleChevronIcon from "./DoubleChevron";
 
 const GpaMetrics = ({
@@ -24,6 +24,8 @@ const GpaMetrics = ({
   avgAttendance,
   colors,
 }) => {
+  const [targetGpa, setTargetGpa] = useState("");
+
   return (
     <div className="gpa-cards-column">
       <div style={{ display: "flex", gap: "20px" }}>
@@ -272,6 +274,15 @@ const GpaMetrics = ({
             N/A = Not Applicable
           </Typography>
         </div>
+      </div>
+      <div style={{ marginTop: "20px", display: "flex", gap: "10px", alignItems: "center" }}>
+        <TextField
+          label="Target GPA"
+          value={targetGpa}
+          onChange={(event) => setTargetGpa(event.target.value)}
+          placeholder="e.g. 3.5"
+        />
+        <Button onClick={() => console.log("Submit Target GPA:", targetGpa)}>Submit</Button>
       </div>
     </div>
   );
