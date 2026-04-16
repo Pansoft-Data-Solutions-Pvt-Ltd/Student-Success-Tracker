@@ -99,7 +99,7 @@ const GpaMetrics = ({
               color: gpaCircleColor,
             }}
           >
-            {loadingTermInformation ? "..." : currentGpa.toFixed(2)}
+            {loadingTermInformation ? "..." : currentGpa}
           </div>
         </Card>
 
@@ -225,7 +225,7 @@ const GpaMetrics = ({
             {loadingTermInformation
               ? "..."
               : avgAttendance != null
-                ? `${avgAttendance.toFixed(2)}%`
+                ? `${avgAttendance}%`
                 : "N/A"}
           </div>
         </Card>

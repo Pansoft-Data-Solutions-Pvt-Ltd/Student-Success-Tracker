@@ -10,10 +10,7 @@ import "./Home.css";
 // Ellucian provided hooks
 import { useData, useCardInfo } from "@ellucian/experience-extension-utils";
 
-import {
-  Typography,
-  Card,
-} from "@ellucian/react-design-system/core";
+import { Typography, Card } from "@ellucian/react-design-system/core";
 
 /* ================= CONFIG ================= */
 /* ================= COMPONENT ================= */
@@ -134,6 +131,7 @@ const MySuccessTrackerTable = () => {
 
     setCurrentGpa(termInfo.cumulative_gpa || 0);
     setTermGpa(termInfo.gpa_available ? termInfo.term_gpa || 0 : "N/A");
+    setAvgAttendance(termInfo.attendancePercentage);
 
     // Calculate avg attendance
     const courses = termInfo.courses || [];
@@ -147,15 +145,6 @@ const MySuccessTrackerTable = () => {
       setIsFirstTermFlag(false);
       return;
     }
-
-    let validAttendances = courses
-      .map((c) => parseFloat(c.attendancePercentage))
-      .filter((a) => !isNaN(a));
-    const avgAtt =
-      validAttendances.length > 0
-        ? validAttendances.reduce((a, b) => a + b, 0) / validAttendances.length
-        : null;
-    setAvgAttendance(avgAtt);
 
     // Calculate mapped courses
     const mappedCourses = courses.map((course) => ({
@@ -187,20 +176,24 @@ const MySuccessTrackerTable = () => {
         const prevTermCode = termCodesResult[currentIndex - 1].termCode;
         const prevTermInfo = pipelineData.termData[prevTermCode];
         if (prevTermInfo) {
-          const prevCumGpa = prevTermInfo.cumulative_gpa || 0;
+          let prevCumGpa = prevTermInfo.cumulative_gpa;
+
+          if (
+            prevCumGpa === "N/A" ||
+            prevCumGpa === null ||
+            prevCumGpa === undefined
+          ) {
+            prevCumGpa = 0;
+          } else {
+            prevCumGpa = Number(prevCumGpa);
+          }
+
           gpaDiff = (termInfo.cumulative_gpa || 0) - prevCumGpa;
 
-          const prevCourses = prevTermInfo.courses || [];
-          let prevValidAtt = prevCourses
-            .map((c) => parseFloat(c.attendancePercentage))
-            .filter((a) => !isNaN(a));
-          const prevAvgAtt =
-            prevValidAtt.length > 0
-              ? prevValidAtt.reduce((a, b) => a + b, 0) / prevValidAtt.length
-              : null;
+          const prevAvgAtt = prevTermInfo.attendancePercentage;
 
-          if (avgAtt !== null && prevAvgAtt !== null) {
-            attDiff = avgAtt - prevAvgAtt;
+          if (avgAttendance !== null && prevAvgAtt !== null) {
+            attDiff = avgAttendance - prevAvgAtt;
           } else {
             attDiff = 0;
           }
@@ -211,7 +204,7 @@ const MySuccessTrackerTable = () => {
     setGpaDelta(gpaDiff);
     setDiffAttendance(attDiff);
     setIsFirstTermFlag(isFirst);
-  }, [pipelineData, currentTermCode, termCodesResult]);
+  }, [pipelineData, currentTermCode, termCodesResult, avgAttendance]);
 
   // For term Gpas Bar
   useEffect(() => {
