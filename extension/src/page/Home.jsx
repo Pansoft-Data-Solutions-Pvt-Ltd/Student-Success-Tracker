@@ -253,7 +253,7 @@ const MySuccessTrackerTable = () => {
   };
 
   const handleTermChange = (term) => {
-    setCourseData([]);
+    // setCourseData([]); // This is causing an error when clicking on already selected term the course data becomes empty
     setCurrentTerm(term.term);
     setCurrentTermCode(term.termCode);
   };
