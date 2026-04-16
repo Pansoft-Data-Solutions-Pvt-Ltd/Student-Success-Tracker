@@ -1,23 +1,13 @@
-import React from // useState
-"react";
+import React from "react";
 import PropTypes from "prop-types";
 import {
   Card,
   Typography,
-  // TextField,
-  // Button,
-  // ExpansionPanel,
-  // ExpansionPanelSummary,
-  // ExpansionPanelDetails
 } from "@ellucian/react-design-system/core";
 import DoubleChevronIcon from "./DoubleChevron";
 // import Markdown from 'react-markdown'
 
 const GpaMetrics = ({
-  // fetchGpaRecommendation,
-  // loadingRecommendation,
-  // recommendationResult,
-  // recommendationError,
   loadingTermInformation,
   isFirstTerm,
   isFirstTermFlag,
@@ -38,7 +28,6 @@ const GpaMetrics = ({
   avgAttendance,
   colors,
 }) => {
-  // const [targetGpa, setTargetGpa] = useState("");
 
   return (
     <div className="gpa-cards-column">
@@ -295,49 +284,6 @@ const GpaMetrics = ({
           </Typography>
         </div>
       </div>
-      {/* <div style={{ marginTop: "20px", display: "flex", gap: "10px", alignItems: "center" }}>
-        <TextField
-          label="Target GPA"
-          value={targetGpa}
-          onChange={(event) => setTargetGpa(event.target.value)}
-          placeholder="e.g. 3.5"
-        />
-        <Button onClick={() => fetchGpaRecommendation(targetGpa)} disabled={loadingRecommendation || !targetGpa}>
-          {loadingRecommendation ? "Submitting..." : "Submit"}
-        </Button>
-      </div>
-
-      {/* Recommendation Results */}
-      {/* {(loadingRecommendation || recommendationResult || recommendationError) && (
-        <div style={{ marginTop: "15px" }}>
-          <ExpansionPanel>
-            <ExpansionPanelSummary>
-              <Typography variant="h4">GPA Recommendation</Typography>
-            </ExpansionPanelSummary>
-            <ExpansionPanelDetails>
-              <div style={{ padding: "5px", width: "100%" }}>
-                {loadingRecommendation && (
-                  <Typography variant="body2" style={{ color: "#4b5563" }}>
-                    Loading recommendation...
-                  </Typography>
-                )}
-                {recommendationError && (
-                  <Typography variant="body2" style={{ color: "#dc2626", fontWeight: 600 }}>
-                    Error: {recommendationError}
-                  </Typography>
-                )}
-                {recommendationResult && !loadingRecommendation && (
-                  <Typography component="div" variant="body2" style={{ color: "#1f2937", whiteSpace: "pre-wrap", fontWeight: 500, lineHeight: 1.5 }}>
-                    <Markdown>
-                      {recommendationResult}
-                    </Markdown>
-                  </Typography>
-                )}
-              </div>
-            </ExpansionPanelDetails>
-          </ExpansionPanel>
-        </div>
-      )} */}
     </div>
   );
 };
