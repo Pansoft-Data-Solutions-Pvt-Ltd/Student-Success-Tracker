@@ -16,71 +16,78 @@ module.exports = {
             label: "Hex color code for excellent performance",
             type: "text",
             require: false,
-            default: "#079C34"
+            default: "#079C34",
           },
           {
             key: "satisfactory_performance_color_code",
             label: "Hex color code for satisfactory performance",
             type: "text",
             require: false,
-            default: "#F5A327"
+            default: "#F5A327",
           },
           {
             key: "poor_performance_color_code",
             label: "Hex color code for poor performance",
             type: "text",
             require: false,
-            default: "#F54927"
+            default: "#F54927",
           },
           {
             key: "minimum_threshold_for_excellent_performance",
             label: "Minimum threshold for excellent performance",
             type: "text",
             require: true,
-            default: "3"
+            default: "3",
           },
           {
             key: "minimum_threshold_for_satisfactory_performance",
             label: "Minimum threshold for satisfactory performance",
             type: "text",
             require: true,
-            default: "2"
+            default: "2",
           },
           {
             key: "minimum_threshold_for_excellent_attendance",
             label: "Minimum threshold for excellent attendance",
             type: "text",
             require: true,
-            default: "80"
+            default: "80",
           },
           {
             key: "minimum_threshold_for_satisfactory_attendance",
             label: "Minimum threshold for satisfactory attendance",
             type: "text",
             require: true,
-            default: "60"
+            default: "60",
           },
           {
             key: "latest_term_information_pipeline",
             label: "Serverless API name for latest term information pipeline",
             type: "text",
             require: true,
-            default: "pansoft-x-get-student-latest-term-information"
+            default: "pansoft-x-get-student-latest-term-information",
           },
           {
             key: "student_term_courses_pipeline",
             label: "Serverless API name for student term courses",
             type: "text",
             require: true,
-            default: "pansoft-x-get-student-term-courses"
+            default: "pansoft-x-get-student-term-courses",
           },
           {
             key: "student_gpa_recommendation_pipeline",
             label: "Serverless API name for student GPA recommendation",
             type: "text",
             require: true,
-            default: "pansoft-x-get-student-gpa-recommendation"
-          }
+            default: "pansoft-x-get-student-gpa-recommendation",
+          },
+          {
+            key: "student_gpa_recommendation_pipeline",
+            label: "Serverless API name for student GPA recommendation",
+            type: "text",
+            require: true,
+            default: "pansoft-x-get-student-gpa-recommendation",
+          },
         ],
         server: [
           {
@@ -88,15 +95,15 @@ module.exports = {
             label: "Ethos API Key",
             type: "password",
             require: true,
-            default: ""
+            default: "",
           },
           {
             key: "openAiApiKey",
             label: "Open AI API Key",
             type: "password",
             require: true,
-            default: ""
-          }
+            default: "",
+          },
         ],
       },
       pageRoute: {
@@ -110,4 +117,3 @@ module.exports = {
     fullWidth: true,
   },
 };
-

@@ -6,11 +6,20 @@ import HomeHeader from "../components/HomeHeader";
 import GpaMetrics from "../components/GpaMetrics";
 import CourseDataView from "../components/CourseDataView";
 import "./Home.css";
+import Markdown from "react-markdown";
 
 // Ellucian provided hooks
 import { useData, useCardInfo } from "@ellucian/experience-extension-utils";
 
-import { Typography, Card } from "@ellucian/react-design-system/core";
+import {
+  Typography,
+  Card,
+  TextField,
+  Button,
+  ExpansionPanel,
+  ExpansionPanelDetails,
+  ExpansionPanelSummary,
+} from "@ellucian/react-design-system/core";
 
 /* ================= CONFIG ================= */
 /* ================= COMPONENT ================= */
@@ -28,6 +37,7 @@ const MySuccessTrackerTable = () => {
   const [diffAttendance, setDiffAttendance] = useState(null);
   const [isFirstTermFlag, setIsFirstTermFlag] = useState(false);
   const [termCodesResult, setTermCodesResult] = useState(null);
+  const [targetGpa, setTargetGpa] = useState("");
 
   const { authenticatedEthosFetch } = useData();
   const { cardId, cardConfiguration } = useCardInfo();
@@ -41,7 +51,61 @@ const MySuccessTrackerTable = () => {
     minimum_threshold_for_excellent_attendance,
     minimum_threshold_for_satisfactory_attendance,
     student_term_courses_pipeline,
+    student_gpa_recommendation_pipeline,
   } = cardConfiguration;
+
+  const [loadingRecommendation, setLoadingRecommendation] = useState(false);
+  const [recommendationResult, setRecommendationResult] = useState(null);
+  const [recommendationError, setRecommendationError] = useState(null);
+
+  const fetchGpaRecommendation = async (targetGpa) => {
+    console.log("targetGpa", targetGpa);
+    console.log(
+      "student_gpa_recommendation_pipeline",
+      student_gpa_recommendation_pipeline,
+    );
+    console.log("student term courses pipeline", student_term_courses_pipeline);
+
+    if (!targetGpa || !student_gpa_recommendation_pipeline) return;
+    // if (!targetGpa) return;
+    setLoadingRecommendation(true);
+    setRecommendationResult(null);
+    setRecommendationError(null);
+
+    try {
+      const queryString = new URLSearchParams({ cardId, targetGpa }).toString();
+      const resourcePath = `${student_gpa_recommendation_pipeline}?${queryString}`;
+      // const resourcePath = `pansoft-x-get-student-gpa-recommendation?${queryString}`;
+      const options = {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      };
+
+      const response = await authenticatedEthosFetch(resourcePath, options);
+      if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+
+      let data = await response.text();
+      try {
+        console.log("response: ", data);
+        const jsonData = JSON.parse(data);
+        if (jsonData.text) data = jsonData.text;
+        else if (jsonData.message) data = jsonData.message;
+        else if (jsonData.result) data = jsonData.result;
+        else if (typeof jsonData === "string") data = jsonData;
+        else data = JSON.stringify(jsonData, null, 2);
+      } catch (e) {
+        console.error(e);
+      }
+      setRecommendationResult(data);
+    } catch (err) {
+      setRecommendationError(err.message || "Something went wrong.");
+    } finally {
+      setLoadingRecommendation(false);
+    }
+  };
 
   // Parse config thresholds once — they arrive as strings from cardConfiguration
   const parsed_minimum_threshold_for_excellent_performance = parseFloat(
@@ -379,6 +443,80 @@ const MySuccessTrackerTable = () => {
                     />
                   </Card>
                 </div>
+
+                <div
+                  style={{
+                    marginTop: "20px",
+                    display: "flex",
+                    gap: "10px",
+                    alignItems: "center",
+                  }}
+                >
+                  <TextField
+                    label="Target GPA"
+                    value={targetGpa}
+                    onChange={(event) => setTargetGpa(event.target.value)}
+                    placeholder="e.g. 3.5"
+                    disabled={!isLatestTerm}
+                  />
+                  <Button
+                    onClick={() => fetchGpaRecommendation(targetGpa)}
+                    disabled={loadingRecommendation || !targetGpa}
+                  >
+                    {loadingRecommendation ? "Submitting..." : "Submit"}
+                  </Button>
+                </div>
+
+                {/* Recommendation Results */}
+                {(loadingRecommendation ||
+                  recommendationResult ||
+                  recommendationError) && (
+                  <div>
+                    <ExpansionPanel>
+                      <ExpansionPanelSummary>
+                        <Typography variant="h4">
+                          {loadingRecommendation
+                            ? "Loading..."
+                            : "GPA Recommendation"}
+                        </Typography>
+                      </ExpansionPanelSummary>
+                      <ExpansionPanelDetails>
+                        <div style={{ padding: "5px", width: "100%" }}>
+                          {loadingRecommendation && (
+                            <Typography
+                              variant="body2"
+                              style={{ color: "#4b5563" }}
+                            >
+                              Loading recommendation...
+                            </Typography>
+                          )}
+                          {recommendationError && (
+                            <Typography
+                              variant="body2"
+                              style={{ color: "#dc2626", fontWeight: 600 }}
+                            >
+                              Error: {recommendationError}
+                            </Typography>
+                          )}
+                          {recommendationResult && !loadingRecommendation && (
+                            <Typography
+                              component="div"
+                              variant="body2"
+                              style={{
+                                color: "#1f2937",
+                                fontWeight: 500,
+                                lineHeight: 1.5,
+                              }}
+                            >
+                              <Markdown>{recommendationResult}</Markdown>
+                            </Typography>
+                          )}
+                        </div>
+                      </ExpansionPanelDetails>
+                    </ExpansionPanel>
+                  </div>
+                )}
+
               </div>
             </div>
 
