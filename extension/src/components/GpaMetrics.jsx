@@ -317,7 +317,7 @@ const GpaMetrics = ({
               alt=""
               style={{ marginRight: "5px" }}
             />
-            Get Target GPA Recommendation
+            Get Recommendations
           </Button>
         </div>
       </div>

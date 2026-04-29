@@ -42,7 +42,7 @@ const TargetGpaModal = ({
         {/* GPA Input */}
         <div style={{ marginBottom: "16px" }}>
           <Typography variant="body1" style={{ marginBottom: "8px" }}>
-            Enter a target GPA you want to achieve next term to get AI
+            Enter a target GPA you want to achieve to get AI
             recommendation
           </Typography>
           <TextField
