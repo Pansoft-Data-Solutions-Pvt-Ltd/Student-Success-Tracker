@@ -28,9 +28,15 @@ const TargetGpaModal = ({
     onClose();
   };
 
-  const handleSubmit = () => {
-    onSubmit(targetGpa);
+  const isValidGpa = (value) => {
+    const num = parseFloat(value);
+    return !isNaN(num) && num >= 0 && num <= 4;
   };
+
+const handleSubmit = () => {
+  if (!isValidGpa(targetGpa)) return;
+  onSubmit(parseFloat(targetGpa));
+};
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
@@ -42,14 +48,19 @@ const TargetGpaModal = ({
         {/* GPA Input */}
         <div style={{ marginBottom: "16px" }}>
           <Typography variant="body1" style={{ marginBottom: "8px" }}>
-            Enter a target GPA you want to achieve to get AI
-            recommendation
+            Enter a target GPA you want to achieve to get AI recommendation
           </Typography>
           <TextField
             label="Target GPA"
             value={targetGpa}
             onChange={(e) => setTargetGpa(e?.target?.value ?? "")}
             placeholder="e.g. 3.5"
+            error={targetGpa && !isValidGpa(targetGpa)}
+            helperText={
+              targetGpa && !isValidGpa(targetGpa)
+                ? "GPA must be between 0 and 4"
+                : ""
+            }
             fullWidth
           />
         </div>
@@ -114,9 +125,11 @@ const TargetGpaModal = ({
         <Button variant="text" onClick={handleClose}>
           Close
         </Button>
-        <Button onClick={handleSubmit} disabled={loading || !targetGpa}>
-          {loading ? "Loading..." : "Get Recommendations"}
-        </Button>
+        {!result && (
+          <Button onClick={handleSubmit} disabled={loading || !isValidGpa(targetGpa) }>
+            {loading ? "Loading..." : "Get Recommendations"}
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );
