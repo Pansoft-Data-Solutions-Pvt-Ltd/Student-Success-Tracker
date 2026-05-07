@@ -47,24 +47,26 @@ const TargetGpaModal = ({
 
       <DialogContent>
         {/* GPA Input */}
-        <div style={{ marginBottom: "16px" }}>
-          <Typography variant="body1" style={{ marginBottom: "8px" }}>
-            Enter a target GPA you want to achieve to get AI recommendation
-          </Typography>
-          <TextField
-            label="Target GPA"
-            value={targetGpa}
-            onChange={(e) => setTargetGpa(e?.target?.value ?? "")}
-            placeholder="e.g. 3.5"
-            error={targetGpa && !isValidGpa(targetGpa)}
-            helperText={
-              targetGpa && !isValidGpa(targetGpa)
-                ? `Please enter a GPA between 0 and ${maxGpa}`
-                : ""
-            }
-            fullWidth
-          />
-        </div>
+        {!result && (
+          <div style={{ marginBottom: "16px" }}>
+            <Typography variant="body1" style={{ marginBottom: "8px" }}>
+              Enter a target GPA you want to achieve to get AI recommendation
+            </Typography>
+            <TextField
+              label="Target GPA"
+              value={targetGpa}
+              onChange={(e) => setTargetGpa(e?.target?.value ?? "")}
+              placeholder="e.g. 3.5"
+              error={targetGpa && !isValidGpa(targetGpa)}
+              helperText={
+                targetGpa && !isValidGpa(targetGpa)
+                  ? `Please enter a GPA between 0 and ${maxGpa}`
+                  : ""
+              }
+              fullWidth
+            />
+          </div>
+        )}
 
         {/* Loading state */}
         {loading && (
@@ -101,16 +103,18 @@ const TargetGpaModal = ({
         {result && !loading && (
           <div
             style={{
-              marginTop: "12px",
+              marginTop: "8px",
               borderTop: "1px solid #e5e7eb",
               paddingTop: "12px",
               maxHeight: "400px",
               overflowY: "auto",
             }}
           >
-            <Typography variant="h4" style={{ marginBottom: "8px" }}>
-              Recommendation
-            </Typography>
+            {/*
+<Typography variant="h4" style={{ marginBottom: "8px" }}>
+Recommendation
+</Typography>
+*/}
             <Typography
               component="div"
               variant="body2"
