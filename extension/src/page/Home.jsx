@@ -44,6 +44,7 @@ const MySuccessTrackerTable = () => {
     minimum_threshold_for_satisfactory_attendance,
     student_term_courses_pipeline,
     student_gpa_recommendation_pipeline,
+    max_gpa
   } = cardConfiguration;
 
   const [loadingRecommendation, setLoadingRecommendation] = useState(false);
@@ -455,6 +456,7 @@ const MySuccessTrackerTable = () => {
                   loading={loadingRecommendation}
                   result={recommendationResult}
                   error={recommendationError}
+                  maxGpa={max_gpa}
                 />
               </div>
             </div>

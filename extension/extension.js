@@ -88,6 +88,13 @@ module.exports = {
             require: true,
             default: "pansoft-x-get-student-gpa-recommendation",
           },
+          {
+            key: "max_gpa",
+            label: "Max Gpa",
+            type: "text",
+            require: true,
+            default: "4",
+          },
         ],
         server: [
           {

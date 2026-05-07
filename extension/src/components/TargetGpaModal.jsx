@@ -20,6 +20,7 @@ const TargetGpaModal = ({
   loading,
   result,
   error,
+  maxGpa,
 }) => {
   const [targetGpa, setTargetGpa] = useState("");
 
@@ -30,13 +31,13 @@ const TargetGpaModal = ({
 
   const isValidGpa = (value) => {
     const num = parseFloat(value);
-    return !isNaN(num) && num >= 0 && num <= 4;
+    return !isNaN(num) && num >= 0 && num <= maxGpa;
   };
 
-const handleSubmit = () => {
-  if (!isValidGpa(targetGpa)) return;
-  onSubmit(parseFloat(targetGpa));
-};
+  const handleSubmit = () => {
+    if (!isValidGpa(targetGpa)) return;
+    onSubmit(parseFloat(targetGpa));
+  };
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
@@ -58,7 +59,7 @@ const handleSubmit = () => {
             error={targetGpa && !isValidGpa(targetGpa)}
             helperText={
               targetGpa && !isValidGpa(targetGpa)
-                ? "GPA must be between 0 and 4"
+                ? `Please enter a GPA between 0 and ${maxGpa}`
                 : ""
             }
             fullWidth
@@ -126,7 +127,10 @@ const handleSubmit = () => {
           Close
         </Button>
         {!result && (
-          <Button onClick={handleSubmit} disabled={loading || !isValidGpa(targetGpa) }>
+          <Button
+            onClick={handleSubmit}
+            disabled={loading || !isValidGpa(targetGpa)}
+          >
             {loading ? "Loading..." : "Get Recommendations"}
           </Button>
         )}
@@ -142,6 +146,7 @@ TargetGpaModal.propTypes = {
   loading: PropTypes.bool,
   result: PropTypes.string,
   error: PropTypes.string,
+  maxGpa: PropTypes.string,
 };
 
 TargetGpaModal.defaultProps = {
