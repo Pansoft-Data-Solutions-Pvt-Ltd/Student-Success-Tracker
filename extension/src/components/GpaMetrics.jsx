@@ -298,7 +298,7 @@ const GpaMetrics = ({
           <Button
             onClick={handleOpenModal}
             disabled={!isLatestTerm}
-            style={{ paddingLeft: "8px" }}
+            style={{ paddingLeft: "8px", textTransform: "capitalize" }}
             variant="contained"
             color="primary"
           >
@@ -307,7 +307,7 @@ const GpaMetrics = ({
               alt=""
               style={{ marginRight: "10px" }}
             />
-            Get Recommendations
+            Get GPA Recommendations
           </Button>
         </div>
       </div>
