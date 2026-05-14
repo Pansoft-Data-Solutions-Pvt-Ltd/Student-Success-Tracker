@@ -30,6 +30,9 @@ const MySuccessTrackerTable = () => {
   const [isFirstTermFlag, setIsFirstTermFlag] = useState(false);
   const [termCodesResult, setTermCodesResult] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  // ✅ FIX: added state for academicStanding and programGpa
+  const [academicStanding, setAcademicStanding] = useState(null);
+  const [programGpa, setProgramGpa] = useState(null);
 
   const { authenticatedEthosFetch } = useData();
   const { cardId, cardConfiguration } = useCardInfo();
@@ -158,6 +161,16 @@ const MySuccessTrackerTable = () => {
     student_term_courses_pipeline,
     {},
   );
+
+  // ✅ FIX: Extract programGpa from root of pipelineData (it's NOT inside termData)
+  useEffect(() => {
+    if (pipelineData) {
+      const rawProgramGpa = pipelineData.programGpa;
+      const parsed = parseFloat(rawProgramGpa);
+      setProgramGpa(isNaN(parsed) ? null : parsed);
+    }
+  }, [pipelineData]);
+
   // Fetch and filter term codes
   useEffect(() => {
     if (pipelineData && pipelineData.termData) {
@@ -166,7 +179,7 @@ const MySuccessTrackerTable = () => {
 
       const newTermCodesResult = filteredTerms.map((tc) => ({
         termCode: tc,
-        term: pipelineData.termData[tc]?.termName || tc, // prefer termName, fallback to termCode
+        term: pipelineData.termData[tc]?.termName || tc,
         bannerId: pipelineData.bannerId,
       }));
 
@@ -179,7 +192,7 @@ const MySuccessTrackerTable = () => {
         setLatestTermCode(latestTc);
         setCurrentTermCode(latestTc);
         setCurrentTerm(latestTermName);
-        setTermData(newTermCodesResult.map((t) => t.term)); // use termName as labels
+        setTermData(newTermCodesResult.map((t) => t.term));
       }
     }
   }, [pipelineData, currentTermCode]);
@@ -193,10 +206,11 @@ const MySuccessTrackerTable = () => {
     setTermGpa(termInfo.gpa_available ? termInfo.term_gpa || 0 : "N/A");
     setAvgAttendance(termInfo.attendancePercentage);
 
-    // Calculate avg attendance
+    // ✅ FIX: Extract academicStanding from the current term
+    setAcademicStanding(termInfo.academicStanding || null);
+
     const courses = termInfo.courses || [];
 
-    // Edge case: term exists but student has no courses enrolled
     if (courses.length === 0) {
       setCourseData([]);
       setAvgAttendance(null);
@@ -206,7 +220,6 @@ const MySuccessTrackerTable = () => {
       return;
     }
 
-    // Calculate mapped courses
     const mappedCourses = courses.map((course) => ({
       courseNumber: course.courseNumber,
       subjectCode: course.subjectCode,
@@ -221,7 +234,6 @@ const MySuccessTrackerTable = () => {
     }));
     setCourseData(mappedCourses);
 
-    // Fetch previous term to compute deltas
     let gpaDiff = 0;
     let attDiff = 0;
     let isFirst = false;
@@ -306,7 +318,6 @@ const MySuccessTrackerTable = () => {
   };
 
   const handleTermChange = (term) => {
-    // setCourseData([]); // This is causing an error when clicking on already selected term the course data becomes empty
     setCurrentTerm(term.term);
     setCurrentTermCode(term.termCode);
   };
@@ -325,6 +336,12 @@ const MySuccessTrackerTable = () => {
   const termGpaCircleColor = getGpaCircleColor(termGpa);
   const attendanceCircleColor = getStatusColor(avgAttendance);
   const deltaColor = isPositive ? COLOR_CONFIG.ON_TRACK : COLOR_CONFIG.CRITICAL;
+
+  // ✅ FIX: compute programGpa circle color
+  const programGpaCircleColor = getGpaCircleColor(programGpa);
+
+  // ✅ FIX: compute academicStanding color
+  const academicStandingColor = COLOR_CONFIG.ON_TRACK;
 
   const isLatestTerm = currentTermCode === latestTermCode;
   const attendanceDiff = parseFloat(diffAttendance);
@@ -359,7 +376,6 @@ const MySuccessTrackerTable = () => {
           </Typography>
         )}
 
-        {/* Edge case: API returned an error */}
         {!isLoading && dataError && (
           <Typography
             style={{
@@ -373,7 +389,6 @@ const MySuccessTrackerTable = () => {
           </Typography>
         )}
 
-        {/* Edge case: Student not registered for any term */}
         {!isLoading && hasNoTerms && (
           <Typography
             style={{
@@ -429,6 +444,14 @@ const MySuccessTrackerTable = () => {
                     avgAttendance={avgAttendance}
                     colors={COLOR_CONFIG}
                     handleOpenModal={handleOpenModal}
+                    academicStanding={academicStanding}
+                    academicStandingColor={academicStandingColor}
+                    programGpa={programGpa}
+                    programGpaCircleColor={programGpaCircleColor}
+                    fetchGpaRecommendation={fetchGpaRecommendation}
+                    loadingRecommendation={loadingRecommendation}
+                    recommendationResult={recommendationResult}
+                    recommendationError={recommendationError}
                   />
 
                   {/* TERM GPA BAR CHART */}
@@ -441,14 +464,6 @@ const MySuccessTrackerTable = () => {
                   </Card>
                 </div>
 
-                {/* Target GPA Button */}
-                {/* <div style={{ marginTop: "20px" }}>
-                  <Button onClick={handleOpenModal} disabled={!isLatestTerm}>
-                    Set Target GPA
-                  </Button>
-                </div> */}
-
-                {/* Target GPA Modal */}
                 <TargetGpaModal
                   open={modalOpen}
                   onClose={handleCloseModal}
