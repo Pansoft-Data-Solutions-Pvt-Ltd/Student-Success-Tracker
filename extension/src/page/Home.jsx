@@ -13,7 +13,6 @@ import { useData, useCardInfo } from "@ellucian/experience-extension-utils";
 
 import { Typography, Card } from "@ellucian/react-design-system/core";
 
-/* ================= CONFIG ================= */
 /* ================= COMPONENT ================= */
 const MySuccessTrackerTable = () => {
   const [currentTerm, setCurrentTerm] = useState(null);
@@ -30,7 +29,6 @@ const MySuccessTrackerTable = () => {
   const [isFirstTermFlag, setIsFirstTermFlag] = useState(false);
   const [termCodesResult, setTermCodesResult] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
-  // ✅ FIX: added state for academicStanding and programGpa
   const [academicStanding, setAcademicStanding] = useState(null);
   const [programGpa, setProgramGpa] = useState(null);
 
@@ -54,6 +52,7 @@ const MySuccessTrackerTable = () => {
   const [recommendationResult, setRecommendationResult] = useState(null);
   const [recommendationError, setRecommendationError] = useState(null);
 
+  // ✅ FIXED: now sets the full object { maxAchievableGpa, data } instead of unwrapping to a string
   const fetchGpaRecommendation = async (gpa) => {
     if (!gpa || !student_gpa_recommendation_pipeline) return;
     setLoadingRecommendation(true);
@@ -77,18 +76,9 @@ const MySuccessTrackerTable = () => {
       const response = await authenticatedEthosFetch(resourcePath, options);
       if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
 
-      let data = await response.text();
-      try {
-        const jsonData = JSON.parse(data);
-        if (jsonData.text) data = jsonData.text;
-        else if (jsonData.message) data = jsonData.message;
-        else if (jsonData.result) data = jsonData.result;
-        else if (typeof jsonData === "string") data = jsonData;
-        else data = JSON.stringify(jsonData, null, 2);
-      } catch (e) {
-        console.error(e);
-      }
-      setRecommendationResult(data);
+      // ✅ Set the full JSON object so modal gets both maxAchievableGpa and data
+      const jsonData = await response.json();
+      setRecommendationResult(jsonData);
     } catch (err) {
       setRecommendationError(err.message || "Something went wrong.");
     } finally {
@@ -162,7 +152,6 @@ const MySuccessTrackerTable = () => {
     {},
   );
 
-  // ✅ FIX: Extract programGpa from root of pipelineData (it's NOT inside termData)
   useEffect(() => {
     if (pipelineData) {
       const rawProgramGpa = pipelineData.programGpa;
@@ -205,8 +194,6 @@ const MySuccessTrackerTable = () => {
     setCurrentGpa(termInfo.cumulative_gpa || 0);
     setTermGpa(termInfo.gpa_available ? termInfo.term_gpa || 0 : "N/A");
     setAvgAttendance(termInfo.attendancePercentage);
-
-    // ✅ FIX: Extract academicStanding from the current term
     setAcademicStanding(termInfo.academicStanding || null);
 
     const courses = termInfo.courses || [];
@@ -336,11 +323,7 @@ const MySuccessTrackerTable = () => {
   const termGpaCircleColor = getGpaCircleColor(termGpa);
   const attendanceCircleColor = getStatusColor(avgAttendance);
   const deltaColor = isPositive ? COLOR_CONFIG.ON_TRACK : COLOR_CONFIG.CRITICAL;
-
-  // ✅ FIX: compute programGpa circle color
   const programGpaCircleColor = getGpaCircleColor(programGpa);
-
-  // ✅ FIX: compute academicStanding color
   const academicStandingColor = COLOR_CONFIG.ON_TRACK;
 
   const isLatestTerm = currentTermCode === latestTermCode;
@@ -470,8 +453,8 @@ const MySuccessTrackerTable = () => {
                   onSubmit={fetchGpaRecommendation}
                   loading={loadingRecommendation}
                   result={recommendationResult}
-                  error={recommendationError}
                   maxGpa={max_gpa}
+                  currentGpa={currentGpa}
                 />
               </div>
             </div>
