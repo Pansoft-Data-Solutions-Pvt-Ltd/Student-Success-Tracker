@@ -455,6 +455,7 @@ const MySuccessTrackerTable = () => {
                   result={recommendationResult}
                   maxGpa={max_gpa}
                   currentGpa={currentGpa}
+                  programGpa={programGpa} 
                 />
               </div>
             </div>
@@ -465,7 +466,9 @@ const MySuccessTrackerTable = () => {
               getStatusColor={getStatusColor}
               tableConfig={TABLE_CONFIG}
               colors={COLOR_CONFIG}
-            />
+              isCurrentTerm={currentTermCode === latestTermCode}
+/>
+            
           </>
         )}
       </Card>

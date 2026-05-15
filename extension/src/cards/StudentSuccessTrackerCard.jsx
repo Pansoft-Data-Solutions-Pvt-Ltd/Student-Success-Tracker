@@ -142,7 +142,6 @@ const StudentSuccessTracker = ({ classes }) => {
   const { authenticatedEthosFetch } = useData();
 
   const { cardId, configuration } = useCardInfo();
-  // console.log("Printing card configuration:", JSON.stringify(configuration));
 
   const {
     excellent_performance_color_code,
@@ -155,7 +154,6 @@ const StudentSuccessTracker = ({ classes }) => {
     latest_term_information_pipeline,
   } = configuration;
 
-  // Parse config thresholds once — they arrive as strings from cardConfiguration
   const parsed_minimum_threshold_for_excellent_performance   = parseFloat(minimum_threshold_for_excellent_performance);
   const parsed_minimum_threshold_for_satisfactory_performance = parseFloat(minimum_threshold_for_satisfactory_performance);
   const parsed_minimum_threshold_for_excellent_attendance    = parseFloat(minimum_threshold_for_excellent_attendance);
@@ -197,7 +195,7 @@ const StudentSuccessTracker = ({ classes }) => {
   const [current_gpa, set_current_gpa]         = useState(0);
   const [term_name, set_term_name]             = useState("");
   const [attendance_data, set_attendance_data] = useState([]);
-  const [avg_attendance, set_avg_attendance]   = useState(null);
+  const [program_gpa, set_program_gpa]         = useState(null);
 
   /* ── Fetch latest term info ───────────────────────────────────────────── */
 
@@ -217,20 +215,11 @@ const StudentSuccessTracker = ({ classes }) => {
     set_current_gpa(parseFloat(data.cumulativeGpa) || 0);
     set_term_name(data.termName || "");
     set_attendance_data(Array.isArray(data.termInformation) ? data.termInformation : []);
-
-    // averageAttendancePercentage arrives as a ratio (e.g. 0.18 = 18%); convert to percentage
-    const raw_average_attendance_percentage = parseFloat(data.averageAttendancePercentage);
-    set_avg_attendance(
-      !isNaN(raw_average_attendance_percentage)
-        ? parseFloat((raw_average_attendance_percentage).toFixed(2))
-        : null
-    );
+    set_program_gpa(parseFloat(data.programGpa) || null);
   }, [data]);
 
-  const gpa_circle_color        = get_gpa_color(current_gpa);
-  const attendance_circle_color = avg_attendance !== null
-    ? get_attendance_color(avg_attendance)
-    : poor_performance_color_code;
+  const gpa_circle_color         = get_gpa_color(current_gpa);
+  const program_gpa_circle_color = get_gpa_color(program_gpa);
 
   /* ── Render ───────────────────────────────────────────────────────────── */
 
@@ -238,7 +227,7 @@ const StudentSuccessTracker = ({ classes }) => {
     <div className={classes.card}>
       <div className={classes.cardBody}>
 
-        {/* ── Left: GPA + Attendance circles ── */}
+        {/* ── Left: Cumulative GPA + Program GPA circles ── */}
         <section className={classes.gpaSection}>
 
           <div className={classes.metricBlock}>
@@ -257,15 +246,16 @@ const StudentSuccessTracker = ({ classes }) => {
 
           <div className={classes.circleDivider} />
 
+          {/* ── Program GPA ── */}
           <div className={classes.metricBlock}>
-            <Typography variant="h5">Term Attendance</Typography>
+            <Typography variant="h5">Program GPA</Typography>
             <div className={classes.circleContainer}>
               <div
                 className={classes.circleInner}
-                style={{ border: `4px solid ${attendance_circle_color}` }}
+                style={{ border: `4px solid ${program_gpa_circle_color}` }}
               >
-                <strong className={classes.circleValue} style={{ color: attendance_circle_color }}>
-                  {loading ? "..." : avg_attendance !== null ? `${avg_attendance}%` : "N/A"}
+                <strong className={classes.circleValue} style={{ color: program_gpa_circle_color }}>
+                  {loading ? "..." : program_gpa !== null ? program_gpa.toFixed(2) : "N/A"}
                 </strong>
               </div>
             </div>
@@ -295,7 +285,6 @@ const StudentSuccessTracker = ({ classes }) => {
           ) : (
             <div className={classes.attendanceList}>
               {attendance_data.map((attendance_entry, index) => {
-                // attendancePercentage arrives as a string; parse for comparison and display
                 const parsed_course_attendance_percentage = parseFloat(attendance_entry.attendancePercentage);
                 const display_attendance_percentage = !isNaN(parsed_course_attendance_percentage)
                   ? `${parsed_course_attendance_percentage}%`

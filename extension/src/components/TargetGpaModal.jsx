@@ -106,7 +106,7 @@ const TargetGpaModal = ({
   loading,
   result,
   maxGpa,
-  currentGpa,
+  programGpa,
   targetGpa: targetGpaProp,
 }) => {
   const [targetGpaInput, setTargetGpaInput] = useState("");
@@ -122,31 +122,30 @@ const TargetGpaModal = ({
     return !isNaN(num) && num >= 0 && num <= (parseFloat(maxGpa) || 4.0);
   };
 
-  const isBelowOrEqualCurrentGpa = () => {
+  const isBelowOrEqualProgramGpa = () => {
     const num = parseFloat(targetGpaInput);
-    const current = parseFloat(currentGpa);
-    return !isNaN(num) && !isNaN(current) && num <= current;
+    const pgpa = parseFloat(programGpa);
+    return !isNaN(num) && !isNaN(pgpa) && num <= pgpa;
   };
 
-  // ── Which error to show ──
   const getHelperText = () => {
     if (!targetGpaInput) return "";
     if (!isValidGpa(targetGpaInput)) {
       return `Please enter a GPA between 0 and ${maxGpa || 4.0}`;
     }
-    if (isBelowOrEqualCurrentGpa()) {
-      return `Target GPA must be greater than your current CGPA of ${parseFloat(currentGpa).toFixed(2)}`;
+    if (isBelowOrEqualProgramGpa()) {
+      return `Target GPA must be greater than your current Program GPA of ${parseFloat(programGpa).toFixed(2)}`;
     }
     return "";
   };
 
   const hasError = Boolean(
-    targetGpaInput && (!isValidGpa(targetGpaInput) || isBelowOrEqualCurrentGpa())
+    targetGpaInput && (!isValidGpa(targetGpaInput) || isBelowOrEqualProgramGpa())
   );
 
   const handleSubmit = () => {
     if (!isValidGpa(targetGpaInput)) return;
-    if (isBelowOrEqualCurrentGpa()) return;
+    if (isBelowOrEqualProgramGpa()) return;
     onSubmit(parseFloat(targetGpaInput));
   };
 
@@ -160,23 +159,18 @@ const TargetGpaModal = ({
   const displayMaxGpa = result?.maxAchievableGpa;
   const displayTargetGpa = targetGpaProp || targetGpaInput || "—";
 
-  // ── Show inline warning banner when input is below current GPA ──
   const showBelowGpaBanner =
     !result &&
     !loading &&
     targetGpaInput &&
     isValidGpa(targetGpaInput) &&
-    isBelowOrEqualCurrentGpa();
+    isBelowOrEqualProgramGpa();
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
 
       <DialogTitle
-        style={{
-          borderBottom: "1px solid #e5e7eb",
-          padding: "14px 24px",
-          backgroundColor: "#fff",
-        }}
+        style={{ borderBottom: "1px solid #e5e7eb", padding: "14px 24px", backgroundColor: "#fff" }}
       >
         <Typography variant="h3" style={{ margin: 0 }}>
           AI Recommendation
@@ -184,11 +178,7 @@ const TargetGpaModal = ({
       </DialogTitle>
 
       <DialogContent
-        style={{
-          padding: "16px 24px 8px 24px",
-          backgroundColor: "#fff",
-          overflow: "visible",
-        }}
+        style={{ padding: "16px 24px 8px 24px", backgroundColor: "#fff", overflow: "visible" }}
       >
 
         {/* ── Input state ── */}
@@ -198,41 +188,43 @@ const TargetGpaModal = ({
               Enter a target GPA you want to achieve
             </Typography>
 
-            {/* Current GPA info chip */}
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                backgroundColor: "#eff6ff",
-                border: "1px solid #bfdbfe",
-                borderRadius: "6px",
-                padding: "6px 12px",
-                marginBottom: "14px",
-              }}
-            >
-              <Typography
-                variant="body2"
-                style={{ color: "#1d4ed8", fontWeight: 600, fontSize: "13px" }}
+            {/* Program GPA chip only */}
+            <div style={{ marginBottom: "14px" }}>
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  backgroundColor: "#f5f3ff",
+                  border: "1px solid #ddd6fe",
+                  borderRadius: "6px",
+                  padding: "6px 12px",
+                }}
               >
-                Your Current Cumulative GPA:&nbsp;
-                <span style={{ fontSize: "15px", fontWeight: 800 }}>
-                  {parseFloat(currentGpa).toFixed(2)}
-                </span>
-              </Typography>
+                <Typography
+                  variant="body2"
+                  style={{ color: "#7c3aed", fontWeight: 600, fontSize: "13px" }}
+                >
+                  Your Program GPA:&nbsp;
+                  <span style={{ fontSize: "15px", fontWeight: 800 }}>
+                    {programGpa != null && !isNaN(parseFloat(programGpa))
+                      ? parseFloat(programGpa).toFixed(2)
+                      : "N/A"}
+                  </span>
+                </Typography>
+              </div>
             </div>
 
             <TextField
               label="Target GPA"
               value={targetGpaInput}
               onChange={(e) => setTargetGpaInput(e?.target?.value ?? "")}
-              placeholder={`e.g. ${(parseFloat(currentGpa) + 0.3).toFixed(1)} (max ${maxGpa || "4.0"})`}
+              placeholder={`e.g. ${programGpa != null ? (parseFloat(programGpa) + 0.3).toFixed(1) : "3.5"} (max ${maxGpa || "4.0"})`}
               error={hasError}
               helperText={getHelperText()}
               fullWidth
             />
 
-            {/* ── Warning banner shown when target ≤ current GPA ── */}
+            {/* ── Warning banner ── */}
             {showBelowGpaBanner && (
               <div
                 style={{
@@ -248,14 +240,9 @@ const TargetGpaModal = ({
               >
                 <div
                   style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: "50%",
-                    backgroundColor: "#f59e0b",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
+                    width: 32, height: 32, borderRadius: "50%",
+                    backgroundColor: "#f59e0b", display: "flex",
+                    alignItems: "center", justifyContent: "center", flexShrink: 0,
                   }}
                 >
                   <WarningIcon style={{ color: "#fff", fontSize: "18px" }} />
@@ -263,12 +250,7 @@ const TargetGpaModal = ({
                 <div>
                   <Typography
                     variant="body2"
-                    style={{
-                      fontWeight: 700,
-                      color: "#92400e",
-                      marginBottom: 4,
-                      fontSize: "13px",
-                    }}
+                    style={{ fontWeight: 700, color: "#92400e", marginBottom: 4, fontSize: "13px" }}
                   >
                     Target GPA Too Low
                   </Typography>
@@ -277,8 +259,8 @@ const TargetGpaModal = ({
                     style={{ color: "#78350f", fontSize: "13px", lineHeight: 1.6 }}
                   >
                     Your target GPA (<strong>{parseFloat(targetGpaInput).toFixed(2)}</strong>) must
-                    be <strong>greater than</strong> your current cumulative GPA of{" "}
-                    <strong>{parseFloat(currentGpa).toFixed(2)}</strong>. Please enter a higher
+                    be <strong>greater than</strong> your current Program GPA of{" "}
+                    <strong>{parseFloat(programGpa).toFixed(2)}</strong>. Please enter a higher
                     value to get a meaningful recommendation.
                   </Typography>
                 </div>
@@ -291,11 +273,8 @@ const TargetGpaModal = ({
         {loading && (
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              padding: "16px 0",
-              justifyContent: "center",
+              display: "flex", alignItems: "center", gap: "12px",
+              padding: "16px 0", justifyContent: "center",
             }}
           >
             <CircularProgress size={28} />
@@ -310,26 +289,17 @@ const TargetGpaModal = ({
             {/* 1. Status Box */}
             <div
               style={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: "12px",
+                display: "flex", alignItems: "flex-start", gap: "12px",
                 backgroundColor: achievable ? "#dcfce7" : "#fef2f2",
                 border: `1px solid ${achievable ? "#bbf7d0" : "#fecaca"}`,
-                borderRadius: "8px",
-                padding: "14px 18px",
-                marginBottom: "12px",
+                borderRadius: "8px", padding: "14px 18px", marginBottom: "12px",
               }}
             >
               <div
                 style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: "50%",
-                  flexShrink: 0,
+                  width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
                   backgroundColor: achievable ? "#16a34a" : "#dc2626",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  display: "flex", alignItems: "center", justifyContent: "center",
                 }}
               >
                 {achievable
@@ -339,21 +309,13 @@ const TargetGpaModal = ({
               <div>
                 <Typography
                   variant="body2"
-                  style={{
-                    fontWeight: 700,
-                    color: achievable ? "#166534" : "#991b1b",
-                    marginBottom: 4,
-                  }}
+                  style={{ fontWeight: 700, color: achievable ? "#166534" : "#991b1b", marginBottom: 4 }}
                 >
                   Target GPA Status
                 </Typography>
                 <Typography
                   variant="body2"
-                  style={{
-                    color: achievable ? "#166534" : "#7f1d1d",
-                    fontSize: "13px",
-                    lineHeight: 1.6,
-                  }}
+                  style={{ color: achievable ? "#166534" : "#7f1d1d", fontSize: "13px", lineHeight: 1.6 }}
                 >
                   {parsed.achievability}
                 </Typography>
@@ -361,50 +323,26 @@ const TargetGpaModal = ({
             </div>
 
             {/* 2. Stat Cards */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "12px",
-                marginBottom: "12px",
-              }}
-            >
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
               <div
                 style={{
-                  backgroundColor: "#fff",
-                  borderRadius: "8px",
-                  padding: "14px 16px",
-                  border: "2px solid #bbf7d0",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
+                  backgroundColor: "#fff", borderRadius: "8px", padding: "14px 16px",
+                  border: "2px solid #bbf7d0", display: "flex", alignItems: "center", gap: "12px",
                 }}
               >
                 <div
                   style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: "50%",
-                    backgroundColor: "#dcfce7",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
+                    width: 40, height: 40, borderRadius: "50%", backgroundColor: "#dcfce7",
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                   }}
                 >
                   <TrophyIcon style={{ color: "#16a34a", fontSize: "20px" }} />
                 </div>
                 <div>
-                  <Typography
-                    variant="body2"
-                    style={{ color: "#16a34a", fontWeight: 600, fontSize: "12px", marginBottom: 2 }}
-                  >
+                  <Typography variant="body2" style={{ color: "#16a34a", fontWeight: 600, fontSize: "12px", marginBottom: 2 }}>
                     Maximum Achievable GPA
                   </Typography>
-                  <Typography
-                    variant="h4"
-                    style={{ color: "#14532d", fontWeight: 800, fontSize: "22px", margin: 0 }}
-                  >
+                  <Typography variant="h4" style={{ color: "#14532d", fontWeight: 800, fontSize: "22px", margin: 0 }}>
                     {displayMaxGpa}
                   </Typography>
                 </div>
@@ -412,40 +350,23 @@ const TargetGpaModal = ({
 
               <div
                 style={{
-                  backgroundColor: "#fff",
-                  borderRadius: "8px",
-                  padding: "14px 16px",
-                  border: "2px solid #fed7aa",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
+                  backgroundColor: "#fff", borderRadius: "8px", padding: "14px 16px",
+                  border: "2px solid #fed7aa", display: "flex", alignItems: "center", gap: "12px",
                 }}
               >
                 <div
                   style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: "50%",
-                    backgroundColor: "#ffedd5",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
+                    width: 40, height: 40, borderRadius: "50%", backgroundColor: "#ffedd5",
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                   }}
                 >
                   <TargetIcon style={{ color: "#ea580c", fontSize: "20px" }} />
                 </div>
                 <div>
-                  <Typography
-                    variant="body2"
-                    style={{ color: "#ea580c", fontWeight: 600, fontSize: "12px", marginBottom: 2 }}
-                  >
+                  <Typography variant="body2" style={{ color: "#ea580c", fontWeight: 600, fontSize: "12px", marginBottom: 2 }}>
                     Target GPA
                   </Typography>
-                  <Typography
-                    variant="h4"
-                    style={{ color: "#9a3412", fontWeight: 800, fontSize: "22px", margin: 0 }}
-                  >
+                  <Typography variant="h4" style={{ color: "#9a3412", fontWeight: 800, fontSize: "22px", margin: 0 }}>
                     {displayTargetGpa}
                   </Typography>
                 </div>
@@ -456,11 +377,8 @@ const TargetGpaModal = ({
             {parsed.grades && parsed.grades.length > 0 && (
               <div
                 style={{
-                  backgroundColor: "#fff",
-                  borderRadius: "8px",
-                  border: "1px solid #e5e7eb",
-                  overflow: "hidden",
-                  marginBottom: "12px",
+                  backgroundColor: "#fff", borderRadius: "8px",
+                  border: "1px solid #e5e7eb", overflow: "hidden", marginBottom: "12px",
                 }}
               >
                 <div style={{ padding: "12px 18px", textAlign: "center" }}>
@@ -482,21 +400,14 @@ const TargetGpaModal = ({
                       <TableRow key={idx}>
                         <TableCell component="th" scope="row">{idx + 1}</TableCell>
                         <TableCell>
-                          <Typography variant="body2" style={{ fontWeight: 500 }}>
-                            {row.course}
-                          </Typography>
+                          <Typography variant="body2" style={{ fontWeight: 500 }}>{row.course}</Typography>
                         </TableCell>
                         <TableCell>{row.credits}</TableCell>
                         <TableCell>
                           <span
                             style={{
-                              display: "inline-block",
-                              padding: "2px 18px",
-                              borderRadius: "12px",
-                              backgroundColor: "#dcfce7",
-                              color: "#16a34a",
-                              fontWeight: 700,
-                              fontSize: "14px",
+                              display: "inline-block", padding: "2px 18px", borderRadius: "12px",
+                              backgroundColor: "#dcfce7", color: "#16a34a", fontWeight: 700, fontSize: "14px",
                             }}
                           >
                             {row.grade}
@@ -513,40 +424,23 @@ const TargetGpaModal = ({
             {parsed.recommendation && (
               <div
                 style={{
-                  backgroundColor: "#fff",
-                  borderRadius: "8px",
-                  border: "1px solid #e5e7eb",
-                  padding: "14px 18px",
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "12px",
+                  backgroundColor: "#fff", borderRadius: "8px", border: "1px solid #e5e7eb",
+                  padding: "14px 18px", display: "flex", alignItems: "flex-start", gap: "12px",
                 }}
               >
                 <div
                   style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: "50%",
-                    backgroundColor: "#dbeafe",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
+                    width: 36, height: 36, borderRadius: "50%", backgroundColor: "#dbeafe",
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                   }}
                 >
                   <BulbIcon style={{ color: "#2563eb", fontSize: "20px" }} />
                 </div>
                 <div>
-                  <Typography
-                    variant="body2"
-                    style={{ fontWeight: 700, color: "#2563eb", marginBottom: 6 }}
-                  >
+                  <Typography variant="body2" style={{ fontWeight: 700, color: "#2563eb", marginBottom: 6 }}>
                     Recommendation
                   </Typography>
-                  <Typography
-                    variant="body2"
-                    style={{ fontSize: "13px", lineHeight: 1.6 }}
-                  >
+                  <Typography variant="body2" style={{ fontSize: "13px", lineHeight: 1.6 }}>
                     {parsed.recommendation}
                   </Typography>
                 </div>
@@ -558,23 +452,15 @@ const TargetGpaModal = ({
 
       <DialogActions
         style={{
-          borderTop: "1px solid #e5e7eb",
-          padding: "12px 20px",
-          backgroundColor: "#fff",
-          justifyContent: "flex-end",
-          gap: "8px",
+          borderTop: "1px solid #e5e7eb", padding: "12px 20px",
+          backgroundColor: "#fff", justifyContent: "flex-end", gap: "8px",
         }}
       >
         {!result && (
           <Button
             color="primary"
             onClick={handleSubmit}
-            disabled={
-              loading ||
-              !targetGpaInput ||
-              !isValidGpa(targetGpaInput) ||
-              isBelowOrEqualCurrentGpa()
-            }
+            disabled={loading || !targetGpaInput || !isValidGpa(targetGpaInput) || isBelowOrEqualProgramGpa()}
             sx={{ textTransform: "none !important" }}
           >
             {loading ? "Loading..." : "Get AI Recommendation"}
@@ -602,7 +488,7 @@ TargetGpaModal.propTypes = {
     data: PropTypes.string,
   }),
   maxGpa: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  currentGpa: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  programGpa: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   targetGpa: PropTypes.string,
 };
 
@@ -610,7 +496,7 @@ TargetGpaModal.defaultProps = {
   loading: false,
   result: null,
   maxGpa: "4.0",
-  currentGpa: 0,
+  programGpa: null,
   targetGpa: null,
 };
 

@@ -15,7 +15,10 @@ const CourseDataView = ({
   getStatusColor,
   tableConfig,
   colors,
+  isCurrentTerm,
 }) => {
+  const creditsHeader = isCurrentTerm ? "Credits" : "Credits Earned";
+
   return (
     <>
       {/* DESKTOP TABLE VIEW */}
@@ -25,7 +28,7 @@ const CourseDataView = ({
             <TableRow>
               <TableCell className="header-cell">Course</TableCell>
               <TableCell className="header-cell">Grade</TableCell>
-              <TableCell className="header-cell">Credits Earned</TableCell>
+              <TableCell className="header-cell">{creditsHeader}</TableCell>
               <TableCell className="header-cell last-cell">
                 Attendance
               </TableCell>
@@ -35,9 +38,7 @@ const CourseDataView = ({
             {loadingCourseData || courseData.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="body-cell">
-                  <Typography
-                    style={{ color: "#6B7280", fontStyle: "italic" }}
-                  >
+                  <Typography style={{ color: "#6B7280", fontStyle: "italic" }}>
                     {loadingCourseData
                       ? "Loading course data..."
                       : "No course data available for this term"}
@@ -101,9 +102,7 @@ const CourseDataView = ({
                             </span>
                           </>
                         ) : (
-                          <span
-                            style={{ color: "#999", fontStyle: "italic" }}
-                          >
+                          <span style={{ color: "#999", fontStyle: "italic" }}>
                             {attendanceDisplay}
                           </span>
                         )}
@@ -151,10 +150,7 @@ const CourseDataView = ({
                     >
                       {row.crn}
                     </Typography>
-                    <Typography
-                      variant="body2"
-                      style={{ color: "#6B7280" }}
-                    >
+                    <Typography variant="body2" style={{ color: "#6B7280" }}>
                       {row.courseTitle}
                     </Typography>
                   </div>
@@ -168,7 +164,7 @@ const CourseDataView = ({
                   </div>
                 </div>
                 <div className="mobile-card-row">
-                  <span className="mobile-card-label">Credits</span>
+                  <span className="mobile-card-label">{creditsHeader}</span>
                   <span className="mobile-card-value">{row.credit}</span>
                 </div>
                 <div className="mobile-card-row">
@@ -225,6 +221,7 @@ CourseDataView.propTypes = {
   getStatusColor: PropTypes.func.isRequired,
   tableConfig: PropTypes.object.isRequired,
   colors: PropTypes.object.isRequired,
+  isCurrentTerm: PropTypes.bool.isRequired,
 };
 
 export default CourseDataView;
