@@ -27,21 +27,21 @@
 }
 
 .term-section button {
-  background-color: #ffffff;
+  /* background-color: #ffffff;
   border: 1px solid #026bc8;
-  color: #026bc8;
+  color: #026bc8; */
   font-weight: 600;
   padding: 8px 20px;
   border-radius: 4px;
 }
 
-.term-section button svg {
+/* .term-section button svg {
   fill: #026bc8;
 }
 
 .term-section button:hover {
   background-color: #f0f9ff;
-}
+} */
 
 @media (min-width: 768px) {
   .term-section {
@@ -297,17 +297,17 @@
 }
 
 .back-button-wrapper button {
-  background-color: #ffffff;
+  /* background-color: #ffffff;
   border: 1px solid #026bc8;
-  color: #026bc8;
+  color: #026bc8; */
   font-weight: 600;
   padding: 8px 20px;
   border-radius: 4px;
 }
 
-.back-button-wrapper button:hover {
+/* .back-button-wrapper button:hover {
   background-color: #f0f9ff;
-}
+} */
 
 @media (min-width: 768px) {
   .card-title {
@@ -337,8 +337,8 @@
 }
 
 .header-cell {
-  background-color: #026bc8;
-  color: #ffffff !important;
+  /* background-color: #026bc8;
+  color: #ffffff !important; */
   font-weight: 600;
   text-align: center;
   height: 52px;

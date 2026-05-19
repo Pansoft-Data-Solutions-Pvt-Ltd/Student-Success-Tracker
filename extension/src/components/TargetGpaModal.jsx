@@ -4,9 +4,7 @@ import PropTypes from "prop-types";
 import {
   Typography,
   TextField,
-  Button,
   Dialog,
-  DialogTitle,
   DialogContent,
   DialogActions,
   CircularProgress,
@@ -72,24 +70,44 @@ const isAchievable = (text) =>
   /possible|can achieve|achievable|yes/i.test(text) &&
   !/not possible|cannot|can't|not achieve|not achievable/i.test(text);
 
-const ELLUCIAN_BLUE = "#175cb6";
-const ELLUCIAN_BLUE_TEXT = "#ffffff";
+//const ELLUCIAN_BLUE = "primary";
+//const ELLUCIAN_BLUE_TEXT = "#ffffff";
+
 
 const tableSx = {
-  "& *": { boxShadow: "none !important" },
-  "& .MuiTableRow-root": { backgroundColor: "#fff !important" },
-  "& .MuiTableRow-root:hover": { backgroundColor: "#f0f4ff !important" },
-  "& .MuiTableCell-root": { backgroundColor: "#fff !important" },
-  "& .MuiTableHead-root .MuiTableRow-root": { backgroundColor: `${ELLUCIAN_BLUE} !important` },
+  "& *": {
+    boxShadow: "none !important",
+  },
+
+  "& .MuiTableRow-root": {
+    backgroundColor: "#fff !important",
+  },
+
+  "& .MuiTableRow-root:hover": {
+    backgroundColor: "#f0f4ff !important",
+  },
+
+  "& .MuiTableCell-root": {
+    backgroundColor: "#fff !important",
+  },
+
+  /* Header row */
+  "& .MuiTableHead-root .MuiTableRow-root": {
+    backgroundColor: "primary.main !important",
+  },
+
+  /* Header cells */
   "& .MuiTableHead-root .MuiTableCell-root": {
-    backgroundColor: `${ELLUCIAN_BLUE} !important`,
-    color: `${ELLUCIAN_BLUE_TEXT} !important`,
+    backgroundColor: "primary.main !important",
+    color: "#ffffff !important",
     fontWeight: 700,
-    fontSize: "11px",
-    textTransform: "uppercase",
-    letterSpacing: "0.4px",
+    fontSize: "13px",
+    textTransform: "none",
+    letterSpacing: "normal",
     borderBottom: "none",
   },
+
+  /* Body cells */
   "& .MuiTableBody-root .MuiTableCell-root": {
     backgroundColor: "#fff !important",
     borderBottom: "1px solid #f3f4f6",
@@ -97,6 +115,81 @@ const tableSx = {
     fontSize: "13px",
   },
 };
+
+
+
+// ─── Max GPA Ring ─────────────────────────────────────────────────────────────
+const MaxGpaRing = ({ maxGpa, programGpa, scaleMax }) => {
+  const scale = parseFloat(scaleMax) || 4.0;
+  const current = parseFloat(programGpa) || 0;
+  const max = parseFloat(maxGpa) || scale;
+
+  const RADIUS = 26;
+  const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+
+  const currentOffset = CIRCUMFERENCE * (1 - Math.min(current / scale, 1));
+  const maxOffset = CIRCUMFERENCE * (1 - Math.min(max / scale, 1));
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "16px",
+        backgroundColor: "#f0fdf4",
+        border: "1.5px solid #86efac",
+        borderRadius: "12px",
+        padding: "14px 20px",
+        flex: 1,
+      }}
+    >
+      {/* SVG Ring */}
+      <div style={{ position: "relative", width: 64, height: 64, flexShrink: 0 }}>
+        <svg width="64" height="64" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r={RADIUS} fill="none" stroke="#dcfce7" strokeWidth="5" />
+          <circle
+            cx="32" cy="32" r={RADIUS} fill="none"
+            stroke="#a78bfa" strokeWidth="5"
+            strokeDasharray={CIRCUMFERENCE} strokeDashoffset={currentOffset}
+            strokeLinecap="round" transform="rotate(-90 32 32)"
+          />
+          <circle
+            cx="32" cy="32" r={RADIUS} fill="none"
+            stroke="#16a34a" strokeWidth="5"
+            strokeDasharray={CIRCUMFERENCE} strokeDashoffset={maxOffset}
+            strokeLinecap="round" transform="rotate(-90 32 32)"
+          />
+        </svg>
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <TrophyIcon style={{ color: "#16a34a", fontSize: "18px" }} />
+        </div>
+      </div>
+
+      {/* Text */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+        <Typography
+          variant="body2"
+          style={{ color: "#15803d", fontWeight: 700, fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.8px", margin: 0 }}
+        >
+          Max Achievable GPA
+        </Typography>
+        <Typography
+          variant="body2"
+          style={{ color: "#14532d", fontWeight: 900, fontSize: "28px", lineHeight: 1, margin: 0 }}
+        >
+          {max.toFixed(2)}
+        </Typography>
+      </div>
+    </div>
+  );
+};
+
+MaxGpaRing.propTypes = {
+  maxGpa: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  programGpa: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  scaleMax: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+};
+MaxGpaRing.defaultProps = { maxGpa: null, programGpa: 0, scaleMax: 4.0 };
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const TargetGpaModal = ({
@@ -108,6 +201,7 @@ const TargetGpaModal = ({
   maxGpa,
   programGpa,
   targetGpa: targetGpaProp,
+  maxAchievableGpa,
 }) => {
   const [targetGpaInput, setTargetGpaInput] = useState("");
 
@@ -116,40 +210,45 @@ const TargetGpaModal = ({
     onClose();
   };
 
-  // ── Validation helpers ──
-  const isValidGpa = (value) => {
-    const num = parseFloat(value);
-    return !isNaN(num) && num >= 0 && num <= (parseFloat(maxGpa) || 4.0);
-  };
-
   const isBelowOrEqualProgramGpa = () => {
     const num = parseFloat(targetGpaInput);
     const pgpa = parseFloat(programGpa);
     return !isNaN(num) && !isNaN(pgpa) && num <= pgpa;
   };
 
+  const isAboveMaxAchievable = () => {
+    if (!maxAchievableGpa) return false;
+    const num = parseFloat(targetGpaInput);
+    const maxAch = parseFloat(maxAchievableGpa);
+    return !isNaN(num) && !isNaN(maxAch) && num > maxAch;
+  };
+
   const getHelperText = () => {
     if (!targetGpaInput) return "";
-    if (!isValidGpa(targetGpaInput)) {
+    const num = parseFloat(targetGpaInput);
+    if (isNaN(num) || num < 0 || num > (parseFloat(maxGpa) || 4.0))
       return `Please enter a GPA between 0 and ${maxGpa || 4.0}`;
-    }
-    if (isBelowOrEqualProgramGpa()) {
+    if (isAboveMaxAchievable())
+      return `Target GPA cannot exceed your Maximum Achievable GPA of ${parseFloat(maxAchievableGpa).toFixed(2)}`;
+    if (isBelowOrEqualProgramGpa())
       return `Target GPA must be greater than your current Program GPA of ${parseFloat(programGpa).toFixed(2)}`;
-    }
     return "";
   };
 
   const hasError = Boolean(
-    targetGpaInput && (!isValidGpa(targetGpaInput) || isBelowOrEqualProgramGpa())
+    targetGpaInput &&
+    (
+      (() => { const n = parseFloat(targetGpaInput); return isNaN(n) || n < 0 || n > (parseFloat(maxGpa) || 4.0); })() ||
+      isAboveMaxAchievable() ||
+      isBelowOrEqualProgramGpa()
+    )
   );
 
   const handleSubmit = () => {
-    if (!isValidGpa(targetGpaInput)) return;
-    if (isBelowOrEqualProgramGpa()) return;
+    if (hasError || !targetGpaInput) return;
     onSubmit(parseFloat(targetGpaInput));
   };
 
-  // ── Parse result ──
   let parsed = null;
   if (result?.data) {
     try { parsed = JSON.parse(result.data); } catch (e) { parsed = null; }
@@ -158,110 +257,135 @@ const TargetGpaModal = ({
   const achievable = parsed ? isAchievable(parsed.achievability) : null;
   const displayMaxGpa = result?.maxAchievableGpa;
   const displayTargetGpa = targetGpaProp || targetGpaInput || "—";
-
-  const showBelowGpaBanner =
-    !result &&
-    !loading &&
-    targetGpaInput &&
-    isValidGpa(targetGpaInput) &&
-    isBelowOrEqualProgramGpa();
+  const showBelowGpaBanner = !result && !loading && targetGpaInput && !hasError && isBelowOrEqualProgramGpa();
+  const inputScreenMaxGpa = maxAchievableGpa || maxGpa;
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
 
-      <DialogTitle
-        style={{ borderBottom: "1px solid #e5e7eb", padding: "14px 24px", backgroundColor: "#fff" }}
+      {/* ── Custom Dialog Title with purple X button ── */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          borderBottom: "1px solid #e5e7eb",
+          padding: "14px 24px",
+          backgroundColor: "#fff",
+        }}
       >
-        <Typography variant="h3" style={{ margin: 0 }}>
+        <Typography
+          variant="h3"
+          style={{ margin: 0, fontSize: "1.4rem", fontWeight: 700, textTransform: "none", letterSpacing: "normal" }}
+        >
           AI Recommendation
         </Typography>
-      </DialogTitle>
+        <button
+          onClick={handleClose}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "32px",
+            height: "32px",
+            
+            borderRadius: "6px",
+            backgroundColor: "transparent",
+            cursor: "pointer",
+            color: "primary",
+            padding: 0,
+          }}
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#6B21A8" strokeWidth="2.2" strokeLinecap="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
 
-      <DialogContent
-        style={{ padding: "16px 24px 8px 24px", backgroundColor: "#fff", overflow: "visible" }}
-      >
+      <DialogContent style={{ padding: "20px 24px 12px 24px", backgroundColor: "#fff", overflow: "visible" }}>
 
         {/* ── Input state ── */}
         {!result && !loading && (
           <>
-            <Typography gutterBottom>
+            <Typography variant="body2" style={{ color: "#210c50", marginBottom: "14px" }}>
               Enter a target GPA you want to achieve
             </Typography>
 
-            {/* Program GPA chip only */}
-            <div style={{ marginBottom: "14px" }}>
+            {/* ── GPA cards row ── */}
+            <div style={{ display: "flex", alignItems: "stretch", gap: "12px", marginBottom: "18px" }}>
+
+              {/* Program GPA card */}
               <div
                 style={{
-                  display: "inline-flex",
-                  alignItems: "center",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
                   backgroundColor: "#f5f3ff",
-                  border: "1px solid #ddd6fe",
-                  borderRadius: "6px",
-                  padding: "6px 12px",
+                  border: "1.5px solid #ddd6fe",
+                  borderRadius: "12px",
+                  padding: "14px 20px",
+                  flex: 1,
                 }}
               >
                 <Typography
                   variant="body2"
-                  style={{ color: "#7c3aed", fontWeight: 600, fontSize: "13px" }}
+                  style={{
+                    color: "#7c3aed",
+                    fontWeight: 700,
+                    fontSize: "10px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.8px",
+                    marginBottom: "6px",
+                  }}
                 >
-                  Your Program GPA:&nbsp;
-                  <span style={{ fontSize: "15px", fontWeight: 800 }}>
-                    {programGpa != null && !isNaN(parseFloat(programGpa))
-                      ? parseFloat(programGpa).toFixed(2)
-                      : "N/A"}
-                  </span>
+                  Your Program GPA
+                </Typography>
+                <Typography
+                  variant="body2"
+                  style={{ color: "#5b21b6", fontWeight: 900, fontSize: "28px", lineHeight: 1, margin: 0 }}
+                >
+                  {programGpa != null && !isNaN(parseFloat(programGpa))
+                    ? parseFloat(programGpa).toFixed(2)
+                    : "N/A"}
                 </Typography>
               </div>
+
+              {/* Max Achievable GPA ring */}
+              {inputScreenMaxGpa && (
+                <MaxGpaRing maxGpa={inputScreenMaxGpa} programGpa={programGpa} scaleMax={maxGpa} />
+              )}
             </div>
 
             <TextField
               label="Target GPA"
               value={targetGpaInput}
               onChange={(e) => setTargetGpaInput(e?.target?.value ?? "")}
-              placeholder={`e.g. ${programGpa != null ? (parseFloat(programGpa) + 0.3).toFixed(1) : "3.5"} (max ${maxGpa || "4.0"})`}
+              placeholder={`e.g. ${programGpa != null ? (parseFloat(programGpa) + 0.3).toFixed(1) : "3.5"}`}
               error={hasError}
               helperText={getHelperText()}
               fullWidth
             />
 
-            {/* ── Warning banner ── */}
             {showBelowGpaBanner && (
               <div
                 style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "10px",
-                  backgroundColor: "#fffbeb",
-                  border: "1px solid #fcd34d",
-                  borderRadius: "8px",
-                  padding: "12px 16px",
-                  marginTop: "14px",
+                  display: "flex", alignItems: "flex-start", gap: "10px",
+                  backgroundColor: "#fffbeb", border: "1px solid #fcd34d",
+                  borderRadius: "8px", padding: "12px 16px", marginTop: "14px",
                 }}
               >
-                <div
-                  style={{
-                    width: 32, height: 32, borderRadius: "50%",
-                    backgroundColor: "#f59e0b", display: "flex",
-                    alignItems: "center", justifyContent: "center", flexShrink: 0,
-                  }}
-                >
+                <div style={{ width: 32, height: 32, borderRadius: "50%", backgroundColor: "#f59e0b", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <WarningIcon style={{ color: "#fff", fontSize: "18px" }} />
                 </div>
                 <div>
-                  <Typography
-                    variant="body2"
-                    style={{ fontWeight: 700, color: "#92400e", marginBottom: 4, fontSize: "13px" }}
-                  >
+                  <Typography variant="body2" style={{ fontWeight: 700, color: "#92400e", marginBottom: 4, fontSize: "13px" }}>
                     Target GPA Too Low
                   </Typography>
-                  <Typography
-                    variant="body2"
-                    style={{ color: "#78350f", fontSize: "13px", lineHeight: 1.6 }}
-                  >
-                    Your target GPA (<strong>{parseFloat(targetGpaInput).toFixed(2)}</strong>) must
-                    be <strong>greater than</strong> your current Program GPA of{" "}
-                    <strong>{parseFloat(programGpa).toFixed(2)}</strong>. Please enter a higher
-                    value to get a meaningful recommendation.
+                  <Typography variant="body2" style={{ color: "#78350f", fontSize: "13px", lineHeight: 1.6 }}>
+                    Your target GPA (<strong>{parseFloat(targetGpaInput).toFixed(2)}</strong>) must be{" "}
+                    <strong>greater than</strong> your current Program GPA of{" "}
+                    <strong>{parseFloat(programGpa).toFixed(2)}</strong>. Please enter a higher value.
                   </Typography>
                 </div>
               </div>
@@ -269,24 +393,18 @@ const TargetGpaModal = ({
           </>
         )}
 
-        {/* ── Loading state ── */}
+        {/* ── Loading ── */}
         {loading && (
-          <div
-            style={{
-              display: "flex", alignItems: "center", gap: "12px",
-              padding: "16px 0", justifyContent: "center",
-            }}
-          >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "24px 0", justifyContent: "center" }}>
             <CircularProgress size={28} />
             <Typography variant="body2">Fetching recommendations...</Typography>
           </div>
         )}
 
-        {/* ── Result state ── */}
+        {/* ── Result ── */}
         {parsed && !loading && (
           <div>
-
-            {/* 1. Status Box */}
+            {/* Status banner */}
             <div
               style={{
                 display: "flex", alignItems: "flex-start", gap: "12px",
@@ -295,47 +413,25 @@ const TargetGpaModal = ({
                 borderRadius: "8px", padding: "14px 18px", marginBottom: "12px",
               }}
             >
-              <div
-                style={{
-                  width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
-                  backgroundColor: achievable ? "#16a34a" : "#dc2626",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}
-              >
+              <div style={{ width: 36, height: 36, borderRadius: "50%", flexShrink: 0, backgroundColor: achievable ? "#16a34a" : "#dc2626", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 {achievable
                   ? <CheckCircleIcon style={{ color: "#fff", fontSize: "20px" }} />
                   : <ErrorCircleIcon style={{ color: "#fff", fontSize: "20px" }} />}
               </div>
               <div>
-                <Typography
-                  variant="body2"
-                  style={{ fontWeight: 700, color: achievable ? "#166534" : "#991b1b", marginBottom: 4 }}
-                >
+                <Typography variant="body2" style={{ fontWeight: 700, color: achievable ? "#166534" : "#991b1b", marginBottom: 4 }}>
                   Target GPA Status
                 </Typography>
-                <Typography
-                  variant="body2"
-                  style={{ color: achievable ? "#166534" : "#7f1d1d", fontSize: "13px", lineHeight: 1.6 }}
-                >
+                <Typography variant="body2" style={{ color: achievable ? "#166534" : "#7f1d1d", fontSize: "13px", lineHeight: 1.6 }}>
                   {parsed.achievability}
                 </Typography>
               </div>
             </div>
 
-            {/* 2. Stat Cards */}
+            {/* Stat cards */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
-              <div
-                style={{
-                  backgroundColor: "#fff", borderRadius: "8px", padding: "14px 16px",
-                  border: "2px solid #bbf7d0", display: "flex", alignItems: "center", gap: "12px",
-                }}
-              >
-                <div
-                  style={{
-                    width: 40, height: 40, borderRadius: "50%", backgroundColor: "#dcfce7",
-                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                  }}
-                >
+              <div style={{ backgroundColor: "#fff", borderRadius: "8px", padding: "14px 16px", border: "2px solid #bbf7d0", display: "flex", alignItems: "center", gap: "12px" }}>
+                <div style={{ width: 40, height: 40, borderRadius: "50%", backgroundColor: "#dcfce7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <TrophyIcon style={{ color: "#16a34a", fontSize: "20px" }} />
                 </div>
                 <div>
@@ -347,19 +443,8 @@ const TargetGpaModal = ({
                   </Typography>
                 </div>
               </div>
-
-              <div
-                style={{
-                  backgroundColor: "#fff", borderRadius: "8px", padding: "14px 16px",
-                  border: "2px solid #fed7aa", display: "flex", alignItems: "center", gap: "12px",
-                }}
-              >
-                <div
-                  style={{
-                    width: 40, height: 40, borderRadius: "50%", backgroundColor: "#ffedd5",
-                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                  }}
-                >
+              <div style={{ backgroundColor: "#fff", borderRadius: "8px", padding: "14px 16px", border: "2px solid #fed7aa", display: "flex", alignItems: "center", gap: "12px" }}>
+                <div style={{ width: 40, height: 40, borderRadius: "50%", backgroundColor: "#ffedd5", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <TargetIcon style={{ color: "#ea580c", fontSize: "20px" }} />
                 </div>
                 <div>
@@ -373,14 +458,9 @@ const TargetGpaModal = ({
               </div>
             </div>
 
-            {/* 3. Table */}
+            {/* Grade table */}
             {parsed.grades && parsed.grades.length > 0 && (
-              <div
-                style={{
-                  backgroundColor: "#fff", borderRadius: "8px",
-                  border: "1px solid #e5e7eb", overflow: "hidden", marginBottom: "12px",
-                }}
-              >
+              <div style={{ backgroundColor: "#fff", borderRadius: "8px", border: "1px solid #e5e7eb", overflow: "hidden", marginBottom: "12px" }}>
                 <div style={{ padding: "12px 18px", textAlign: "center" }}>
                   <Typography variant="h5" style={{ margin: 0 }}>
                     Recommended Grades for Remaining Courses
@@ -389,29 +469,47 @@ const TargetGpaModal = ({
                 <Table size="small" sx={tableSx}>
                   <TableHead>
                     <TableRow>
-                      <TableCell>#</TableCell>
-                      <TableCell>Course</TableCell>
-                      <TableCell>Credits</TableCell>
-                      <TableCell>Recommended Grade</TableCell>
+                      <TableCell>
+                        <Typography variant="body2" style={{ color: "#ffffff", fontWeight: 700 }}>#</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" style={{ color: "#ffffff", fontWeight: 700 }}>Course</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" style={{ color: "#ffffff", fontWeight: 700 }}>Credits</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" style={{ color: "#ffffff", fontWeight: 700 }}>Recommended Grade</Typography>
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {parsed.grades.map((row, idx) => (
                       <TableRow key={idx}>
-                        <TableCell component="th" scope="row">{idx + 1}</TableCell>
+                        <TableCell>
+                          <Typography variant="body2">{idx + 1}</Typography>
+                        </TableCell>
                         <TableCell>
                           <Typography variant="body2" style={{ fontWeight: 500 }}>{row.course}</Typography>
                         </TableCell>
-                        <TableCell>{row.credits}</TableCell>
                         <TableCell>
-                          <span
+                          <Typography variant="body2">{row.credits}</Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography
+                            variant="body2"
                             style={{
-                              display: "inline-block", padding: "2px 18px", borderRadius: "12px",
-                              backgroundColor: "#dcfce7", color: "#16a34a", fontWeight: 700, fontSize: "14px",
+                              display: "inline-block",
+                              padding: "2px 18px",
+                              borderRadius: "12px",
+                              backgroundColor: "#dcfce7",
+                              color: "#16a34a",
+                              fontWeight: 700,
+                              fontSize: "14px",
                             }}
                           >
                             {row.grade}
-                          </span>
+                          </Typography>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -420,20 +518,10 @@ const TargetGpaModal = ({
               </div>
             )}
 
-            {/* 4. Recommendation */}
+            {/* Recommendation */}
             {parsed.recommendation && (
-              <div
-                style={{
-                  backgroundColor: "#fff", borderRadius: "8px", border: "1px solid #e5e7eb",
-                  padding: "14px 18px", display: "flex", alignItems: "flex-start", gap: "12px",
-                }}
-              >
-                <div
-                  style={{
-                    width: 36, height: 36, borderRadius: "50%", backgroundColor: "#dbeafe",
-                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                  }}
-                >
+              <div style={{ backgroundColor: "#fff", borderRadius: "8px", border: "1px solid #e5e7eb", padding: "14px 18px", display: "flex", alignItems: "flex-start", gap: "12px" }}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", backgroundColor: "#dbeafe", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <BulbIcon style={{ color: "#2563eb", fontSize: "20px" }} />
                 </div>
                 <div>
@@ -450,32 +538,59 @@ const TargetGpaModal = ({
         )}
       </DialogContent>
 
-      <DialogActions
-        style={{
-          borderTop: "1px solid #e5e7eb", padding: "12px 20px",
-          backgroundColor: "#fff", justifyContent: "flex-end", gap: "8px",
-        }}
-      >
+      {/* ── Actions ── */}
+      <DialogActions style={{ borderTop: "1px solid #e5e7eb", padding: "12px 20px", backgroundColor: "#fff", justifyContent: "flex-end", gap: "8px" }}>
+
+        {/* Purple filled "Get AI Recommendation" button */}
         {!result && (
-          <Button
-            color="primary"
+          <button
             onClick={handleSubmit}
-            disabled={loading || !targetGpaInput || !isValidGpa(targetGpaInput) || isBelowOrEqualProgramGpa()}
-            sx={{ textTransform: "none !important" }}
+            disabled={loading || !targetGpaInput || hasError}
+            style={{
+              textTransform: "none",
+              backgroundColor: loading || !targetGpaInput || hasError ? "#d8b4fe" : "#300e4d",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "4px",
+              padding: "8px 16px",
+              cursor: loading || !targetGpaInput || hasError ? "not-allowed" : "pointer",
+              letterSpacing: "0.3px",
+            }}
           >
-            {loading ? "Loading..." : "Get AI Recommendation"}
-          </Button>
+            <Typography variant="body2" style={{ color: "#ffffff", fontWeight: 600, margin: 0 }}>
+              {loading ? "Loading..." : "Get AI Recommendation"}
+            </Typography>
+          </button>
         )}
-        <Button
-          color="secondary"
-          onClick={handleClose}
-          sx={{ textTransform: "none !important" }}
-        >
-          Close
-        </Button>
-      </DialogActions>
+
+        {/* Purple outlined "Close" button */}
+        <button
+  onClick={handleClose}
+  style={{
+    textTransform: "none",
+    color: "#ffffff",
+    border: "1.5px solid #300e4d",
+    borderRadius: "4px",
+    backgroundColor: "#300e4d",
+    padding: "8px 16px",
+    cursor: "pointer",
+    letterSpacing: "0.3px",
+  }}
+>
+  <Typography
+    variant="body2"
+    style={{
+      color: "#ffffff",
+      fontWeight: 600,
+      margin: 0,
+    }}
+  >
+    Close
+  </Typography>
+</button>
+ </DialogActions>
     </Dialog>
-  );
+     );
 };
 
 TargetGpaModal.propTypes = {
@@ -490,6 +605,7 @@ TargetGpaModal.propTypes = {
   maxGpa: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   programGpa: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   targetGpa: PropTypes.string,
+  maxAchievableGpa: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 TargetGpaModal.defaultProps = {
@@ -498,6 +614,7 @@ TargetGpaModal.defaultProps = {
   maxGpa: "4.0",
   programGpa: null,
   targetGpa: null,
+  maxAchievableGpa: null,
 };
 
 export default TargetGpaModal;
