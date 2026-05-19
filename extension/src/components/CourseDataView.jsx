@@ -9,25 +9,68 @@ import {
   Typography,
 } from "@ellucian/react-design-system/core";
 
+import { useThemeInfo } from "@ellucian/experience-extension-utils";
+
+const styles = `
+   .custom-header-cell {
+    backgroundcolor: primary;
+    color: #ffffff !important;
+  }
+ `;
+
 const CourseDataView = ({
   loadingCourseData,
   courseData,
   getStatusColor,
   tableConfig,
   colors,
+  isCurrentTerm,
 }) => {
+  const creditsHeader = isCurrentTerm ? "Credits" : "Credits Earned";
+
+  const headerTextStyle = {
+    backgroundColorcolor: "primary",
+    fontWeight: 700,
+    fontSize: "1rem",
+    letterSpacing: "0.02em",
+  };
+  const themeInfo = useThemeInfo();
+  const primaryColor = themeInfo.primaryColor;
+  const textColor = '#ffffff';
+  console.log(JSON.stringify(themeInfo));
+
   return (
     <>
+      <style>{styles}</style>
+
       {/* DESKTOP TABLE VIEW */}
       <div className="table-container">
         <Table className="table">
           <TableHead>
             <TableRow>
-              <TableCell className="header-cell">Course</TableCell>
-              <TableCell className="header-cell">Grade</TableCell>
-              <TableCell className="header-cell">Credits Earned</TableCell>
-              <TableCell className="header-cell last-cell">
-                Attendance
+              <TableCell 
+              style={{backgroundColor: primaryColor, color: textColor, textAlign: 'center'}}
+              // className="header-cell custom-header-cell"
+              >
+                <Typography variant="body1" style={headerTextStyle}>Course</Typography>
+              </TableCell>
+              <TableCell 
+              style={{backgroundColor: primaryColor, color: textColor, textAlign: 'center'}}
+              // className="header-cell custom-header-cell"
+              >
+                <Typography variant="body1" style={headerTextStyle}>Grade</Typography>
+              </TableCell>
+              <TableCell 
+              style={{backgroundColor: primaryColor, color: textColor, textAlign: 'center'}}
+              // className="header-cell custom-header-cell"
+              >
+                <Typography variant="body1" style={headerTextStyle}>{creditsHeader}</Typography>
+              </TableCell>
+              <TableCell 
+              style={{backgroundColor: primaryColor, color: textColor, textAlign: 'center'}}
+              // className="header-cell last-cell custom-header-cell"
+              >
+                <Typography variant="body1" style={headerTextStyle}>Attendance</Typography>
               </TableCell>
             </TableRow>
           </TableHead>
@@ -35,9 +78,7 @@ const CourseDataView = ({
             {loadingCourseData || courseData.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="body-cell">
-                  <Typography
-                    style={{ color: "#6B7280", fontStyle: "italic" }}
-                  >
+                  <Typography variant="body2" style={{ color: "#6B7280", fontStyle: "italic" }}>
                     {loadingCourseData
                       ? "Loading course data..."
                       : "No course data available for this term"}
@@ -60,18 +101,13 @@ const CourseDataView = ({
                         <Typography variant="body2">
                           {row.subjectCode}-{row.courseNumber}
                         </Typography>
-                        <Typography
-                          variant="caption"
-                          style={{ color: "#6B7280" }}
-                        >
+                        <Typography variant="caption" style={{ color: "#6B7280" }}>
                           {row.courseTitle}
                         </Typography>
                       </div>
                     </TableCell>
-                    <TableCell
-                      className={`body-cell ${isLowGrade ? "low-grade" : ""}`}
-                    >
-                      {row?.grade}
+                    <TableCell className={`body-cell ${isLowGrade ? "low-grade" : ""}`}>
+                      <Typography variant="body2">{row?.grade}</Typography>
                     </TableCell>
                     <TableCell className="body-cell">
                       <Typography variant="body2">{row?.credit}</Typography>
@@ -89,7 +125,8 @@ const CourseDataView = ({
                                 }}
                               />
                             </div>
-                            <span
+                            <Typography
+                              variant="body2"
                               style={{
                                 color: attendanceColor,
                                 fontWeight: 400,
@@ -98,14 +135,15 @@ const CourseDataView = ({
                               }}
                             >
                               {attendanceDisplay}
-                            </span>
+                            </Typography>
                           </>
                         ) : (
-                          <span
+                          <Typography
+                            variant="body2"
                             style={{ color: "#999", fontStyle: "italic" }}
                           >
                             {attendanceDisplay}
-                          </span>
+                          </Typography>
                         )}
                       </div>
                     </TableCell>
@@ -121,6 +159,7 @@ const CourseDataView = ({
       <div className="mobile-card-list">
         {loadingCourseData || courseData.length === 0 ? (
           <Typography
+            variant="body2"
             style={{
               textAlign: "center",
               color: "#6B7280",
@@ -151,28 +190,33 @@ const CourseDataView = ({
                     >
                       {row.crn}
                     </Typography>
-                    <Typography
-                      variant="body2"
-                      style={{ color: "#6B7280" }}
-                    >
+                    <Typography variant="body2" style={{ color: "#6B7280" }}>
                       {row.courseTitle}
                     </Typography>
                   </div>
-                  <div
+                  <Typography
+                    variant="body1"
                     className="mobile-card-grade"
                     style={{
                       color: isLowGrade ? colors.CRITICAL : "#1F2937",
+                      fontWeight: 700,
                     }}
                   >
                     {row.grade}
-                  </div>
+                  </Typography>
                 </div>
                 <div className="mobile-card-row">
-                  <span className="mobile-card-label">Credits</span>
-                  <span className="mobile-card-value">{row.credit}</span>
+                  <Typography variant="body2" className="mobile-card-label">
+                    {creditsHeader}
+                  </Typography>
+                  <Typography variant="body2" className="mobile-card-value">
+                    {row.credit}
+                  </Typography>
                 </div>
                 <div className="mobile-card-row">
-                  <span className="mobile-card-label">Attendance</span>
+                  <Typography variant="body2" className="mobile-card-label">
+                    Attendance
+                  </Typography>
                   <div className="mobile-progress-wrapper">
                     {row.attendancePercentage !== null ? (
                       <>
@@ -185,7 +229,8 @@ const CourseDataView = ({
                             }}
                           />
                         </div>
-                        <span
+                        <Typography
+                          variant="body2"
                           style={{
                             color: attendanceColor,
                             fontWeight: 600,
@@ -195,10 +240,11 @@ const CourseDataView = ({
                           }}
                         >
                           {attendanceDisplay}
-                        </span>
+                        </Typography>
                       </>
                     ) : (
-                      <span
+                      <Typography
+                        variant="body2"
                         style={{
                           color: "#999",
                           fontStyle: "italic",
@@ -206,7 +252,7 @@ const CourseDataView = ({
                         }}
                       >
                         {attendanceDisplay}
-                      </span>
+                      </Typography>
                     )}
                   </div>
                 </div>
@@ -225,6 +271,7 @@ CourseDataView.propTypes = {
   getStatusColor: PropTypes.func.isRequired,
   tableConfig: PropTypes.object.isRequired,
   colors: PropTypes.object.isRequired,
+  isCurrentTerm: PropTypes.bool.isRequired,
 };
 
 export default CourseDataView;

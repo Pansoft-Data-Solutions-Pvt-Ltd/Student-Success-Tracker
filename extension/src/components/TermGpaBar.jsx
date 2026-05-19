@@ -31,7 +31,7 @@ const options = {
       position: "top",
       labels: {
         usePointStyle: true,
-        pointStyle: "circle", // circle | rect | triangle | star | etc.
+        pointStyle: "circle",
       },
     },
     title: {
@@ -46,7 +46,7 @@ const options = {
       ticks: {
         stepSize: 1,
         callback: function (value) {
-          return value; // Only show whole numbers
+          return value;
         },
       },
     },
@@ -54,15 +54,16 @@ const options = {
 };
 
 export default function App({ termData, termGpaData }) {
-  // Chart data
   const data = {
     labels: termData,
     datasets: [
       {
         label: "Term GPA",
         data: termGpaData?.map((data) => data.termGpa),
-        borderColor: "rgb(53, 162, 235)",
-        backgroundColor: "rgba(53, 162, 235, 0.5)",
+        borderColor: "#6B21A8",
+        backgroundColor: "rgba(107, 33, 168, 0.2)",
+        pointBackgroundColor: "#6B21A8",
+        pointBorderColor: "#6B21A8",
       },
     ],
   };

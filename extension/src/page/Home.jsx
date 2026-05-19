@@ -13,7 +13,12 @@ import { useData, useCardInfo } from "@ellucian/experience-extension-utils";
 
 import { Typography, Card } from "@ellucian/react-design-system/core";
 
-/* ================= CONFIG ================= */
+// Helper: treat "N/A", null, undefined, "" all as no standing
+const parseStanding = (value) => {
+  if (!value || value.trim().toUpperCase() === "N/A") return null;
+  return value;
+};
+
 /* ================= COMPONENT ================= */
 const MySuccessTrackerTable = () => {
   const [currentTerm, setCurrentTerm] = useState(null);
@@ -30,6 +35,9 @@ const MySuccessTrackerTable = () => {
   const [isFirstTermFlag, setIsFirstTermFlag] = useState(false);
   const [termCodesResult, setTermCodesResult] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [academicStanding, setAcademicStanding] = useState(null);
+  const [previousAcademicStanding, setPreviousAcademicStanding] = useState(null);
+  const [programGpa, setProgramGpa] = useState(null);
 
   const { authenticatedEthosFetch } = useData();
   const { cardId, cardConfiguration } = useCardInfo();
@@ -74,18 +82,8 @@ const MySuccessTrackerTable = () => {
       const response = await authenticatedEthosFetch(resourcePath, options);
       if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
 
-      let data = await response.text();
-      try {
-        const jsonData = JSON.parse(data);
-        if (jsonData.text) data = jsonData.text;
-        else if (jsonData.message) data = jsonData.message;
-        else if (jsonData.result) data = jsonData.result;
-        else if (typeof jsonData === "string") data = jsonData;
-        else data = JSON.stringify(jsonData, null, 2);
-      } catch (e) {
-        console.error(e);
-      }
-      setRecommendationResult(data);
+      const jsonData = await response.json();
+      setRecommendationResult(jsonData);
     } catch (err) {
       setRecommendationError(err.message || "Something went wrong.");
     } finally {
@@ -103,7 +101,7 @@ const MySuccessTrackerTable = () => {
     setModalOpen(false);
   };
 
-  // Parse config thresholds once — they arrive as strings from cardConfiguration
+  // Parse config thresholds once
   const parsed_minimum_threshold_for_excellent_performance = parseFloat(
     minimum_threshold_for_excellent_performance,
   );
@@ -158,6 +156,15 @@ const MySuccessTrackerTable = () => {
     student_term_courses_pipeline,
     {},
   );
+
+  useEffect(() => {
+    if (pipelineData) {
+      const rawProgramGpa = pipelineData.programGpa;
+      const parsed = parseFloat(rawProgramGpa);
+      setProgramGpa(isNaN(parsed) ? null : parsed);
+    }
+  }, [pipelineData]);
+
   // Fetch and filter term codes
   useEffect(() => {
     if (pipelineData && pipelineData.termData) {
@@ -166,7 +173,7 @@ const MySuccessTrackerTable = () => {
 
       const newTermCodesResult = filteredTerms.map((tc) => ({
         termCode: tc,
-        term: pipelineData.termData[tc]?.termName || tc, // prefer termName, fallback to termCode
+        term: pipelineData.termData[tc]?.termName || tc,
         bannerId: pipelineData.bannerId,
       }));
 
@@ -179,7 +186,7 @@ const MySuccessTrackerTable = () => {
         setLatestTermCode(latestTc);
         setCurrentTermCode(latestTc);
         setCurrentTerm(latestTermName);
-        setTermData(newTermCodesResult.map((t) => t.term)); // use termName as labels
+        setTermData(newTermCodesResult.map((t) => t.term));
       }
     }
   }, [pipelineData, currentTermCode]);
@@ -193,10 +200,25 @@ const MySuccessTrackerTable = () => {
     setTermGpa(termInfo.gpa_available ? termInfo.term_gpa || 0 : "N/A");
     setAvgAttendance(termInfo.attendancePercentage);
 
-    // Calculate avg attendance
+    // parseStanding converts "N/A" string → null so fallback logic works correctly
+    setAcademicStanding(parseStanding(termInfo.academicStanding));
+
+    // Set previous term's academic standing as fallback
+    if (termCodesResult) {
+      const currentIndex = termCodesResult.findIndex(
+        (t) => t.termCode === currentTermCode,
+      );
+      if (currentIndex > 0) {
+        const prevTermCode = termCodesResult[currentIndex - 1].termCode;
+        const prevTermInfo = pipelineData.termData[prevTermCode];
+        setPreviousAcademicStanding(parseStanding(prevTermInfo?.academicStanding));
+      } else {
+        setPreviousAcademicStanding(null);
+      }
+    }
+
     const courses = termInfo.courses || [];
 
-    // Edge case: term exists but student has no courses enrolled
     if (courses.length === 0) {
       setCourseData([]);
       setAvgAttendance(null);
@@ -206,7 +228,6 @@ const MySuccessTrackerTable = () => {
       return;
     }
 
-    // Calculate mapped courses
     const mappedCourses = courses.map((course) => ({
       courseNumber: course.courseNumber,
       subjectCode: course.subjectCode,
@@ -221,7 +242,6 @@ const MySuccessTrackerTable = () => {
     }));
     setCourseData(mappedCourses);
 
-    // Fetch previous term to compute deltas
     let gpaDiff = 0;
     let attDiff = 0;
     let isFirst = false;
@@ -266,7 +286,7 @@ const MySuccessTrackerTable = () => {
     setIsFirstTermFlag(isFirst);
   }, [pipelineData, currentTermCode, termCodesResult, avgAttendance]);
 
-  // For term Gpas Bar
+  // For term GPAs Bar
   useEffect(() => {
     if (!pipelineData || !termCodesResult) {
       setTermGpaData([]);
@@ -305,8 +325,24 @@ const MySuccessTrackerTable = () => {
     return poor_performance_color_code;
   };
 
+  const getAcademicStandingColor = (standing) => {
+    if (!standing) return COLOR_CONFIG.ON_TRACK;
+    const lower = standing.toLowerCase();
+    if (
+      lower.includes("good") ||
+      lower.includes("honor") ||
+      lower.includes("excellent") ||
+      lower.includes("satisfactory")
+    )
+      return COLOR_CONFIG.ON_TRACK;
+    if (lower.includes("warning") || lower.includes("probation"))
+      return COLOR_CONFIG.NEEDS_ATTENTION;
+    if (lower.includes("suspend") || lower.includes("dismiss"))
+      return COLOR_CONFIG.CRITICAL;
+    return COLOR_CONFIG.ON_TRACK;
+  };
+
   const handleTermChange = (term) => {
-    // setCourseData([]); // This is causing an error when clicking on already selected term the course data becomes empty
     setCurrentTerm(term.term);
     setCurrentTermCode(term.termCode);
   };
@@ -325,6 +361,10 @@ const MySuccessTrackerTable = () => {
   const termGpaCircleColor = getGpaCircleColor(termGpa);
   const attendanceCircleColor = getStatusColor(avgAttendance);
   const deltaColor = isPositive ? COLOR_CONFIG.ON_TRACK : COLOR_CONFIG.CRITICAL;
+  const programGpaCircleColor = getGpaCircleColor(programGpa);
+
+  const resolvedStanding = academicStanding || previousAcademicStanding;
+  const academicStandingColor = getAcademicStandingColor(resolvedStanding);
 
   const isLatestTerm = currentTermCode === latestTermCode;
   const attendanceDiff = parseFloat(diffAttendance);
@@ -359,7 +399,6 @@ const MySuccessTrackerTable = () => {
           </Typography>
         )}
 
-        {/* Edge case: API returned an error */}
         {!isLoading && dataError && (
           <Typography
             style={{
@@ -373,7 +412,6 @@ const MySuccessTrackerTable = () => {
           </Typography>
         )}
 
-        {/* Edge case: Student not registered for any term */}
         {!isLoading && hasNoTerms && (
           <Typography
             style={{
@@ -429,6 +467,15 @@ const MySuccessTrackerTable = () => {
                     avgAttendance={avgAttendance}
                     colors={COLOR_CONFIG}
                     handleOpenModal={handleOpenModal}
+                    academicStanding={academicStanding}
+                    previousAcademicStanding={previousAcademicStanding}
+                    academicStandingColor={academicStandingColor}
+                    programGpa={programGpa}
+                    programGpaCircleColor={programGpaCircleColor}
+                    fetchGpaRecommendation={fetchGpaRecommendation}
+                    loadingRecommendation={loadingRecommendation}
+                    recommendationResult={recommendationResult}
+                    recommendationError={recommendationError}
                   />
 
                   {/* TERM GPA BAR CHART */}
@@ -441,22 +488,16 @@ const MySuccessTrackerTable = () => {
                   </Card>
                 </div>
 
-                {/* Target GPA Button */}
-                {/* <div style={{ marginTop: "20px" }}>
-                  <Button onClick={handleOpenModal} disabled={!isLatestTerm}>
-                    Set Target GPA
-                  </Button>
-                </div> */}
-
-                {/* Target GPA Modal */}
                 <TargetGpaModal
                   open={modalOpen}
                   onClose={handleCloseModal}
                   onSubmit={fetchGpaRecommendation}
                   loading={loadingRecommendation}
                   result={recommendationResult}
-                  error={recommendationError}
                   maxGpa={max_gpa}
+                  currentGpa={currentGpa}
+                  programGpa={programGpa}
+                  maxAchievableGpa={pipelineData?.maxAchievableGpa}
                 />
               </div>
             </div>
@@ -467,6 +508,7 @@ const MySuccessTrackerTable = () => {
               getStatusColor={getStatusColor}
               tableConfig={TABLE_CONFIG}
               colors={COLOR_CONFIG}
+              isCurrentTerm={currentTermCode === latestTermCode}
             />
           </>
         )}

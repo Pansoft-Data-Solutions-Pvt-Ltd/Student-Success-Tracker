@@ -73,30 +73,12 @@ const styles = (theme) => ({
     fontWeight: 600,
     lineHeight: 1,
   },
-  metricFooter: {
-    height: "1.2rem",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  subLabel: {
-    display: "flex",
-    alignItems: "center",
-    gap: "3px",
-    fontSize: "0.62rem",
-    whiteSpace: "nowrap",
-  },
   circleDivider: {
     width: "70%",
     margin: "0",
   },
   attendanceHeader: {
     marginBottom: "0.1rem",
-  },
-  iconText: {
-    display: "flex",
-    alignItems: "center",
-    gap: "4px",
   },
   attendanceList: {
     flex: 1,
@@ -140,9 +122,7 @@ const styles = (theme) => ({
 /* ================= COMPONENT ================= */
 const StudentSuccessTracker = ({ classes }) => {
   const { authenticatedEthosFetch } = useData();
-
   const { cardId, configuration } = useCardInfo();
-  // console.log("Printing card configuration:", JSON.stringify(configuration));
 
   const {
     excellent_performance_color_code,
@@ -155,11 +135,10 @@ const StudentSuccessTracker = ({ classes }) => {
     latest_term_information_pipeline,
   } = configuration;
 
-  // Parse config thresholds once — they arrive as strings from cardConfiguration
-  const parsed_minimum_threshold_for_excellent_performance   = parseFloat(minimum_threshold_for_excellent_performance);
+  const parsed_minimum_threshold_for_excellent_performance    = parseFloat(minimum_threshold_for_excellent_performance);
   const parsed_minimum_threshold_for_satisfactory_performance = parseFloat(minimum_threshold_for_satisfactory_performance);
-  const parsed_minimum_threshold_for_excellent_attendance    = parseFloat(minimum_threshold_for_excellent_attendance);
-  const parsed_minimum_threshold_for_satisfactory_attendance = parseFloat(minimum_threshold_for_satisfactory_attendance);
+  const parsed_minimum_threshold_for_excellent_attendance     = parseFloat(minimum_threshold_for_excellent_attendance);
+  const parsed_minimum_threshold_for_satisfactory_attendance  = parseFloat(minimum_threshold_for_satisfactory_attendance);
 
   if (parsed_minimum_threshold_for_excellent_performance <= parsed_minimum_threshold_for_satisfactory_performance) {
     throw new Error("Invalid performance configuration: excellent threshold must be greater than satisfactory threshold");
@@ -172,24 +151,19 @@ const StudentSuccessTracker = ({ classes }) => {
   /* ── Helper functions ─────────────────────────────────────────────────── */
 
   const get_gpa_color = (gpa_value) => {
-    const parsed_gpa_value = parseFloat(gpa_value);
-    if (isNaN(parsed_gpa_value)) return poor_performance_color_code;
-    if (parsed_gpa_value >= parsed_minimum_threshold_for_excellent_performance)   return excellent_performance_color_code;
-    if (parsed_gpa_value >= parsed_minimum_threshold_for_satisfactory_performance) return satisfactory_performance_color_code;
+    const parsed = parseFloat(gpa_value);
+    if (isNaN(parsed)) return poor_performance_color_code;
+    if (parsed >= parsed_minimum_threshold_for_excellent_performance)    return excellent_performance_color_code;
+    if (parsed >= parsed_minimum_threshold_for_satisfactory_performance) return satisfactory_performance_color_code;
     return poor_performance_color_code;
   };
 
-  const get_attendance_color = (attendance_percentage_value) => {
-    const parsed_attendance_percentage_value = parseFloat(attendance_percentage_value);
-    if (isNaN(parsed_attendance_percentage_value)) return poor_performance_color_code;
-    if (parsed_attendance_percentage_value >= parsed_minimum_threshold_for_excellent_attendance)   return excellent_performance_color_code;
-    if (parsed_attendance_percentage_value >= parsed_minimum_threshold_for_satisfactory_attendance) return satisfactory_performance_color_code;
+  const get_attendance_color = (attendance_value) => {
+    const parsed = parseFloat(attendance_value);
+    if (isNaN(parsed)) return poor_performance_color_code;
+    if (parsed >= parsed_minimum_threshold_for_excellent_attendance)    return excellent_performance_color_code;
+    if (parsed >= parsed_minimum_threshold_for_satisfactory_attendance) return satisfactory_performance_color_code;
     return poor_performance_color_code;
-  };
-
-  const get_attendance_status_color = (attendance_percentage_value) => {
-    if (attendance_percentage_value === null || attendance_percentage_value === undefined) return poor_performance_color_code;
-    return get_attendance_color(attendance_percentage_value);
   };
 
   /* ── State ────────────────────────────────────────────────────────────── */
@@ -197,9 +171,9 @@ const StudentSuccessTracker = ({ classes }) => {
   const [current_gpa, set_current_gpa]         = useState(0);
   const [term_name, set_term_name]             = useState("");
   const [attendance_data, set_attendance_data] = useState([]);
-  const [avg_attendance, set_avg_attendance]   = useState(null);
+  const [program_gpa, set_program_gpa]         = useState(null);
 
-  /* ── Fetch latest term info ───────────────────────────────────────────── */
+  /* ── Fetch ────────────────────────────────────────────────────────────── */
 
   const { data, loading } = useFetch(
     authenticatedEthosFetch,
@@ -214,23 +188,30 @@ const StudentSuccessTracker = ({ classes }) => {
   useEffect(() => {
     if (!data) return;
 
-    set_current_gpa(parseFloat(data.cumulativeGpa) || 0);
+    // ── Cumulative GPA (flat field from this pipeline) ──
+    const parsedCumulativeGpa = parseFloat(data.cumulativeGpa);
+    set_current_gpa(!isNaN(parsedCumulativeGpa) ? parsedCumulativeGpa : 0);
+
+    // ── Term name ──
     set_term_name(data.termName || "");
+
+    // ── Course attendance list ──
     set_attendance_data(Array.isArray(data.termInformation) ? data.termInformation : []);
 
-    // averageAttendancePercentage arrives as a ratio (e.g. 0.18 = 18%); convert to percentage
-    const raw_average_attendance_percentage = parseFloat(data.averageAttendancePercentage);
-    set_avg_attendance(
-      !isNaN(raw_average_attendance_percentage)
-        ? parseFloat((raw_average_attendance_percentage).toFixed(2))
-        : null
-    );
+    // ── Program GPA: not in this pipeline, derive from termInformation if possible ──
+    // Calculate a weighted average GPA from available course grades as fallback
+    // Or set null if not calculable
+    if (data.programGpa !== undefined && data.programGpa !== null) {
+      const parsedProgramGpa = parseFloat(data.programGpa);
+      set_program_gpa(!isNaN(parsedProgramGpa) ? parsedProgramGpa : null);
+    } else {
+      set_program_gpa(null);
+    }
+
   }, [data]);
 
-  const gpa_circle_color        = get_gpa_color(current_gpa);
-  const attendance_circle_color = avg_attendance !== null
-    ? get_attendance_color(avg_attendance)
-    : poor_performance_color_code;
+  const gpa_circle_color         = get_gpa_color(current_gpa);
+  const program_gpa_circle_color = get_gpa_color(program_gpa);
 
   /* ── Render ───────────────────────────────────────────────────────────── */
 
@@ -238,7 +219,7 @@ const StudentSuccessTracker = ({ classes }) => {
     <div className={classes.card}>
       <div className={classes.cardBody}>
 
-        {/* ── Left: GPA + Attendance circles ── */}
+        {/* ── Left: Cumulative GPA + Program GPA circles ── */}
         <section className={classes.gpaSection}>
 
           <div className={classes.metricBlock}>
@@ -257,18 +238,31 @@ const StudentSuccessTracker = ({ classes }) => {
 
           <div className={classes.circleDivider} />
 
+          {/* ── Program GPA ── */}
           <div className={classes.metricBlock}>
-            <Typography variant="h5">Term Attendance</Typography>
+            <Typography variant="h5">Program GPA</Typography>
             <div className={classes.circleContainer}>
               <div
                 className={classes.circleInner}
-                style={{ border: `4px solid ${attendance_circle_color}` }}
+                style={{ border: `4px solid ${program_gpa !== null ? program_gpa_circle_color : poor_performance_color_code}` }}
               >
-                <strong className={classes.circleValue} style={{ color: attendance_circle_color }}>
-                  {loading ? "..." : avg_attendance !== null ? `${avg_attendance}%` : "N/A"}
+                <strong
+                  className={classes.circleValue}
+                  style={{ color: program_gpa !== null ? program_gpa_circle_color : poor_performance_color_code }}
+                >
+                  {loading
+                    ? "..."
+                    : program_gpa !== null
+                      ? program_gpa.toFixed(2)
+                      : "N/A"}
                 </strong>
               </div>
             </div>
+            {!loading && program_gpa === null && (
+              <Typography variant="body3" style={{ textAlign: "center", fontSize: "0.6rem", color: "#999" }}>
+                Not available for current term
+              </Typography>
+            )}
           </div>
 
         </section>
@@ -295,10 +289,9 @@ const StudentSuccessTracker = ({ classes }) => {
           ) : (
             <div className={classes.attendanceList}>
               {attendance_data.map((attendance_entry, index) => {
-                // attendancePercentage arrives as a string; parse for comparison and display
-                const parsed_course_attendance_percentage = parseFloat(attendance_entry.attendancePercentage);
-                const display_attendance_percentage = !isNaN(parsed_course_attendance_percentage)
-                  ? `${parsed_course_attendance_percentage}%`
+                const parsed_attendance = parseFloat(attendance_entry.attendancePercentage);
+                const display_attendance = !isNaN(parsed_attendance)
+                  ? `${parsed_attendance}%`
                   : "N/A";
 
                 return (
@@ -307,8 +300,8 @@ const StudentSuccessTracker = ({ classes }) => {
                       {attendance_entry.courseTitle}
                     </div>
                     <div className={classes.attendancePercentage}>
-                      <span>{display_attendance_percentage}</span>
-                      <SvgHollowCircle color={get_attendance_status_color(parsed_course_attendance_percentage)} />
+                      <span>{display_attendance}</span>
+                      <SvgHollowCircle color={get_attendance_color(parsed_attendance)} />
                     </div>
                   </div>
                 );
