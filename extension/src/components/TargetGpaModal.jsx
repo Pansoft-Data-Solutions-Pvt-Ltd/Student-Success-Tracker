@@ -321,7 +321,7 @@ const TargetGpaModal = ({
     onSubmit(parseFloat(targetGpaInput));
   };
 
-  // ── PDF Download Handler ──────────────────────────────────────────────────
+  // ── PDF Download Handler (A4, multi-page) ────────────────────────────────
   const downloadPdf = async () => {
     const element = resultRef.current;
     if (!element) return;
@@ -329,25 +329,91 @@ const TargetGpaModal = ({
     setPdfLoading(true);
     try {
       const canvas = await html2canvas(element, {
-        scale: 2, // 2x for sharper output
-        useCORS: true, // allow cross-origin images if any
+        scale: 2,
+        useCORS: true,
         backgroundColor: "#ffffff",
         logging: false,
       });
 
-      const imgData = canvas.toDataURL("image/png");
-
-      // A4 width in px at 96dpi ≈ 794px; scale image to fit
-      const pdfWidth = 794;
-      const pdfHeight = Math.round((canvas.height / canvas.width) * pdfWidth);
+      // A4 dimensions in mm
+      const A4_WIDTH_MM = 210;
+      const A4_HEIGHT_MM = 297;
+      const MARGIN_MM = 12; // margin on all sides
 
       const pdf = new jsPDF({
-        orientation: pdfHeight > pdfWidth ? "portrait" : "landscape",
-        unit: "px",
-        format: [pdfWidth, pdfHeight],
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
       });
 
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      const printableWidth = A4_WIDTH_MM - MARGIN_MM * 2;
+      const printableHeight = A4_HEIGHT_MM - MARGIN_MM * 2;
+
+      // Convert canvas pixels to mm at 96 dpi (1 mm = 3.7795275591 px at 96 dpi)
+      // canvas.width/height are already at scale:2 so effective dpi is 192
+      const PX_PER_MM = (96 * 2) / 25.4; // ≈ 7.559 px/mm at scale:2
+
+      const imgWidthMm = canvas.width / PX_PER_MM;
+      const imgHeightMm = canvas.height / PX_PER_MM;
+
+      // Scale image to fit the printable width
+      const scaleFactor = printableWidth / imgWidthMm;
+      const scaledWidthMm = printableWidth;
+      const scaledHeightMm = imgHeightMm * scaleFactor;
+
+      // Number of A4 pages needed
+      const totalPages = Math.ceil(scaledHeightMm / printableHeight);
+
+      // const imgData = canvas.toDataURL("image/png");
+
+      for (let page = 0; page < totalPages; page++) {
+        if (page > 0) pdf.addPage();
+
+        // Y offset into the image for this page (in mm)
+        const yOffsetMm = page * printableHeight;
+
+        // Remaining height of image on this page
+        const sliceHeightMm = Math.min(
+          printableHeight,
+          scaledHeightMm - yOffsetMm,
+        );
+
+        // Convert mm offsets back to canvas pixels for clipping
+        const srcYPx = Math.round(
+          (yOffsetMm / scaleFactor / imgHeightMm) * canvas.height,
+        );
+        const srcHeightPx = Math.round(
+          (sliceHeightMm / scaleFactor / imgHeightMm) * canvas.height,
+        );
+
+        // Create a temporary canvas for this slice
+        const sliceCanvas = document.createElement("canvas");
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = srcHeightPx;
+        const ctx = sliceCanvas.getContext("2d");
+        ctx.drawImage(
+          canvas,
+          0,
+          srcYPx, // source x, y
+          canvas.width,
+          srcHeightPx, // source w, h
+          0,
+          0, // dest x, y
+          canvas.width,
+          srcHeightPx, // dest w, h
+        );
+
+        const sliceData = sliceCanvas.toDataURL("image/png");
+        pdf.addImage(
+          sliceData,
+          "PNG",
+          MARGIN_MM, // x
+          MARGIN_MM, // y
+          scaledWidthMm, // width
+          sliceHeightMm, // height (actual slice height, not full page)
+        );
+      }
+
       pdf.save(`GPA_Recommendation_${displayTargetGpa}.pdf`);
     } catch (err) {
       console.error("PDF generation failed:", err);
@@ -910,6 +976,20 @@ const TargetGpaModal = ({
                 </div>
               </div>
             )}
+
+            {/* ── Subtle AI disclaimer ── */}
+            <Typography
+              variant="body2"
+              style={{
+                marginTop: "14px",
+                textAlign: "center",
+                fontSize: "11px",
+                color: "#9ca3af",
+              }}
+            >
+              AI-generated · Results may not be fully accurate. Verify with your
+              academic advisor.
+            </Typography>
           </div>
         )}
       </DialogContent>
@@ -1037,4 +1117,3 @@ TargetGpaModal.defaultProps = {
 };
 
 export default TargetGpaModal;
-
