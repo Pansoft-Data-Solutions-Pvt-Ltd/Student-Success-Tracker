@@ -101,7 +101,7 @@ const CourseDataView = ({
                         <Typography variant="body2">
                           {row.subjectCode}-{row.courseNumber}
                         </Typography>
-                        <Typography variant="caption" style={{ color: "#6B7280" }}>
+                        <Typography variant="caption" style={{ color: "#000207",textTransform: "capitalize" }}>
                           {row.courseTitle}
                         </Typography>
                       </div>
@@ -164,7 +164,7 @@ const CourseDataView = ({
               textAlign: "center",
               color: "#6B7280",
               fontStyle: "italic",
-              padding: "30px",
+              padding: "30px"
             }}
           >
             {loadingCourseData

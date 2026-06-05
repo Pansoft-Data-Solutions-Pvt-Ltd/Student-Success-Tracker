@@ -1,4 +1,3 @@
-
 import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import {
@@ -7,7 +6,23 @@ import {
   DropdownButtonItem,
 } from "@ellucian/react-design-system/core";
 
+// Title-case helper: "SPRING 2026" → "Spring 2026"
+const toTitleCase = (str) => {
+  if (!str) return str;
+  return str
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
 const styles = `
+  /* Force normal text-transform on all buttons */
+  .card-header button,
+  .card-header [class*="Button"],
+  .card-header [class*="button"] {
+    text-transform: none !important;
+    letter-spacing: normal !important;
+  }
+
   /* Dropdown items */
   .term-section [class*="dropdown"] li,
   .term-section [class*="Dropdown"] li,
@@ -59,6 +74,10 @@ const HomeHeader = ({
   loadingTermCodes,
   handleTermChange,
 }) => {
+  // HomeHeader is a pure display/interaction component.
+  // Term initialisation (card term vs latest term) is handled in Home.jsx.
+  // This component simply displays whichever term Home.jsx has set as current.
+
   const backHref = useMemo(() => {
     const segments = window?.location?.pathname
       ?.split("/")
@@ -87,7 +106,7 @@ const HomeHeader = ({
           </Button>
         </div>
 
-        {/* Title */}
+        {/* Title — reflects whatever term Home.jsx has initialised/selected */}
         <div>
           <Typography
             variant="h4"
@@ -99,11 +118,11 @@ const HomeHeader = ({
             }}
           >
             Academic Performance
-            {currentTerm ? ` – ${currentTerm}` : ""}
+            {currentTerm ? ` – ${toTitleCase(currentTerm)}` : ""}
           </Typography>
         </div>
 
-        {/* Select Term */}
+        {/* Select Term dropdown */}
         <div className="top-bar">
           <div className="term-section">
             <Typography className="term-label">
@@ -121,13 +140,13 @@ const HomeHeader = ({
                     key={term.termCode}
                     onClick={() => handleTermChange(term)}
                   >
-                    {term.term}
+                    {toTitleCase(term.term)}
                   </DropdownButtonItem>
                 ))}
             >
               {loadingTermCodes
                 ? "Loading..."
-                : currentTerm || "Select Term"}
+                : toTitleCase(currentTerm) || "Select Term"}
             </Button>
           </div>
         </div>
@@ -137,11 +156,10 @@ const HomeHeader = ({
 };
 
 HomeHeader.propTypes = {
-  currentTerm: PropTypes.string,
-  termCodesResult: PropTypes.array,
+  currentTerm:      PropTypes.string,
+  termCodesResult:  PropTypes.array,
   loadingTermCodes: PropTypes.bool.isRequired,
   handleTermChange: PropTypes.func.isRequired,
 };
 
 export default HomeHeader;
-

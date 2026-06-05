@@ -70,9 +70,8 @@ const isAchievable = (text) =>
   /possible|can achieve|achievable|yes/i.test(text) &&
   !/not possible|cannot|can't|not achieve|not achievable/i.test(text);
 
-//const ELLUCIAN_BLUE = "primary";
-//const ELLUCIAN_BLUE_TEXT = "#ffffff";
-
+// ─── Bright purple matching the screenshot ────────────────────────────────────
+const HEADER_PURPLE = "#7B2FBE";
 
 const tableSx = {
   "& *": {
@@ -84,7 +83,7 @@ const tableSx = {
   },
 
   "& .MuiTableRow-root:hover": {
-    backgroundColor: "#f0f4ff !important",
+    backgroundColor: "#f5f3ff !important",
   },
 
   "& .MuiTableCell-root": {
@@ -93,18 +92,19 @@ const tableSx = {
 
   /* Header row */
   "& .MuiTableHead-root .MuiTableRow-root": {
-    backgroundColor: "primary.main !important",
+    backgroundColor: `${HEADER_PURPLE} !important`,
   },
 
   /* Header cells */
   "& .MuiTableHead-root .MuiTableCell-root": {
-    backgroundColor: "primary.main !important",
+    backgroundColor: `${HEADER_PURPLE} !important`,
     color: "#ffffff !important",
     fontWeight: 700,
     fontSize: "13px",
     textTransform: "none",
     letterSpacing: "normal",
     borderBottom: "none",
+    textAlign: "center",
   },
 
   /* Body cells */
@@ -115,8 +115,6 @@ const tableSx = {
     fontSize: "13px",
   },
 };
-
-
 
 // ─── Max GPA Ring ─────────────────────────────────────────────────────────────
 const MaxGpaRing = ({ maxGpa, programGpa, scaleMax }) => {
@@ -143,7 +141,6 @@ const MaxGpaRing = ({ maxGpa, programGpa, scaleMax }) => {
         flex: 1,
       }}
     >
-      {/* SVG Ring */}
       <div style={{ position: "relative", width: 64, height: 64, flexShrink: 0 }}>
         <svg width="64" height="64" viewBox="0 0 64 64">
           <circle cx="32" cy="32" r={RADIUS} fill="none" stroke="#dcfce7" strokeWidth="5" />
@@ -165,7 +162,6 @@ const MaxGpaRing = ({ maxGpa, programGpa, scaleMax }) => {
         </div>
       </div>
 
-      {/* Text */}
       <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
         <Typography
           variant="body2"
@@ -263,7 +259,7 @@ const TargetGpaModal = ({
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
 
-      {/* ── Custom Dialog Title with purple X button ── */}
+      {/* ── Dialog Title ── */}
       <div
         style={{
           display: "flex",
@@ -288,11 +284,10 @@ const TargetGpaModal = ({
             justifyContent: "center",
             width: "32px",
             height: "32px",
-            
             borderRadius: "6px",
             backgroundColor: "transparent",
+            border: "none",
             cursor: "pointer",
-            color: "primary",
             padding: 0,
           }}
         >
@@ -312,9 +307,7 @@ const TargetGpaModal = ({
               Enter a target GPA you want to achieve
             </Typography>
 
-            {/* ── GPA cards row ── */}
             <div style={{ display: "flex", alignItems: "stretch", gap: "12px", marginBottom: "18px" }}>
-
               {/* Program GPA card */}
               <div
                 style={{
@@ -351,7 +344,6 @@ const TargetGpaModal = ({
                 </Typography>
               </div>
 
-              {/* Max Achievable GPA ring */}
               {inputScreenMaxGpa && (
                 <MaxGpaRing maxGpa={inputScreenMaxGpa} programGpa={programGpa} scaleMax={maxGpa} />
               )}
@@ -365,6 +357,25 @@ const TargetGpaModal = ({
               error={hasError}
               helperText={getHelperText()}
               fullWidth
+              variant="outlined"
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": { borderColor: "#d1d5db !important" },
+                  "&:hover fieldset": { borderColor: "#300e4d !important" },
+                  "&.Mui-focused fieldset": { borderColor: "#300e4d !important", borderWidth: "2px !important" },
+                  "&.Mui-focused": { boxShadow: "0 0 0 3px rgba(48, 14, 77, 0.1) !important" },
+                },
+                "& .MuiOutlinedInput-root.Mui-error": {
+                  "& fieldset": { borderColor: "#dc2626 !important" },
+                  "&:hover fieldset": { borderColor: "#991b1b !important" },
+                  "&.Mui-focused fieldset": { borderColor: "#dc2626 !important", borderWidth: "2px !important" },
+                },
+                "& .MuiInputBase-input": { fontSize: "14px !important" },
+                "& .MuiInputLabel-root": {
+                  color: "#6b21a8 !important",
+                  "&.Mui-focused": { color: "#300e4d !important" },
+                },
+              }}
             />
 
             {showBelowGpaBanner && (
@@ -461,11 +472,13 @@ const TargetGpaModal = ({
             {/* Grade table */}
             {parsed.grades && parsed.grades.length > 0 && (
               <div style={{ backgroundColor: "#fff", borderRadius: "8px", border: "1px solid #e5e7eb", overflow: "hidden", marginBottom: "12px" }}>
-                <div style={{ padding: "12px 18px", textAlign: "center" }}>
-                  <Typography variant="h5" style={{ margin: 0 }}>
+                {/* ── Title bar: white bg, black text ── */}
+                <div style={{ padding: "12px 18px", backgroundColor: "#ffffff", borderBottom: "1px solid #e5e7eb", textAlign: "center" }}>
+                  <Typography variant="h5" style={{ margin: 0, color: "#111827", fontWeight: 700 }}>
                     Recommended Grades for Remaining Courses
                   </Typography>
                 </div>
+                {/* ── Table: bright purple headers matching screenshot ── */}
                 <Table size="small" sx={tableSx}>
                   <TableHead>
                     <TableRow>
@@ -540,8 +553,6 @@ const TargetGpaModal = ({
 
       {/* ── Actions ── */}
       <DialogActions style={{ borderTop: "1px solid #e5e7eb", padding: "12px 20px", backgroundColor: "#fff", justifyContent: "flex-end", gap: "8px" }}>
-
-        {/* Purple filled "Get AI Recommendation" button */}
         {!result && (
           <button
             onClick={handleSubmit}
@@ -563,34 +574,26 @@ const TargetGpaModal = ({
           </button>
         )}
 
-        {/* Purple outlined "Close" button */}
         <button
-  onClick={handleClose}
-  style={{
-    textTransform: "none",
-    color: "#ffffff",
-    border: "1.5px solid #300e4d",
-    borderRadius: "4px",
-    backgroundColor: "#300e4d",
-    padding: "8px 16px",
-    cursor: "pointer",
-    letterSpacing: "0.3px",
-  }}
->
-  <Typography
-    variant="body2"
-    style={{
-      color: "#ffffff",
-      fontWeight: 600,
-      margin: 0,
-    }}
-  >
-    Close
-  </Typography>
-</button>
- </DialogActions>
+          onClick={handleClose}
+          style={{
+            textTransform: "none",
+            color: "#ffffff",
+            border: "1.5px solid #300e4d",
+            borderRadius: "4px",
+            backgroundColor: "#300e4d",
+            padding: "8px 16px",
+            cursor: "pointer",
+            letterSpacing: "0.3px",
+          }}
+        >
+          <Typography variant="body2" style={{ color: "#ffffff", fontWeight: 600, margin: 0 }}>
+            Close
+          </Typography>
+        </button>
+      </DialogActions>
     </Dialog>
-     );
+  );
 };
 
 TargetGpaModal.propTypes = {

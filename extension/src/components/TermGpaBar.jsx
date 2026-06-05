@@ -60,10 +60,10 @@ export default function App({ termData, termGpaData }) {
       {
         label: "Term GPA",
         data: termGpaData?.map((data) => data.termGpa),
-        borderColor: "#6B21A8",
-        backgroundColor: "rgba(107, 33, 168, 0.2)",
-        pointBackgroundColor: "#6B21A8",
-        pointBorderColor: "#6B21A8",
+        borderColor: "#320e50",
+        backgroundColor: "rgba(35, 9, 56, 0.2)",
+        pointBackgroundColor: "#3d1161",
+        pointBorderColor: "#31104d",
       },
     ],
   };

@@ -39,8 +39,20 @@ const MySuccessTrackerTable = () => {
   const [previousAcademicStanding, setPreviousAcademicStanding] = useState(null);
   const [programGpa, setProgramGpa] = useState(null);
 
+  // ── Track whether we have already applied the term passed from the card.
+  //    Once applied we must NOT re-apply it (e.g. when the user manually changes
+  //    the term via the dropdown, we don't want to revert back to the card term).
+  const [cardTermApplied, setCardTermApplied] = useState(false);
+
   const { authenticatedEthosFetch } = useData();
   const { cardId, cardConfiguration } = useCardInfo();
+
+  // ── Read the term the user was viewing in the card.
+  //    The card writes it to localStorage on every term change.
+  //    useState initializer runs once on mount so it never re-reads on re-renders.
+  const [termCodeFromCard] = useState(() => {
+    return localStorage.getItem("sst_card_term_code") || null;
+  });
 
   const {
     excellent_performance_color_code,
@@ -165,31 +177,49 @@ const MySuccessTrackerTable = () => {
     }
   }, [pipelineData]);
 
-  // Fetch and filter term codes
+  // ── Build term list and set initial term ──────────────────────────────────
+  // KEY FIX: When termCodeFromCard is present (user clicked a specific term in
+  // the card view), initialise to THAT term. Only fall back to the latest term
+  // when no term was passed (e.g. direct page navigation).
   useEffect(() => {
-    if (pipelineData && pipelineData.termData) {
-      const allTermCodes = Object.keys(pipelineData.termData);
-      const filteredTerms = allTermCodes.sort((a, b) => a.localeCompare(b));
+    if (!pipelineData?.termData) return;
 
-      const newTermCodesResult = filteredTerms.map((tc) => ({
-        termCode: tc,
-        term: pipelineData.termData[tc]?.termName || tc,
-        bannerId: pipelineData.bannerId,
-      }));
+    const allTermCodes = Object.keys(pipelineData.termData);
+    const filteredTerms = allTermCodes.sort((a, b) => a.localeCompare(b));
 
-      setTermCodesResult(newTermCodesResult);
+    const newTermCodesResult = filteredTerms.map((tc) => ({
+      termCode: tc,
+      term: pipelineData.termData[tc]?.termName || tc,
+      bannerId: pipelineData.bannerId,
+    }));
 
-      if (filteredTerms.length > 0 && !currentTermCode) {
-        const latestTc = filteredTerms[filteredTerms.length - 1];
-        const latestTermName =
-          pipelineData.termData[latestTc]?.termName || latestTc;
-        setLatestTermCode(latestTc);
+    setTermCodesResult(newTermCodesResult);
+    setTermData(newTermCodesResult.map((t) => t.term));
+
+    // Store the latest term code for comparison (used in isLatestTerm)
+    const latestTc = filteredTerms[filteredTerms.length - 1];
+    setLatestTermCode(latestTc);
+
+    // Only set the initial term once (cardTermApplied guards subsequent renders)
+    if (!cardTermApplied) {
+      setCardTermApplied(true);
+
+      if (termCodeFromCard && pipelineData.termData[termCodeFromCard]) {
+        // ✅ User clicked a specific term in the card — open that term
+        const termName = pipelineData.termData[termCodeFromCard]?.termName || termCodeFromCard;
+        setCurrentTermCode(termCodeFromCard);
+        setCurrentTerm(termName);
+      } else {
+        // ✅ Fallback: no term passed (direct navigation) — open latest term
+        const latestTermName = pipelineData.termData[latestTc]?.termName || latestTc;
         setCurrentTermCode(latestTc);
         setCurrentTerm(latestTermName);
-        setTermData(newTermCodesResult.map((t) => t.term));
       }
     }
-  }, [pipelineData, currentTermCode]);
+  }, [pipelineData]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Note: cardTermApplied and termCodeFromCard are intentionally excluded from
+  // deps — we only want this guard logic to run when fresh pipeline data arrives,
+  // not every time the user manually changes the term dropdown.
 
   useEffect(() => {
     if (!pipelineData || !currentTermCode) return;
@@ -342,6 +372,9 @@ const MySuccessTrackerTable = () => {
     return COLOR_CONFIG.ON_TRACK;
   };
 
+  // ── This is called when the user manually picks a term from the dropdown.
+  //    It simply updates state — no conflict with the card-term logic above
+  //    because cardTermApplied is already true by this point.
   const handleTermChange = (term) => {
     setCurrentTerm(term.term);
     setCurrentTermCode(term.termCode);
