@@ -128,17 +128,16 @@ const tableSx = {
   "& .MuiTableRow-root:hover": { backgroundColor: "#f0f4ff !important" },
   "& .MuiTableCell-root": { backgroundColor: "#fff !important" },
   "& .MuiTableHead-root .MuiTableRow-root": {
-    backgroundColor: `${HEADER_PURPLE} !important`,
+    backgroundColor: "primary.main !important",
   },
   "& .MuiTableHead-root .MuiTableCell-root": {
-    backgroundColor: `${HEADER_PURPLE} !important`,
+    backgroundColor: "primary.main !important",
     color: "#ffffff !important",
     fontWeight: 700,
     fontSize: "13px",
     textTransform: "none",
     letterSpacing: "normal",
     borderBottom: "none",
-    textAlign: "center",
   },
   "& .MuiTableBody-root .MuiTableCell-root": {
     backgroundColor: "#fff !important",
@@ -479,7 +478,6 @@ const TargetGpaModal = ({
             borderRadius: "6px",
             backgroundColor: "transparent",
             border: "none",
-            border: "none",
             cursor: "pointer",
             padding: 0,
           }}
@@ -566,6 +564,7 @@ const TargetGpaModal = ({
                 </Typography>
               </div>
 
+              {/* Max Achievable GPA ring */}
               {inputScreenMaxGpa && (
                 <MaxGpaRing
                   maxGpa={inputScreenMaxGpa}
@@ -583,25 +582,6 @@ const TargetGpaModal = ({
               error={hasError}
               helperText={getHelperText()}
               fullWidth
-              variant="outlined"
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  "& fieldset": { borderColor: "#d1d5db !important" },
-                  "&:hover fieldset": { borderColor: "#300e4d !important" },
-                  "&.Mui-focused fieldset": { borderColor: "#300e4d !important", borderWidth: "2px !important" },
-                  "&.Mui-focused": { boxShadow: "0 0 0 3px rgba(48, 14, 77, 0.1) !important" },
-                },
-                "& .MuiOutlinedInput-root.Mui-error": {
-                  "& fieldset": { borderColor: "#dc2626 !important" },
-                  "&:hover fieldset": { borderColor: "#991b1b !important" },
-                  "&.Mui-focused fieldset": { borderColor: "#dc2626 !important", borderWidth: "2px !important" },
-                },
-                "& .MuiInputBase-input": { fontSize: "14px !important" },
-                "& .MuiInputLabel-root": {
-                  color: "#6b21a8 !important",
-                  "&.Mui-focused": { color: "#300e4d !important" },
-                },
-              }}
             />
 
             {showBelowGpaBanner && (
@@ -872,7 +852,6 @@ const TargetGpaModal = ({
                     Recommended Grades for Remaining Courses
                   </Typography>
                 </div>
-                {/* ── Table: bright purple headers matching screenshot ── */}
                 <Table size="small" sx={tableSx}>
                   <TableHead>
                     <TableRow>
@@ -1110,7 +1089,6 @@ const TargetGpaModal = ({
         </button>
       </DialogActions>
     </Dialog>
-  );
   );
 };
 
