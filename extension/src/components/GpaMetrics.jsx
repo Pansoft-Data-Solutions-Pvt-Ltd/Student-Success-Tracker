@@ -79,7 +79,7 @@ const GpaMetrics = ({
         </Card>
 
         {/* TERM GPA CARD */}
-        <Card className="term-gpa-card">
+        <Card className="term-gpa-card" >
           <div className="gpa-left">
             <Typography
               variant="p"
