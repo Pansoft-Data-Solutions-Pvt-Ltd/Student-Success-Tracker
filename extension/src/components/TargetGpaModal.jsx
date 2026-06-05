@@ -977,7 +977,7 @@ const TargetGpaModal = ({
               </div>
             )}
 
-            {/* ── Subtle AI disclaimer ── */}
+            {/* ── AI disclaimer ── */}
             <Typography
               variant="body2"
               style={{
