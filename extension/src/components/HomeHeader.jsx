@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Button,
@@ -6,67 +6,44 @@ import {
   DropdownButtonItem,
 } from "@ellucian/react-design-system/core";
 
-// Title-case helper: "SPRING 2026" → "Spring 2026"
 const toTitleCase = (str) => {
   if (!str) return str;
-  return str
-    .toLowerCase()
-    .replace(/\b\w/g, (char) => char.toUpperCase());
+  return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
-const styles = `
-  /* Force normal text-transform on all buttons */
-  .card-header button,
-  .card-header [class*="Button"],
-  .card-header [class*="button"] {
-    text-transform: none !important;
-    letter-spacing: normal !important;
-  }
-
-  /* Dropdown items */
-  .term-section [class*="dropdown"] li,
-  .term-section [class*="Dropdown"] li,
-  .term-section [class*="menu"] li,
-  .term-section ul li {
-    color: #000000 !important;
-    background-color: #ffffff !important;
-    outline: none !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-
-  /* Focus state */
-  .term-section [class*="dropdown"] li:focus,
-  .term-section [class*="Dropdown"] li:focus,
-  .term-section [class*="menu"] li:focus,
-  .term-section ul li:focus,
-  .term-section [class*="dropdown"] li:focus-visible,
-  .term-section ul li:focus-visible {
-    outline: none !important;
-    border: none !important;
-    box-shadow: none !important;
-    background-color: #EDE9FE !important;
-    color: #000000 !important;
-  }
-
-  /* Hover state */
-  .term-section [class*="dropdown"] li:hover,
-  .term-section [class*="Dropdown"] li:hover,
-  .term-section [class*="menu"] li:hover,
-  .term-section ul li:hover {
-    background-color: #EDE9FE !important;
-    color: #000000 !important;
-  }
-
-  /* Selected item */
-  .term-section [class*="selected"],
-  .term-section [class*="active"],
-  .term-section [class*="Selected"],
-  .term-section [class*="Active"] {
-    background-color: #EDE9FE !important;
-    color: #000000 !important;
-  }
-`;
+// Inject into <head> — beats JSS every time
+const injectHeadStyles = () => {
+  const id = "home-header-override";
+  if (document.getElementById(id)) return;
+  const style = document.createElement("style");
+  style.id = id;
+  style.innerHTML = `
+    .home-header-btn button {
+      background-color: #ffffff !important;
+      color: #320070 !important;
+      border: 1px solid #320070 !important;
+      border-radius: 4px !important;
+      padding: 6px 16px !important;
+      font-weight: 600 !important;
+      text-transform: none !important;
+      letter-spacing: normal !important;
+      box-shadow: none !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+    }
+    .home-header-btn button:hover {
+      background-color: #F6F6FD !important;
+    }
+    .home-header-btn button * {
+      color: #320070 !important;
+      fill: #320070 !important;
+      text-transform: none !important;
+      letter-spacing: normal !important;
+    }
+  `;
+  document.head.appendChild(style);
+};
 
 const HomeHeader = ({
   currentTerm,
@@ -74,19 +51,15 @@ const HomeHeader = ({
   loadingTermCodes,
   handleTermChange,
 }) => {
-  // HomeHeader is a pure display/interaction component.
-  // Term initialisation (card term vs latest term) is handled in Home.jsx.
-  // This component simply displays whichever term Home.jsx has set as current.
+  useEffect(() => {
+    injectHeadStyles();
+  }, []);
 
   const backHref = useMemo(() => {
-    const segments = window?.location?.pathname
-      ?.split("/")
-      .filter(Boolean);
-
+    const segments = window?.location?.pathname?.split("/").filter(Boolean);
     if (segments.length > 0) {
       return `${window.location.origin}/${segments[0]}/`;
     }
-
     return window.location.origin;
   }, []);
 
@@ -94,70 +67,115 @@ const HomeHeader = ({
     window.location.assign(backHref);
   };
 
+  const termLabel = loadingTermCodes
+    ? "Loading..."
+    : toTitleCase(currentTerm) || "Select Term";
+
   return (
-    <>
-      <style>{styles}</style>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "10px 24px",
+        backgroundColor: "#ffffff",
+        borderBottom: "1px solid #E5E7EB",
+        width: "100%",
+        boxSizing: "border-box",
+      }}
+    >
+      {/* LEFT — Back Button */}
+      <div className="home-header-btn" style={{ flex: "0 0 auto" }}>
+        <Button onClick={handleBack}>← Back</Button>
+      </div>
 
-      <div className="card-header">
-        {/* Back Button */}
-        <div className="back-button-wrapper">
-          <Button onClick={handleBack}>
-            Back
-          </Button>
-        </div>
+      {/* CENTER — Title */}
+      <div style={{ flex: 1, textAlign: "center", margin: "0 16px" }}>
+        <Typography
+          style={{
+            fontWeight: 800,
+            fontSize: "22px",
+            color: "#1F2937",
+            whiteSpace: "nowrap",
+            letterSpacing: "0.01em",
+            display: "block",
+          }}
+        >
+          Academic Performance
+          {currentTerm ? ` – ${toTitleCase(currentTerm)}` : ""}
+        </Typography>
+      </div>
 
-        {/* Title — reflects whatever term Home.jsx has initialised/selected */}
-        <div>
-          <Typography
-            variant="h4"
-            className="card-title"
-            style={{
-              fontWeight: 700,
-              color: "#1F2937",
-              textAlign: "center",
-            }}
-          >
-            Academic Performance
-            {currentTerm ? ` – ${toTitleCase(currentTerm)}` : ""}
-          </Typography>
-        </div>
+      {/* RIGHT — Select Term */}
+      <div
+        style={{
+          flex: "0 0 auto",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+        }}
+      >
+        <Typography
+          style={{
+            whiteSpace: "nowrap",
+            color: "#1F2937",
+            fontSize: "16px",
+            fontWeight: 600,
+          }}
+        >
+          Select Term
+        </Typography>
 
-        {/* Select Term dropdown */}
-        <div className="top-bar">
-          <div className="term-section">
-            <Typography className="term-label">
-              Select Term
-            </Typography>
+        <div className="home-header-btn">
+         <Button
+  disabled={loadingTermCodes || !termCodesResult}
+  dropdown={termCodesResult
+    ?.sort((a, b) => a.termCode.localeCompare(b.termCode))
+    .map((term) => (
+      <DropdownButtonItem
+        key={term.termCode}
+        onClick={() => handleTermChange(term)}
+      >
+        {toTitleCase(term.term)}
+      </DropdownButtonItem>
+    ))}
+>
+  <svg
+    className="ds-icon ds-calendar-check"
+    style={{
+      width: "18px",
+      height: "18px",
+      flexShrink: 0,
+      fill: "currentColor",
+    }}
+    aria-hidden="true"
+  >
+    <use xlinkHref="#ds-icon-calendar-check" />
+  </svg>
 
-            <Button
-              disabled={loadingTermCodes || !termCodesResult}
-              dropdown={termCodesResult
-                ?.sort((a, b) =>
-                  a.termCode.localeCompare(b.termCode)
-                )
-                .map((term) => (
-                  <DropdownButtonItem
-                    key={term.termCode}
-                    onClick={() => handleTermChange(term)}
-                  >
-                    {toTitleCase(term.term)}
-                  </DropdownButtonItem>
-                ))}
-            >
-              {loadingTermCodes
-                ? "Loading..."
-                : toTitleCase(currentTerm) || "Select Term"}
-            </Button>
-          </div>
+  <span
+    style={{
+      fontSize: "15px",
+      fontWeight: 600,
+      textTransform: "none",
+      letterSpacing: "normal",
+      color: "inherit",
+    }}
+  >
+    {termLabel}
+  </span>
+
+  {/* REMOVED the manual chevron SVG — Ellucian adds it automatically */}
+</Button>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
 HomeHeader.propTypes = {
-  currentTerm:      PropTypes.string,
-  termCodesResult:  PropTypes.array,
+  currentTerm: PropTypes.string,
+  termCodesResult: PropTypes.array,
   loadingTermCodes: PropTypes.bool.isRequired,
   handleTermChange: PropTypes.func.isRequired,
 };

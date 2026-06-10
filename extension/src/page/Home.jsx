@@ -1,25 +1,20 @@
 import React, { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 import useFetch from "../hooks/useFetch";
-import TermGpaBar from "../components/TermGpaBar";
 import HomeHeader from "../components/HomeHeader";
 import GpaMetrics from "../components/GpaMetrics";
 import CourseDataView from "../components/CourseDataView";
 import "./Home.css";
 import TargetGpaModal from "../components/TargetGpaModal";
 
-// Ellucian provided hooks
 import { useData, useCardInfo } from "@ellucian/experience-extension-utils";
-
 import { Typography, Card } from "@ellucian/react-design-system/core";
 
-// Helper: treat "N/A", null, undefined, "" all as no standing
 const parseStanding = (value) => {
   if (!value || value.trim().toUpperCase() === "N/A") return null;
   return value;
 };
 
-/* ================= COMPONENT ================= */
 const MySuccessTrackerTable = () => {
   const [currentTerm, setCurrentTerm] = useState(null);
   const [termData, setTermData] = useState([]);
@@ -38,18 +33,11 @@ const MySuccessTrackerTable = () => {
   const [academicStanding, setAcademicStanding] = useState(null);
   const [previousAcademicStanding, setPreviousAcademicStanding] = useState(null);
   const [programGpa, setProgramGpa] = useState(null);
-
-  // ── Track whether we have already applied the term passed from the card.
-  //    Once applied we must NOT re-apply it (e.g. when the user manually changes
-  //    the term via the dropdown, we don't want to revert back to the card term).
   const [cardTermApplied, setCardTermApplied] = useState(false);
 
   const { authenticatedEthosFetch } = useData();
   const { cardId, cardConfiguration } = useCardInfo();
 
-  // ── Read the term the user was viewing in the card.
-  //    The card writes it to localStorage on every term change.
-  //    useState initializer runs once on mount so it never re-reads on re-renders.
   const [termCodeFromCard] = useState(() => {
     return localStorage.getItem("sst_card_term_code") || null;
   });
@@ -64,7 +52,7 @@ const MySuccessTrackerTable = () => {
     minimum_threshold_for_satisfactory_attendance,
     student_term_courses_pipeline,
     student_gpa_recommendation_pipeline,
-    max_gpa
+    max_gpa,
   } = cardConfiguration;
 
   const [loadingRecommendation, setLoadingRecommendation] = useState(false);
@@ -113,36 +101,17 @@ const MySuccessTrackerTable = () => {
     setModalOpen(false);
   };
 
-  // Parse config thresholds once
-  const parsed_minimum_threshold_for_excellent_performance = parseFloat(
-    minimum_threshold_for_excellent_performance,
-  );
-  const parsed_minimum_threshold_for_satisfactory_performance = parseFloat(
-    minimum_threshold_for_satisfactory_performance,
-  );
-  const parsed_minimum_threshold_for_excellent_attendance = parseFloat(
-    minimum_threshold_for_excellent_attendance,
-  );
-  const parsed_minimum_threshold_for_satisfactory_attendance = parseFloat(
-    minimum_threshold_for_satisfactory_attendance,
-  );
+  const parsed_minimum_threshold_for_excellent_performance = parseFloat(minimum_threshold_for_excellent_performance);
+  const parsed_minimum_threshold_for_satisfactory_performance = parseFloat(minimum_threshold_for_satisfactory_performance);
+  const parsed_minimum_threshold_for_excellent_attendance = parseFloat(minimum_threshold_for_excellent_attendance);
+  const parsed_minimum_threshold_for_satisfactory_attendance = parseFloat(minimum_threshold_for_satisfactory_attendance);
 
-  if (
-    parsed_minimum_threshold_for_excellent_performance <=
-    parsed_minimum_threshold_for_satisfactory_performance
-  ) {
-    throw new Error(
-      "Invalid performance configuration: excellent threshold must be greater than satisfactory threshold",
-    );
+  if (parsed_minimum_threshold_for_excellent_performance <= parsed_minimum_threshold_for_satisfactory_performance) {
+    throw new Error("Invalid performance configuration: excellent threshold must be greater than satisfactory threshold");
   }
 
-  if (
-    parsed_minimum_threshold_for_excellent_attendance <=
-    parsed_minimum_threshold_for_satisfactory_attendance
-  ) {
-    throw new Error(
-      "Invalid attendance configuration: excellent threshold must be greater than satisfactory threshold",
-    );
+  if (parsed_minimum_threshold_for_excellent_attendance <= parsed_minimum_threshold_for_satisfactory_attendance) {
+    throw new Error("Invalid attendance configuration: excellent threshold must be greater than satisfactory threshold");
   }
 
   const COLOR_CONFIG = {
@@ -161,13 +130,7 @@ const MySuccessTrackerTable = () => {
     loading: dataLoading,
     data: pipelineData,
     error: dataError,
-  } = useFetch(
-    authenticatedEthosFetch,
-    cardId,
-    undefined,
-    student_term_courses_pipeline,
-    {},
-  );
+  } = useFetch(authenticatedEthosFetch, cardId, undefined, student_term_courses_pipeline, {});
 
   useEffect(() => {
     if (pipelineData) {
@@ -177,10 +140,6 @@ const MySuccessTrackerTable = () => {
     }
   }, [pipelineData]);
 
-  // ── Build term list and set initial term ──────────────────────────────────
-  // KEY FIX: When termCodeFromCard is present (user clicked a specific term in
-  // the card view), initialise to THAT term. Only fall back to the latest term
-  // when no term was passed (e.g. direct page navigation).
   useEffect(() => {
     if (!pipelineData?.termData) return;
 
@@ -196,30 +155,22 @@ const MySuccessTrackerTable = () => {
     setTermCodesResult(newTermCodesResult);
     setTermData(newTermCodesResult.map((t) => t.term));
 
-    // Store the latest term code for comparison (used in isLatestTerm)
     const latestTc = filteredTerms[filteredTerms.length - 1];
     setLatestTermCode(latestTc);
 
-    // Only set the initial term once (cardTermApplied guards subsequent renders)
     if (!cardTermApplied) {
       setCardTermApplied(true);
-
       if (termCodeFromCard && pipelineData.termData[termCodeFromCard]) {
-        // ✅ User clicked a specific term in the card — open that term
         const termName = pipelineData.termData[termCodeFromCard]?.termName || termCodeFromCard;
         setCurrentTermCode(termCodeFromCard);
         setCurrentTerm(termName);
       } else {
-        // ✅ Fallback: no term passed (direct navigation) — open latest term
         const latestTermName = pipelineData.termData[latestTc]?.termName || latestTc;
         setCurrentTermCode(latestTc);
         setCurrentTerm(latestTermName);
       }
     }
   }, [pipelineData]); // eslint-disable-line react-hooks/exhaustive-deps
-  // Note: cardTermApplied and termCodeFromCard are intentionally excluded from
-  // deps — we only want this guard logic to run when fresh pipeline data arrives,
-  // not every time the user manually changes the term dropdown.
 
   useEffect(() => {
     if (!pipelineData || !currentTermCode) return;
@@ -229,15 +180,10 @@ const MySuccessTrackerTable = () => {
     setCurrentGpa(termInfo.cumulative_gpa || 0);
     setTermGpa(termInfo.gpa_available ? termInfo.term_gpa || 0 : "N/A");
     setAvgAttendance(termInfo.attendancePercentage);
-
-    // parseStanding converts "N/A" string → null so fallback logic works correctly
     setAcademicStanding(parseStanding(termInfo.academicStanding));
 
-    // Set previous term's academic standing as fallback
     if (termCodesResult) {
-      const currentIndex = termCodesResult.findIndex(
-        (t) => t.termCode === currentTermCode,
-      );
+      const currentIndex = termCodesResult.findIndex((t) => t.termCode === currentTermCode);
       if (currentIndex > 0) {
         const prevTermCode = termCodesResult[currentIndex - 1].termCode;
         const prevTermInfo = pipelineData.termData[prevTermCode];
@@ -263,9 +209,7 @@ const MySuccessTrackerTable = () => {
       subjectCode: course.subjectCode,
       crn: course.crn,
       courseTitle: course.courseTitle || "-",
-      attendancePercentage: course.attendancePercentage
-        ? parseFloat(course.attendancePercentage)
-        : null,
+      attendancePercentage: course.attendancePercentage ? parseFloat(course.attendancePercentage) : null,
       grade: course.finalGrade || "-",
       credit: course.creditHours || "-",
       gradeMode: course.gradeMode || "-",
@@ -277,9 +221,7 @@ const MySuccessTrackerTable = () => {
     let isFirst = false;
 
     if (termCodesResult) {
-      const currentIndex = termCodesResult.findIndex(
-        (t) => t.termCode === currentTermCode,
-      );
+      const currentIndex = termCodesResult.findIndex((t) => t.termCode === currentTermCode);
       if (currentIndex === 0) {
         isFirst = true;
       } else if (currentIndex > 0) {
@@ -287,21 +229,14 @@ const MySuccessTrackerTable = () => {
         const prevTermInfo = pipelineData.termData[prevTermCode];
         if (prevTermInfo) {
           let prevCumGpa = prevTermInfo.cumulative_gpa;
-
-          if (
-            prevCumGpa === "N/A" ||
-            prevCumGpa === null ||
-            prevCumGpa === undefined
-          ) {
+          if (prevCumGpa === "N/A" || prevCumGpa === null || prevCumGpa === undefined) {
             prevCumGpa = 0;
           } else {
             prevCumGpa = Number(prevCumGpa);
           }
-
           gpaDiff = (termInfo.cumulative_gpa || 0) - prevCumGpa;
 
           const prevAvgAtt = prevTermInfo.attendancePercentage;
-
           if (avgAttendance !== null && prevAvgAtt !== null) {
             attDiff = avgAttendance - prevAvgAtt;
           } else {
@@ -316,7 +251,6 @@ const MySuccessTrackerTable = () => {
     setIsFirstTermFlag(isFirst);
   }, [pipelineData, currentTermCode, termCodesResult, avgAttendance]);
 
-  // For term GPAs Bar
   useEffect(() => {
     if (!pipelineData || !termCodesResult) {
       setTermGpaData([]);
@@ -338,32 +272,23 @@ const MySuccessTrackerTable = () => {
   const getStatusColor = (value) => {
     const parsed_value = parseFloat(value);
     if (isNaN(parsed_value)) return poor_performance_color_code;
-    if (parsed_value >= parsed_minimum_threshold_for_excellent_attendance)
-      return excellent_performance_color_code;
-    if (parsed_value >= parsed_minimum_threshold_for_satisfactory_attendance)
-      return satisfactory_performance_color_code;
+    if (parsed_value >= parsed_minimum_threshold_for_excellent_attendance) return excellent_performance_color_code;
+    if (parsed_value >= parsed_minimum_threshold_for_satisfactory_attendance) return satisfactory_performance_color_code;
     return poor_performance_color_code;
   };
 
   const getGpaCircleColor = (gpa) => {
     const parsed_gpa = parseFloat(gpa);
     if (isNaN(parsed_gpa)) return poor_performance_color_code;
-    if (parsed_gpa >= parsed_minimum_threshold_for_excellent_performance)
-      return excellent_performance_color_code;
-    if (parsed_gpa >= parsed_minimum_threshold_for_satisfactory_performance)
-      return satisfactory_performance_color_code;
+    if (parsed_gpa >= parsed_minimum_threshold_for_excellent_performance) return excellent_performance_color_code;
+    if (parsed_gpa >= parsed_minimum_threshold_for_satisfactory_performance) return satisfactory_performance_color_code;
     return poor_performance_color_code;
   };
 
   const getAcademicStandingColor = (standing) => {
     if (!standing) return COLOR_CONFIG.ON_TRACK;
     const lower = standing.toLowerCase();
-    if (
-      lower.includes("good") ||
-      lower.includes("honor") ||
-      lower.includes("excellent") ||
-      lower.includes("satisfactory")
-    )
+    if (lower.includes("good") || lower.includes("honor") || lower.includes("excellent") || lower.includes("satisfactory"))
       return COLOR_CONFIG.ON_TRACK;
     if (lower.includes("warning") || lower.includes("probation"))
       return COLOR_CONFIG.NEEDS_ATTENTION;
@@ -372,9 +297,6 @@ const MySuccessTrackerTable = () => {
     return COLOR_CONFIG.ON_TRACK;
   };
 
-  // ── This is called when the user manually picks a term from the dropdown.
-  //    It simply updates state — no conflict with the card-term logic above
-  //    because cardTermApplied is already true by this point.
   const handleTermChange = (term) => {
     setCurrentTerm(term.term);
     setCurrentTermCode(term.termCode);
@@ -382,9 +304,7 @@ const MySuccessTrackerTable = () => {
 
   const isFirstTerm = useMemo(() => {
     if (!termCodesResult || termCodesResult.length === 0) return false;
-    const sorted = termCodesResult.sort((a, b) =>
-      a.termCode.localeCompare(b.termCode),
-    );
+    const sorted = termCodesResult.sort((a, b) => a.termCode.localeCompare(b.termCode));
     return sorted[0]?.termCode === currentTermCode;
   }, [termCodesResult, currentTermCode]);
 
@@ -395,17 +315,13 @@ const MySuccessTrackerTable = () => {
   const attendanceCircleColor = getStatusColor(avgAttendance);
   const deltaColor = isPositive ? COLOR_CONFIG.ON_TRACK : COLOR_CONFIG.CRITICAL;
   const programGpaCircleColor = getGpaCircleColor(programGpa);
-
   const resolvedStanding = academicStanding || previousAcademicStanding;
   const academicStandingColor = getAcademicStandingColor(resolvedStanding);
-
   const isLatestTerm = currentTermCode === latestTermCode;
   const attendanceDiff = parseFloat(diffAttendance);
   const isZeroAttendanceDiff = attendanceDiff === 0;
   const isPositiveAttendanceDiff = attendanceDiff > 0;
-  const attendanceDiffColor = isPositiveAttendanceDiff
-    ? COLOR_CONFIG.ON_TRACK
-    : COLOR_CONFIG.CRITICAL;
+  const attendanceDiffColor = isPositiveAttendanceDiff ? COLOR_CONFIG.ON_TRACK : COLOR_CONFIG.CRITICAL;
 
   const isLoading = dataLoading;
   const hasNoTerms =
@@ -425,115 +341,73 @@ const MySuccessTrackerTable = () => {
         />
 
         {isLoading && (
-          <Typography
-            style={{ padding: "20px", textAlign: "center", color: "#02050c" }}
-          >
+          <Typography style={{ padding: "20px", textAlign: "center", color: "#02050c" }}>
             Loading student details...
           </Typography>
         )}
 
         {!isLoading && dataError && (
-          <Typography
-            style={{
-              padding: "20px",
-              textAlign: "center",
-              color: "#B91C1C",
-              fontStyle: "italic",
-            }}
-          >
+          <Typography style={{ padding: "20px", textAlign: "center", color: "#B91C1C", fontStyle: "italic" }}>
             Failed to load student data. Please try again later.
           </Typography>
         )}
 
         {!isLoading && hasNoTerms && (
-          <Typography
-            style={{
-              padding: "20px",
-              textAlign: "center",
-              color: "#6B7280",
-              fontStyle: "italic",
-            }}
-          >
+          <Typography style={{ padding: "20px", textAlign: "center", color: "#6B7280", fontStyle: "italic" }}>
             No term registrations found for this student.
           </Typography>
         )}
 
         {!isLoading && !dataError && !hasNoTerms && termCodesResult && (
           <>
-            <div className="gpa-cards-wrapper">
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "20px",
-                  justifyContent: "space-between",
-                  width: "100%",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    gap: "20px",
-                    justifyContent: "space-between",
-                    width: "100%",
-                  }}
-                >
-                  <GpaMetrics
-                    loadingTermInformation={dataLoading}
-                    isFirstTerm={isFirstTerm}
-                    isFirstTermFlag={isFirstTermFlag}
-                    isZeroDelta={isZeroDelta}
-                    isPositive={isPositive}
-                    deltaColor={deltaColor}
-                    gpaDelta={gpaDelta}
-                    gpaCircleColor={gpaCircleColor}
-                    currentGpa={currentGpa}
-                    termGpaCircleColor={termGpaCircleColor}
-                    termGpa={termGpa}
-                    isLatestTerm={isLatestTerm}
-                    diffAttendance={diffAttendance}
-                    isZeroAttendanceDiff={isZeroAttendanceDiff}
-                    isPositiveAttendanceDiff={isPositiveAttendanceDiff}
-                    attendanceDiffColor={attendanceDiffColor}
-                    attendanceCircleColor={attendanceCircleColor}
-                    avgAttendance={avgAttendance}
-                    colors={COLOR_CONFIG}
-                    handleOpenModal={handleOpenModal}
-                    academicStanding={academicStanding}
-                    previousAcademicStanding={previousAcademicStanding}
-                    academicStandingColor={academicStandingColor}
-                    programGpa={programGpa}
-                    programGpaCircleColor={programGpaCircleColor}
-                    fetchGpaRecommendation={fetchGpaRecommendation}
-                    loadingRecommendation={loadingRecommendation}
-                    recommendationResult={recommendationResult}
-                    recommendationError={recommendationError}
-                  />
-
-                  {/* TERM GPA BAR CHART */}
-                  <Card className="term-gpa-bar-card">
-                    <TermGpaBar
-                      termData={termData}
-                      termGpaData={termGpaData}
-                      loading={dataLoading}
-                    />
-                  </Card>
-                </div>
-
-                <TargetGpaModal
-                  open={modalOpen}
-                  onClose={handleCloseModal}
-                  onSubmit={fetchGpaRecommendation}
-                  loading={loadingRecommendation}
-                  result={recommendationResult}
-                  maxGpa={max_gpa}
-                  currentGpa={currentGpa}
-                  programGpa={programGpa}
-                  maxAchievableGpa={pipelineData?.maxAchievableGpa}
-                />
-              </div>
+            <div className="gpa-cards-wrapper" style={{ marginTop: "14px" }}>
+              {/* GpaMetrics contains the 4 cards + chart + legends + button — all in one */}
+              <GpaMetrics
+                loadingTermInformation={dataLoading}
+                termData={termData}
+                termGpaData={termGpaData}
+                isFirstTerm={isFirstTerm}
+                isFirstTermFlag={isFirstTermFlag}
+                isZeroDelta={isZeroDelta}
+                isPositive={isPositive}
+                deltaColor={deltaColor}
+                gpaDelta={gpaDelta}
+                gpaCircleColor={gpaCircleColor}
+                currentGpa={currentGpa}
+                termGpaCircleColor={termGpaCircleColor}
+                termGpa={termGpa}
+                isLatestTerm={isLatestTerm}
+                diffAttendance={diffAttendance}
+                isZeroAttendanceDiff={isZeroAttendanceDiff}
+                isPositiveAttendanceDiff={isPositiveAttendanceDiff}
+                attendanceDiffColor={attendanceDiffColor}
+                attendanceCircleColor={attendanceCircleColor}
+                avgAttendance={avgAttendance}
+                colors={COLOR_CONFIG}
+                handleOpenModal={handleOpenModal}
+                academicStanding={academicStanding}
+                previousAcademicStanding={previousAcademicStanding}
+                academicStandingColor={academicStandingColor}
+                programGpa={programGpa}
+                programGpaCircleColor={programGpaCircleColor}
+                fetchGpaRecommendation={fetchGpaRecommendation}
+                loadingRecommendation={loadingRecommendation}
+                recommendationResult={recommendationResult}
+                recommendationError={recommendationError}
+              />
             </div>
+
+            <TargetGpaModal
+              open={modalOpen}
+              onClose={handleCloseModal}
+              onSubmit={fetchGpaRecommendation}
+              loading={loadingRecommendation}
+              result={recommendationResult}
+              maxGpa={max_gpa}
+              currentGpa={currentGpa}
+              programGpa={programGpa}
+              maxAchievableGpa={pipelineData?.maxAchievableGpa}
+            />
 
             <CourseDataView
               loadingCourseData={dataLoading}

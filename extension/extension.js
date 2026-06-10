@@ -19,6 +19,13 @@ module.exports = {
             default: "#079C34",
           },
           {
+            key: "attendance_source",
+            label: "attendance",
+            type: "text",
+            require: false,
+           
+          },
+          {
             key: "satisfactory_performance_color_code",
             label: "Hex color code for satisfactory performance",
             type: "text",
