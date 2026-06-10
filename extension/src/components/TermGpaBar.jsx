@@ -121,9 +121,9 @@ export default function TermGpaBar({ termData, termGpaData }) {
   return (
     <div
       style={{
-        width: "320px",
-        minWidth: "320px",
-        maxWidth: "320px",
+        width: "300px",
+        minWidth: "300px",
+        maxWidth: "300px",
         padding: "18px 14px 20px 14px",
         borderRadius: "12px",
         display: "flex",
@@ -156,7 +156,7 @@ export default function TermGpaBar({ termData, termGpaData }) {
       </Typography>
 
       {/* Chart — height tuned to keep card same size as neighbours */}
-      <div style={{ height: "90px", width: "100%" }}>
+      <div style={{ height: "110px", width: "100%" }}>
         <Line options={buildOptions(fullLabels)} data={data} />
       </div>
     </div>

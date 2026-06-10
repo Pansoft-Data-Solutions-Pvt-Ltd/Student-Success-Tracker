@@ -6,6 +6,7 @@ import GpaMetrics from "../components/GpaMetrics";
 import CourseDataView from "../components/CourseDataView";
 import "./Home.css";
 import TargetGpaModal from "../components/TargetGpaModal";
+import TermGpaBar from "../components/TermGpaBar";
 
 import { useData, useCardInfo } from "@ellucian/experience-extension-utils";
 import { Typography, Card } from "@ellucian/react-design-system/core";
@@ -361,41 +362,53 @@ const MySuccessTrackerTable = () => {
         {!isLoading && !dataError && !hasNoTerms && termCodesResult && (
           <>
             <div className="gpa-cards-wrapper" style={{ marginTop: "14px" }}>
-              {/* GpaMetrics contains the 4 cards + chart + legends + button — all in one */}
-              <GpaMetrics
-                loadingTermInformation={dataLoading}
-                termData={termData}
-                termGpaData={termGpaData}
-                isFirstTerm={isFirstTerm}
-                isFirstTermFlag={isFirstTermFlag}
-                isZeroDelta={isZeroDelta}
-                isPositive={isPositive}
-                deltaColor={deltaColor}
-                gpaDelta={gpaDelta}
-                gpaCircleColor={gpaCircleColor}
-                currentGpa={currentGpa}
-                termGpaCircleColor={termGpaCircleColor}
-                termGpa={termGpa}
-                isLatestTerm={isLatestTerm}
-                diffAttendance={diffAttendance}
-                isZeroAttendanceDiff={isZeroAttendanceDiff}
-                isPositiveAttendanceDiff={isPositiveAttendanceDiff}
-                attendanceDiffColor={attendanceDiffColor}
-                attendanceCircleColor={attendanceCircleColor}
-                avgAttendance={avgAttendance}
-                colors={COLOR_CONFIG}
-                handleOpenModal={handleOpenModal}
-                academicStanding={academicStanding}
-                previousAcademicStanding={previousAcademicStanding}
-                academicStandingColor={academicStandingColor}
-                programGpa={programGpa}
-                programGpaCircleColor={programGpaCircleColor}
-                fetchGpaRecommendation={fetchGpaRecommendation}
-                loadingRecommendation={loadingRecommendation}
-                recommendationResult={recommendationResult}
-                recommendationError={recommendationError}
-              />
-            </div>
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "row",
+      gap: "20px",
+      alignItems: "stretch",
+      width: "100%",
+    }}
+  >
+    <GpaMetrics
+      loadingTermInformation={dataLoading}
+      isFirstTerm={isFirstTerm}
+      isFirstTermFlag={isFirstTermFlag}
+      isZeroDelta={isZeroDelta}
+      isPositive={isPositive}
+      deltaColor={deltaColor}
+      gpaDelta={gpaDelta}
+      gpaCircleColor={gpaCircleColor}
+      currentGpa={currentGpa}
+      termGpaCircleColor={termGpaCircleColor}
+      termGpa={termGpa}
+      isLatestTerm={isLatestTerm}
+      diffAttendance={diffAttendance}
+      isZeroAttendanceDiff={isZeroAttendanceDiff}
+      isPositiveAttendanceDiff={isPositiveAttendanceDiff}
+      attendanceDiffColor={attendanceDiffColor}
+      attendanceCircleColor={attendanceCircleColor}
+      avgAttendance={avgAttendance}
+      colors={COLOR_CONFIG}
+      handleOpenModal={handleOpenModal}
+      academicStanding={academicStanding}
+      previousAcademicStanding={previousAcademicStanding}
+      academicStandingColor={academicStandingColor}
+      programGpa={programGpa}
+      programGpaCircleColor={programGpaCircleColor}
+      fetchGpaRecommendation={fetchGpaRecommendation}
+      loadingRecommendation={loadingRecommendation}
+      recommendationResult={recommendationResult}
+      recommendationError={recommendationError}
+    />
+
+    <TermGpaBar
+      termData={termData}
+      termGpaData={termGpaData}
+    />
+  </div>
+</div>
 
             <TargetGpaModal
               open={modalOpen}
