@@ -76,13 +76,13 @@ const CourseDataView = ({
     backgroundColor: "#EDE9F6",
     color: "#3B1F6E",
     textAlign: "center",
-    padding: "10px 16px",
+    padding: "12px 16px",
     borderBottom: "1px solid #D1C4E9",
   };
 
   const headerTextStyle = {
     fontWeight: 700,
-    fontSize: "0.875rem",
+    fontSize: "1rem",
     color: "#3B1F6E",
   };
 

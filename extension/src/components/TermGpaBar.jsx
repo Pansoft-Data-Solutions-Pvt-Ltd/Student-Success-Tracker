@@ -34,24 +34,13 @@ const ChartIcon = () => (
 const buildOptions = (fullLabels) => ({
   responsive: true,
   maintainAspectRatio: false,
-  layout: { padding: 0 },
+  layout: { padding: { top: 2, bottom: 4, left: 0, right: 4 } },
   plugins: {
-    legend: {
-      position: "top",
-      align: "end",
-      labels: {
-        usePointStyle: true,
-        pointStyle: "circle",
-        font: { size: 9 },
-        boxWidth: 6,
-        padding: 6,
-        color: "#7C3AED",
-      },
-    },
+    legend: { display: false },
     title: { display: false },
     tooltip: {
-      bodyFont: { size: 10 },
-      titleFont: { size: 10, weight: "bold" },
+      bodyFont: { size: 11 },
+      titleFont: { size: 11, weight: "bold" },
       callbacks: {
         title: (items) => fullLabels[items[0].dataIndex] ?? items[0].label,
         label: (item) => `GPA: ${Number(item.raw).toFixed(2)}`,
@@ -62,36 +51,34 @@ const buildOptions = (fullLabels) => ({
   scales: {
     x: {
       ticks: {
-        font: { size: 8 },
+        font: { size: 9, weight: "600" },   // ← bolder + bigger
         autoSkip: true,
         maxTicksLimit: 5,
-        color: "#6B7280",
+        color: "#4B0082",                    // ← darker purple so more visible
+        padding: 2,
         callback: function (val, index) {
           const label = fullLabels[index] ?? "";
-          const match = label.match(/^(Spring|Fall|Summer|Winter)\s+(\d{4})$/i);
-          if (match) {
-            const season = match[1].substring(0, 2).toUpperCase();
-            const year = match[2].substring(2);
-            return `${season}${year}`;
-          }
+          // Full names: "Spring 2024", "Fall 2024" etc — no shortening
           return label;
         },
       },
       grid: { display: false },
       border: { display: false },
+      offset: false,
     },
     y: {
-      min: 0,
-      max: 4,
-      ticks: {
-        stepSize: 1,
-        font: { size: 8 },
-        padding: 2,
-        color: "#6B7280",
-      },
-      grid: { color: "rgba(243,232,255,0.8)" },
-      border: { display: false },
-    },
+  min: undefined,
+  max: undefined,
+  ticks: {
+    font: { size: 8, weight: "600" },  // ← added weight: "600"
+    padding: 2,
+    color: "#4B0082",                   // ← darker purple like x-axis
+    maxTicksLimit: 4,
+    callback: (val) => Number(val).toFixed(1),
+  },
+  grid: { color: "rgba(139,92,246,0.15)", lineWidth: 1 },
+  border: { display: false },
+},
   },
 });
 
@@ -121,10 +108,11 @@ export default function TermGpaBar({ termData, termGpaData }) {
   return (
     <div
       style={{
-        width: "300px",
-        minWidth: "300px",
-        maxWidth: "300px",
-        padding: "18px 14px 20px 14px",
+        flex: 1,
+        minWidth: 0,
+        flexGrow: 1,
+        height: "130px",
+        padding: "4px 14px 8px 14px",
         borderRadius: "12px",
         display: "flex",
         flexDirection: "column",
@@ -133,10 +121,9 @@ export default function TermGpaBar({ termData, termGpaData }) {
         boxShadow: "0 2px 8px rgba(0,0,0,0.10)",
         background: "#fff",
         boxSizing: "border-box",
-        alignSelf: "flex-start",
       }}
     >
-      {/* Icon + Title on same row to save vertical space */}
+      {/* Title row */}
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
         <ChartIcon />
         <Typography
@@ -147,16 +134,8 @@ export default function TermGpaBar({ termData, termGpaData }) {
         </Typography>
       </div>
 
-      {/* Subtitle */}
-      <Typography
-        variant="body2"
-        style={{ fontSize: "0.78rem", color: "#6B21A8", fontWeight: 500, margin: "2px 0 4px 0" }}
-      >
-        ● GPA trend across terms
-      </Typography>
-
-      {/* Chart — height tuned to keep card same size as neighbours */}
-      <div style={{ height: "110px", width: "100%" }}>
+      {/* Chart */}
+      <div style={{ flex: 1, width: "100%", minHeight: 0 }}>
         <Line options={buildOptions(fullLabels)} data={data} />
       </div>
     </div>
