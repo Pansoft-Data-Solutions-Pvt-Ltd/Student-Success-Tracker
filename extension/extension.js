@@ -20,10 +20,17 @@ module.exports = {
           },
           {
             key: "attendance_source",
-            label: "attendance",
+            label: "Attendance Source(banner/moodle)",
             type: "text",
             require: false,
-           
+            default: "banner" 
+          },
+          {
+            key: "grade_source",
+            label: "Grade Source(banner/moodle)",
+            type: "text",
+            require: false,
+            default: "banner" 
           },
           {
             key: "satisfactory_performance_color_code",
@@ -66,13 +73,6 @@ module.exports = {
             type: "text",
             require: true,
             default: "60",
-          },
-          {
-            key: "latest_term_information_pipeline",
-            label: "Serverless API name for latest term information pipeline",
-            type: "text",
-            require: true,
-            default: "pansoft-x-get-student-latest-term-information",
           },
           {
             key: "student_term_courses_pipeline",
