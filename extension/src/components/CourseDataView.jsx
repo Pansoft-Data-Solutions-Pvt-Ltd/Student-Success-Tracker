@@ -8,6 +8,7 @@ import {
   TableBody,
   Typography,
 } from "@ellucian/react-design-system/core";
+import { useCardInfo } from "@ellucian/experience-extension-utils";
 
 // Circular progress SVG component
 const CircularProgress = ({ percentage, color }) => {
@@ -69,7 +70,11 @@ const CourseDataView = ({
 }) => {
   const creditsHeader = isCurrentTerm ? "Credits" : "Credits Earned";
 
-  // ── Fix 2: removed unused `themeInfo` from useThemeInfo() ──
+  const { cardConfiguration } = useCardInfo();
+  const {
+    attendance_source,
+    grade_source,
+  } = cardConfiguration;
 
   // Light lavender header — matches screenshot
   const headerCellStyle = {
@@ -97,13 +102,13 @@ const CourseDataView = ({
                 <Typography variant="body1" style={headerTextStyle}>Course</Typography>
               </TableCell>
               <TableCell style={headerCellStyle}>
-                <Typography variant="body1" style={headerTextStyle}>Grade</Typography>
+                <Typography variant="body1" style={headerTextStyle}>Grade <span style={{fontSize: '0.8rem', fontWeight: 'normal'}} >({grade_source})</span></Typography>
               </TableCell>
               <TableCell style={headerCellStyle}>
                 <Typography variant="body1" style={headerTextStyle}>{creditsHeader}</Typography>
               </TableCell>
               <TableCell style={headerCellStyle}>
-                <Typography variant="body1" style={headerTextStyle}>Attendance</Typography>
+                <Typography variant="body1" style={headerTextStyle}>Attendance <span style={{fontSize: '0.8rem', fontWeight: 'normal'}} >({attendance_source})</span></Typography>
               </TableCell>
             </TableRow>
           </TableHead>

@@ -166,7 +166,7 @@ const MySuccessTrackerTable = () => {
       undefined,
       "pansoft-x-get-student-course-attendance-banner",
       { pidm, termCode: currentTermCode, crns },
-      attendance_source === "banner" && pidm !== undefined,
+      attendance_source === "banner",
     );
 
   /* ── Attendance: Moodle ── */
@@ -183,7 +183,7 @@ const MySuccessTrackerTable = () => {
         termCode: currentTermCode,
         crns,
       },
-      attendance_source === "moodle" && pidm !== undefined,
+      attendance_source === "moodle",
     );
 
   /* ── Grades: Banner ── */
@@ -193,7 +193,7 @@ const MySuccessTrackerTable = () => {
     undefined,
     "pansoft-x-get-student-course-grades-banner",
     { pidm, termCode: currentTermCode, crns },
-    grade_source === "banner" && pidm !== undefined,
+    grade_source === "banner",
   );
 
   /* ── Grades: Moodle ── */
@@ -209,7 +209,7 @@ const MySuccessTrackerTable = () => {
       termCode: currentTermCode,
       crns,
     },
-    grade_source === "moodle" && pidm !== undefined,
+    grade_source === "moodle",
   );
 
   /* ── Moodle attendance: crn → percentage (number) ── */
@@ -235,17 +235,22 @@ const MySuccessTrackerTable = () => {
     }, {});
   }, [bannerGradeData]);
 
-  /* ── Moodle grades: crn → { grade (percentage string), gradeMode, creditHours } ── */
+  /* ── Moodle grades: crn → { grade (percentage string), gradeMode, creditHours, gradeComponents } ── */
   const moodleGradeLookup = useMemo(() => {
     if (!moodleGradeData?.gradebooks) return {};
     return moodleGradeData.gradebooks.reduce((acc, entry) => {
-      // Use the type === "course" entry as the overall grade
+      // Overall grade: type === "course" entry
       const courseEntry = entry.grades?.find((g) => g.type === "course");
       const pct = courseEntry ? parseFloat(courseEntry.percentage) : null;
+      // Breakdown: mod + quiz entries only
+      const gradeComponents =
+        entry.grades?.filter((g) => g.type === "mod" || g.type === "quiz") ??
+        [];
       acc[entry.crn] = {
         grade: pct !== null && !isNaN(pct) ? `${pct.toFixed(2)}%` : "-",
         gradeMode: "-",
         creditHours: "-",
+        gradeComponents,
       };
       return acc;
     }, {});
@@ -308,7 +313,7 @@ const MySuccessTrackerTable = () => {
     if (!termInfo) return;
 
     setCurrentGpa(termInfo.cumulative_gpa || 0);
-    setTermGpa(termInfo.gpa_available ? termInfo.term_gpa || 0 : "N/A");
+    setTermGpa(termInfo.gpa_available ? termInfo.termGpa || 0 : "N/A");
     setAcademicStanding(parseStanding(termInfo.academicStanding));
 
     if (!termCodesResult) return;
@@ -380,6 +385,7 @@ const MySuccessTrackerTable = () => {
         grade: gradeInfo?.grade || "-",
         credit: gradeInfo?.creditHours || "-",
         gradeMode: gradeInfo?.gradeMode || "-",
+        gradeComponents: gradeInfo?.gradeComponents || [],
       };
     });
 
@@ -406,7 +412,7 @@ const MySuccessTrackerTable = () => {
       return {
         term: termObj.term,
         termCode: termObj.termCode,
-        termGpa: tInfo?.term_gpa || 0,
+        termGpa: tInfo?.termGpa || 0,
         cumulativeGpa: tInfo?.cumulative_gpa || 0,
       };
     });
@@ -704,4 +710,3 @@ MySuccessTrackerTable.propTypes = {
 };
 
 export default MySuccessTrackerTable;
-

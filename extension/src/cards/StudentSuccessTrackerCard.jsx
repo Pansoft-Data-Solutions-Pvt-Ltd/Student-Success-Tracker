@@ -684,9 +684,9 @@ const StudentSuccessTracker = ({ classes }) => {
           <div className={classes.attHeader}>
             <Typography
               variant="h5"
-              style={{ fontSize: "0.72rem", fontWeight: 700, color: "#111827" }}
+              style={{ fontSize: "0.72rem", fontWeight: 700, color: "#111827", textTransform: "capitalize" }}
             >
-              Attendance {attendance_source}
+              (Attendance {attendance_source})
             </Typography>
 
             {!loadingv2 && all_terms.length > 0 && (
