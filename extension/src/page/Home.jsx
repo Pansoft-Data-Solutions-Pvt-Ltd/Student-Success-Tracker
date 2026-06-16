@@ -383,7 +383,8 @@ const MySuccessTrackerTable = () => {
         attendancePercentage:
           parsedAtt !== null && !isNaN(parsedAtt) ? parsedAtt : null,
         grade: gradeInfo?.grade || "-",
-        credit: gradeInfo?.creditHours || "-",
+        // credit: gradeInfo?.creditHours || "-",
+        credit: course?.credits || "-",
         gradeMode: gradeInfo?.gradeMode || "-",
         gradeComponents: gradeInfo?.gradeComponents || [],
       };

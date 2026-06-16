@@ -105,7 +105,7 @@ const CourseDataView = ({
                 <Typography variant="body1" style={headerTextStyle}>Grade <span style={{fontSize: '0.8rem', fontWeight: 'normal'}} >({grade_source})</span></Typography>
               </TableCell>
               <TableCell style={headerCellStyle}>
-                <Typography variant="body1" style={headerTextStyle}>{creditsHeader}</Typography>
+                <Typography variant="body1" style={headerTextStyle}>Available Credits</Typography>
               </TableCell>
               <TableCell style={headerCellStyle}>
                 <Typography variant="body1" style={headerTextStyle}>Attendance <span style={{fontSize: '0.8rem', fontWeight: 'normal'}} >({attendance_source})</span></Typography>
