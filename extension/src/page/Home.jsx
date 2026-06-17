@@ -230,6 +230,7 @@ const MySuccessTrackerTable = () => {
         grade: data?.grade?.grade || "-",
         gradeMode: data?.grade?.gradeMode || "-",
         creditHours: data?.grade?.creditHours || "-",
+        gradeComponents: data?.gradeableComponents ?? [],
       };
       return acc;
     }, {});
@@ -244,8 +245,11 @@ const MySuccessTrackerTable = () => {
       const pct = courseEntry ? parseFloat(courseEntry.percentage) : null;
       // Breakdown: mod + quiz entries only
       const gradeComponents =
-        entry.grades?.filter((g) => g.type === "mod" || g.type === "quiz") ??
-        [];
+        entry.grades?.filter(
+          (g) =>
+            (g.type === "mod" || g.type === "quiz") &&
+            g.name?.toLowerCase() !== "attendance",
+        ) ?? [];
       acc[entry.crn] = {
         grade: pct !== null && !isNaN(pct) ? `${pct.toFixed(2)}%` : "-",
         gradeMode: "-",
