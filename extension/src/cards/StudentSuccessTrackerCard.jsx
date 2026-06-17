@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 
 import { useCardInfo, useData } from "@ellucian/experience-extension-utils";
@@ -10,12 +10,25 @@ import { Typography } from "@ellucian/react-design-system/core";
 
 import SvgHollowCircle from "../components/SvgHollowCircle.jsx";
 
+/* Inline SVG chevrons — no external icon package, no redirect */
+const ChevronLeftIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const ChevronRightIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
 const styles = (theme) => ({
   card: {
     padding: "0 0.5rem",
     display: "flex",
     flexDirection: "column",
-    gap: "0.5rem",
+    gap: "0.4rem",
     overflow: "hidden",
     width: "100%",
     height: "100%",
@@ -73,30 +86,71 @@ const styles = (theme) => ({
     fontWeight: 600,
     lineHeight: 1,
   },
-  metricFooter: {
-    height: "1.2rem",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  subLabel: {
-    display: "flex",
-    alignItems: "center",
-    gap: "3px",
-    fontSize: "0.62rem",
-    whiteSpace: "nowrap",
-  },
   circleDivider: {
     width: "70%",
     margin: "0",
   },
-  attendanceHeader: {
-    marginBottom: "0.1rem",
+  /* Full-width row: term nav aligned to the right */
+  termNavRow: {
+    display: "flex",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    width: "100%",
+    marginBottom: "0.15rem",
   },
-  iconText: {
+  /* Row: Cumulative GPA label | Attendance Overview label side by side */
+  sectionTitlesRow: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    marginBottom: "0.25rem",
+  },
+  gpaTitleCell: {
+    flex: "0 0 38%",
+    textAlign: "center",
+  },
+  attendanceTitleCell: {
+    flex: "1 1 62%",
+    paddingLeft: "0.5rem",
+  },
+  /* Keep attendanceHeader minimal — titles moved to sectionTitlesRow */
+  attendanceHeader: {
+    display: "flex",
+    flexDirection: "column",
+  },
+  termNav: {
     display: "flex",
     alignItems: "center",
     gap: "4px",
+  },
+  termNavLabel: {
+    minWidth: "72px",
+    textAlign: "center",
+    fontSize: "0.72rem",
+    lineHeight: 1.2,
+  },
+  /* Plain <button> — no Ellucian IconButton to avoid redirect */
+  navBtn: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "22px",
+    height: "22px",
+    padding: 0,
+    border: "1px solid #ccc",
+    borderRadius: "50%",
+    background: "transparent",
+    cursor: "pointer",
+    color: "inherit",
+    lineHeight: 1,
+    "&:disabled": {
+      opacity: 0.35,
+      cursor: "default",
+    },
+    "&:hover:not(:disabled)": {
+      background: "rgba(0,0,0,0.06)",
+    },
   },
   attendanceList: {
     flex: 1,
@@ -137,12 +191,16 @@ const styles = (theme) => ({
   },
 });
 
+/* ── Title-case helper ── */
+const toTitleCase = (str) => {
+  if (!str) return str;
+  return str.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+};
+
 /* ================= COMPONENT ================= */
 const StudentSuccessTracker = ({ classes }) => {
   const { authenticatedEthosFetch } = useData();
-
   const { cardId, configuration } = useCardInfo();
-  // console.log("Printing card configuration:", JSON.stringify(configuration));
 
   const {
     excellent_performance_color_code,
@@ -152,97 +210,182 @@ const StudentSuccessTracker = ({ classes }) => {
     minimum_threshold_for_satisfactory_performance,
     minimum_threshold_for_excellent_attendance,
     minimum_threshold_for_satisfactory_attendance,
-    latest_term_information_pipeline,
+    student_term_courses_pipeline,
   } = configuration;
 
-  // Parse config thresholds once — they arrive as strings from cardConfiguration
-  const parsed_minimum_threshold_for_excellent_performance   = parseFloat(minimum_threshold_for_excellent_performance);
+  const parsed_minimum_threshold_for_excellent_performance    = parseFloat(minimum_threshold_for_excellent_performance);
   const parsed_minimum_threshold_for_satisfactory_performance = parseFloat(minimum_threshold_for_satisfactory_performance);
-  const parsed_minimum_threshold_for_excellent_attendance    = parseFloat(minimum_threshold_for_excellent_attendance);
-  const parsed_minimum_threshold_for_satisfactory_attendance = parseFloat(minimum_threshold_for_satisfactory_attendance);
+  const parsed_minimum_threshold_for_excellent_attendance     = parseFloat(minimum_threshold_for_excellent_attendance);
+  const parsed_minimum_threshold_for_satisfactory_attendance  = parseFloat(minimum_threshold_for_satisfactory_attendance);
 
   if (parsed_minimum_threshold_for_excellent_performance <= parsed_minimum_threshold_for_satisfactory_performance) {
     throw new Error("Invalid performance configuration: excellent threshold must be greater than satisfactory threshold");
   }
-
   if (parsed_minimum_threshold_for_excellent_attendance <= parsed_minimum_threshold_for_satisfactory_attendance) {
     throw new Error("Invalid attendance configuration: excellent threshold must be greater than satisfactory threshold");
   }
 
-  /* ── Helper functions ─────────────────────────────────────────────────── */
-
+  /* ── Helpers ── */
   const get_gpa_color = (gpa_value) => {
-    const parsed_gpa_value = parseFloat(gpa_value);
-    if (isNaN(parsed_gpa_value)) return poor_performance_color_code;
-    if (parsed_gpa_value >= parsed_minimum_threshold_for_excellent_performance)   return excellent_performance_color_code;
-    if (parsed_gpa_value >= parsed_minimum_threshold_for_satisfactory_performance) return satisfactory_performance_color_code;
+    const parsed = parseFloat(gpa_value);
+    if (isNaN(parsed)) return poor_performance_color_code;
+    if (parsed >= parsed_minimum_threshold_for_excellent_performance)    return excellent_performance_color_code;
+    if (parsed >= parsed_minimum_threshold_for_satisfactory_performance) return satisfactory_performance_color_code;
     return poor_performance_color_code;
   };
 
-  const get_attendance_color = (attendance_percentage_value) => {
-    const parsed_attendance_percentage_value = parseFloat(attendance_percentage_value);
-    if (isNaN(parsed_attendance_percentage_value)) return poor_performance_color_code;
-    if (parsed_attendance_percentage_value >= parsed_minimum_threshold_for_excellent_attendance)   return excellent_performance_color_code;
-    if (parsed_attendance_percentage_value >= parsed_minimum_threshold_for_satisfactory_attendance) return satisfactory_performance_color_code;
+  const get_attendance_color = (attendance_value) => {
+    const parsed = parseFloat(attendance_value);
+    if (isNaN(parsed)) return poor_performance_color_code;
+    if (parsed >= parsed_minimum_threshold_for_excellent_attendance)    return excellent_performance_color_code;
+    if (parsed >= parsed_minimum_threshold_for_satisfactory_attendance) return satisfactory_performance_color_code;
     return poor_performance_color_code;
   };
 
-  const get_attendance_status_color = (attendance_percentage_value) => {
-    if (attendance_percentage_value === null || attendance_percentage_value === undefined) return poor_performance_color_code;
-    return get_attendance_color(attendance_percentage_value);
-  };
+  /* ── State ── */
+  const [selected_term_code, set_selected_term_code] = useState(null);
+  const [current_gpa, set_current_gpa]               = useState(0);
+  const [program_gpa, set_program_gpa]               = useState(null);
 
-  /* ── State ────────────────────────────────────────────────────────────── */
-
-  const [current_gpa, set_current_gpa]         = useState(0);
-  const [term_name, set_term_name]             = useState("");
-  const [attendance_data, set_attendance_data] = useState([]);
-  const [avg_attendance, set_avg_attendance]   = useState(null);
-
-  /* ── Fetch latest term info ───────────────────────────────────────────── */
-
+  /* ── Fetch ── */
   const { data, loading } = useFetch(
     authenticatedEthosFetch,
     cardId,
     null,
-    latest_term_information_pipeline,
+    student_term_courses_pipeline,
     {},
   );
 
-  /* ── React to data ────────────────────────────────────────────────────── */
-
-  useEffect(() => {
-    if (!data) return;
-
-    set_current_gpa(parseFloat(data.cumulativeGpa) || 0);
-    set_term_name(data.termName || "");
-    set_attendance_data(Array.isArray(data.termInformation) ? data.termInformation : []);
-
-    // averageAttendancePercentage arrives as a ratio (e.g. 0.18 = 18%); convert to percentage
-    const raw_average_attendance_percentage = parseFloat(data.averageAttendancePercentage);
-    set_avg_attendance(
-      !isNaN(raw_average_attendance_percentage)
-        ? parseFloat((raw_average_attendance_percentage).toFixed(2))
-        : null
-    );
+  /* ── Derive term list ── */
+  const all_terms = useMemo(() => {
+    if (!data?.termData) return [];
+    return Object.keys(data.termData)
+      .sort((a, b) => a.localeCompare(b))
+      .map((tc) => ({
+        termCode: tc,
+        termName: data.termData[tc]?.termName || tc,
+      }));
   }, [data]);
 
-  const gpa_circle_color        = get_gpa_color(current_gpa);
-  const attendance_circle_color = avg_attendance !== null
-    ? get_attendance_color(avg_attendance)
-    : poor_performance_color_code;
+  /* ── Auto-select latest term (only on first load) ── */
+  useEffect(() => {
+    if (all_terms.length > 0 && !selected_term_code) {
+      set_selected_term_code(all_terms[all_terms.length - 1].termCode);
+    }
+  }, [all_terms, selected_term_code]);
 
-  /* ── Render ───────────────────────────────────────────────────────────── */
+  /* ── Persist selected term to localStorage whenever it changes.
+       Home.jsx reads this on mount so the page opens on the same term
+       the user was viewing in the card.                                 ── */
+  useEffect(() => {
+    if (selected_term_code) {
+      localStorage.setItem("sst_card_term_code", selected_term_code);
+    }
+  }, [selected_term_code]);
 
+  /* ── Sync GPA when term changes ── */
+  useEffect(() => {
+    if (!data || !selected_term_code) return;
+    const termInfo = data.termData?.[selected_term_code];
+    if (!termInfo) return;
+
+    const parsedCumulativeGpa = parseFloat(termInfo.cumulative_gpa);
+    set_current_gpa(!isNaN(parsedCumulativeGpa) ? parsedCumulativeGpa : 0);
+
+    const parsedProgramGpa = parseFloat(data.programGpa);
+    set_program_gpa(!isNaN(parsedProgramGpa) ? parsedProgramGpa : null);
+  }, [data, selected_term_code]);
+
+  /* ── Derived ── */
+  const current_term_index  = all_terms.findIndex(t => t.termCode === selected_term_code);
+  const selected_term_obj   = all_terms[current_term_index] || null;
+  const displayed_term_name = selected_term_obj?.termName ?? "";
+
+  const displayed_attendance = useMemo(() => {
+    if (!data?.termData || !selected_term_code) return [];
+    return data.termData[selected_term_code]?.courses ?? [];
+  }, [data, selected_term_code]);
+
+  const gpa_circle_color         = get_gpa_color(current_gpa);
+  const program_gpa_circle_color = get_gpa_color(program_gpa);
+
+  /* ── Term nav handlers — e.stopPropagation() prevents card-level redirect ── */
+  const handle_prev_term = (e) => {
+    e.stopPropagation();
+    if (current_term_index > 0) {
+      set_selected_term_code(all_terms[current_term_index - 1].termCode);
+    }
+  };
+
+  const handle_next_term = (e) => {
+    e.stopPropagation();
+    if (current_term_index < all_terms.length - 1) {
+      set_selected_term_code(all_terms[current_term_index + 1].termCode);
+    }
+  };
+
+  /* ── Card click — localStorage is already up-to-date via the persist effect above.
+       Nothing extra needed here; the SDK’s built-in pageRoute click fires naturally. ── */
+  const handle_card_click = () => {};
+
+  /* ── Render ── */
   return (
-    <div className={classes.card}>
+    <div
+      className={classes.card}
+      role="button"
+      tabIndex={0}
+      onClick={handle_card_click}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handle_card_click();
+        }
+      }}
+      style={{ cursor: "pointer" }}
+    >
+      {/* ── Row 1: term nav aligned right ── */}
+      {!loading && all_terms.length > 0 && (
+        <div className={classes.termNavRow}>
+          <button
+            type="button"
+            className={classes.navBtn}
+            aria-label="Previous term"
+            disabled={current_term_index <= 0}
+            onClick={handle_prev_term}
+          >
+            <ChevronLeftIcon />
+          </button>
+          <Typography variant="body2" className={classes.termNavLabel}>
+            {toTitleCase(displayed_term_name) || "Select Term"}
+          </Typography>
+          <button
+            type="button"
+            className={classes.navBtn}
+            aria-label="Next term"
+            disabled={current_term_index >= all_terms.length - 1}
+            onClick={handle_next_term}
+          >
+            <ChevronRightIcon />
+          </button>
+        </div>
+      )}
+
+      {/* ── Row 2: section titles side by side ── */}
+      <div className={classes.sectionTitlesRow}>
+        <div className={classes.gpaTitleCell}>
+          <Typography variant="h5">Cumulative GPA</Typography>
+        </div>
+        <div className={classes.attendanceTitleCell}>
+          <Typography variant="h5">Attendance Overview</Typography>
+        </div>
+      </div>
+
       <div className={classes.cardBody}>
 
-        {/* ── Left: GPA + Attendance circles ── */}
+        {/* ── Left: GPA circles ── */}
         <section className={classes.gpaSection}>
 
           <div className={classes.metricBlock}>
-            <Typography variant="h5">Cumulative GPA</Typography>
             <div className={classes.circleContainer}>
               <div
                 className={classes.circleInner}
@@ -258,65 +401,65 @@ const StudentSuccessTracker = ({ classes }) => {
           <div className={classes.circleDivider} />
 
           <div className={classes.metricBlock}>
-            <Typography variant="h5">Term Attendance</Typography>
+            <Typography variant="h5">Program GPA</Typography>
             <div className={classes.circleContainer}>
               <div
                 className={classes.circleInner}
-                style={{ border: `4px solid ${attendance_circle_color}` }}
+                style={{
+                  border: `4px solid ${program_gpa !== null ? program_gpa_circle_color : poor_performance_color_code}`,
+                }}
               >
-                <strong className={classes.circleValue} style={{ color: attendance_circle_color }}>
-                  {loading ? "..." : avg_attendance !== null ? `${avg_attendance}%` : "N/A"}
+                <strong
+                  className={classes.circleValue}
+                  style={{ color: program_gpa !== null ? program_gpa_circle_color : poor_performance_color_code }}
+                >
+                  {loading ? "..." : program_gpa !== null ? program_gpa.toFixed(2) : "N/A"}
                 </strong>
               </div>
             </div>
+            {!loading && program_gpa === null && (
+              <Typography variant="body3" style={{ textAlign: "center", fontSize: "0.6rem", color: "#999" }}>
+                Not available
+              </Typography>
+            )}
           </div>
 
         </section>
 
-        {/* ── Right: per-course attendance list ── */}
+        {/* ── Right: attendance ── */}
         <section className={classes.attendanceSection}>
-          <header className={classes.attendanceHeader}>
-            <Typography variant="h5" style={{ textAlign: "center" }}>
-              Attendance Overview
-            </Typography>
-            <Typography variant="body2" style={{ textAlign: "center" }}>
-              {term_name || "Current Term"}
-            </Typography>
-          </header>
 
+          {/* Attendance list */}
           {loading ? (
             <Typography style={{ textAlign: "center", padding: "1rem" }}>
               Loading attendance data...
             </Typography>
-          ) : attendance_data.length === 0 ? (
+          ) : displayed_attendance.length === 0 ? (
             <Typography style={{ textAlign: "center", padding: "1rem" }}>
               No attendance data available
             </Typography>
           ) : (
             <div className={classes.attendanceList}>
-              {attendance_data.map((attendance_entry, index) => {
-                // attendancePercentage arrives as a string; parse for comparison and display
-                const parsed_course_attendance_percentage = parseFloat(attendance_entry.attendancePercentage);
-                const display_attendance_percentage = !isNaN(parsed_course_attendance_percentage)
-                  ? `${parsed_course_attendance_percentage}%`
-                  : "N/A";
+              {displayed_attendance.map((entry, index) => {
+                const parsed_attendance  = parseFloat(entry.attendancePercentage);
+                const display_attendance = !isNaN(parsed_attendance) ? `${parsed_attendance}%` : "N/A";
 
                 return (
                   <div key={index} className={classes.attendanceRow}>
-                    <div className={classes.courseName} title={attendance_entry.courseTitle}>
-                      {attendance_entry.courseTitle}
+                    <div className={classes.courseName} title={entry.courseTitle}>
+                      {entry.courseTitle}
                     </div>
                     <div className={classes.attendancePercentage}>
-                      <span>{display_attendance_percentage}</span>
-                      <SvgHollowCircle color={get_attendance_status_color(parsed_course_attendance_percentage)} />
+                      <span>{display_attendance}</span>
+                      <SvgHollowCircle color={get_attendance_color(parsed_attendance)} />
                     </div>
                   </div>
                 );
               })}
             </div>
           )}
-        </section>
 
+        </section>
       </div>
     </div>
   );
