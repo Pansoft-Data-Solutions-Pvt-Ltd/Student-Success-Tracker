@@ -188,7 +188,7 @@ const CourseDataView = ({
   colors,
   isCurrentTerm,
 }) => {
-  const creditsHeader = isCurrentTerm ? "Credits" : "Credits Earned";
+  const creditsHeader = "Credits";
 
   const { cardConfiguration } = useCardInfo();
   const { attendance_source, grade_source } = cardConfiguration;
