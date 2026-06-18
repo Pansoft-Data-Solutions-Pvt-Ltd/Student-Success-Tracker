@@ -127,46 +127,46 @@ const HomeHeader = ({
         </Typography>
 
         <div className="home-header-btn">
-         <Button
-  disabled={loadingTermCodes || !termCodesResult}
-  dropdown={termCodesResult
-    ?.sort((a, b) => a.termCode.localeCompare(b.termCode))
-    .map((term) => (
-      <DropdownButtonItem
-        key={term.termCode}
-        onClick={() => handleTermChange(term)}
-      >
-        {toTitleCase(term.term)}
-      </DropdownButtonItem>
-    ))}
->
-  <svg
-    className="ds-icon ds-calendar-check"
-    style={{
-      width: "18px",
-      height: "18px",
-      flexShrink: 0,
-      fill: "currentColor",
-    }}
-    aria-hidden="true"
-  >
-    <use xlinkHref="#ds-icon-calendar-check" />
-  </svg>
+          <Button
+            disabled={loadingTermCodes || !termCodesResult}
+            dropdown={termCodesResult
+              ?.sort((a, b) => a.termCode.localeCompare(b.termCode))
+              .map((term) => (
+                <DropdownButtonItem
+                  key={term.termCode}
+                  onClick={() => handleTermChange(term)}
+                >
+                  {toTitleCase(term.term)}
+                </DropdownButtonItem>
+              ))}
+          >
+            <svg
+              className="ds-icon ds-calendar-check"
+              style={{
+                width: "18px",
+                height: "18px",
+                flexShrink: 0,
+                fill: "currentColor",
+              }}
+              aria-hidden="true"
+            >
+              <use xlinkHref="#ds-icon-calendar-check" />
+            </svg>
 
-  <span
-    style={{
-      fontSize: "15px",
-      fontWeight: 600,
-      textTransform: "none",
-      letterSpacing: "normal",
-      color: "inherit",
-    }}
-  >
-    {termLabel}
-  </span>
+            <span
+              style={{
+                fontSize: "15px",
+                fontWeight: 600,
+                textTransform: "none",
+                letterSpacing: "normal",
+                color: "inherit",
+              }}
+            >
+              {termLabel}
+            </span>
 
-  {/* REMOVED the manual chevron SVG — Ellucian adds it automatically */}
-</Button>
+            {/* REMOVED the manual chevron SVG — Ellucian adds it automatically */}
+          </Button>
         </div>
       </div>
     </div>
@@ -181,3 +181,4 @@ HomeHeader.propTypes = {
 };
 
 export default HomeHeader;
+
