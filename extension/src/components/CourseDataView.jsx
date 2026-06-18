@@ -475,6 +475,7 @@ const CourseDataView = ({
                 fontWeight: 700,
                 fontSize: "1rem",
                 borderBottom: "1px solid #D1C4E9",
+                textTransform: "capitalize",
               },
               "& .MuiTableBody-root .MuiTableRow-root:hover td": {
                 backgroundColor: "#f9fafb",
