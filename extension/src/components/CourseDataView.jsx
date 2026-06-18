@@ -230,7 +230,7 @@ const GradeBreakdownPanel = ({
                         borderBottom: isLast ? "none" : cellStyle.borderBottom,
                       }}
                     >
-                      {isMoodle ? item.grade : item.score}
+                      {isMoodle ? item.grade : parseInt(item.score)}
                     </td>
                     {isMoodle && (
                       <td
@@ -250,7 +250,7 @@ const GradeBreakdownPanel = ({
                         borderBottom: isLast ? "none" : cellStyle.borderBottom,
                       }}
                     >
-                      {item.percentage}
+                      {parseInt(item.percentage)}
                     </td>
                     {/* Progress bar */}
                     <td
@@ -462,7 +462,7 @@ const CourseDataView = ({
             columns={columns}
             data={courseData}
             enableExpanding
-            enableExpandAll={false}
+            enableExpandAll={true}
             state={{ isLoading: loadingCourseData }}
             muiTableContainerProps={{
               sx: { borderRadius: "8px", border: "1px solid #d1d5db" },
