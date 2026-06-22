@@ -54,6 +54,11 @@ const MySuccessTrackerTable = () => {
     max_gpa,
     attendance_source,
     grade_source,
+    student_term_courses_pipeline_v2,
+    get_student_course_attendance_banner,
+    get_student_course_attendance_moodle,
+    get_student_course_grades_moodle,
+    get_student_course_grades_banner,
   } = cardConfiguration;
 
   const [loadingRecommendation, setLoadingRecommendation] = useState(false);
@@ -148,7 +153,7 @@ const MySuccessTrackerTable = () => {
     authenticatedEthosFetch,
     cardId,
     undefined,
-    "pansoft-x-get-student-term-courses-v2",
+    student_term_courses_pipeline_v2,
     {},
   );
 
@@ -164,7 +169,7 @@ const MySuccessTrackerTable = () => {
       authenticatedEthosFetch,
       cardId,
       undefined,
-      "pansoft-x-get-student-course-attendance-banner",
+      get_student_course_attendance_banner,
       { pidm, termCode: currentTermCode, crns },
       attendance_source === "banner",
     );
@@ -175,7 +180,7 @@ const MySuccessTrackerTable = () => {
       authenticatedEthosFetch,
       cardId,
       undefined,
-      "pansoft-x-get-student-course-attendance-moodle",
+      get_student_course_attendance_moodle,
       {
         moodleUrl: "https://vidyastu.com/webservice/rest/server.php",
         moodleWsToken: "4d7dc29800b05b61dfd7f8c138e5885f",
@@ -191,7 +196,7 @@ const MySuccessTrackerTable = () => {
     authenticatedEthosFetch,
     cardId,
     undefined,
-    "pansoft-x-get-student-course-grades-banner",
+    get_student_course_grades_banner,
     { pidm, termCode: currentTermCode, crns },
     grade_source === "banner",
   );
@@ -201,7 +206,7 @@ const MySuccessTrackerTable = () => {
     authenticatedEthosFetch,
     cardId,
     undefined,
-    "pansoft-x-get-student-course-grades-moodle",
+    get_student_course_grades_moodle,
     {
       moodleUrl: "https://vidyastu.com/webservice/rest/server.php",
       moodleWsToken: "4d7dc29800b05b61dfd7f8c138e5885f",

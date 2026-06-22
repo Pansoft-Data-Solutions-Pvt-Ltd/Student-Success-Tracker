@@ -427,6 +427,9 @@ const StudentSuccessTracker = ({ classes }) => {
     minimum_threshold_for_satisfactory_performance,
     minimum_threshold_for_excellent_attendance,
     minimum_threshold_for_satisfactory_attendance,
+    student_term_courses_pipeline_v2,
+    get_student_course_attendance_banner,
+    get_student_course_attendance_moodle,
     attendance_source,
   } = configuration;
 
@@ -475,7 +478,7 @@ const StudentSuccessTracker = ({ classes }) => {
     authenticatedEthosFetch,
     cardId,
     null,
-    "pansoft-x-get-student-term-courses-v2",
+    student_term_courses_pipeline_v2,
     {},
   );
 
@@ -492,7 +495,7 @@ const StudentSuccessTracker = ({ classes }) => {
       authenticatedEthosFetch,
       cardId,
       null,
-      "pansoft-x-get-student-course-attendance-banner",
+      get_student_course_attendance_banner,
       { pidm, termCode: selected_term_code, crns },
       attendance_source === "banner",
     );
@@ -503,7 +506,7 @@ const StudentSuccessTracker = ({ classes }) => {
       authenticatedEthosFetch,
       cardId,
       null,
-      "pansoft-x-get-student-course-attendance-moodle",
+      get_student_course_attendance_moodle,
       {
         moodleUrl: "https://vidyastu.com/webservice/rest/server.php",
         moodleWsToken: "4d7dc29800b05b61dfd7f8c138e5885f",
@@ -684,7 +687,12 @@ const StudentSuccessTracker = ({ classes }) => {
           <div className={classes.attHeader}>
             <Typography
               variant="h5"
-              style={{ fontSize: "0.72rem", fontWeight: 700, color: "#111827", textTransform: "capitalize" }}
+              style={{
+                fontSize: "0.72rem",
+                fontWeight: 700,
+                color: "#111827",
+                textTransform: "capitalize",
+              }}
             >
               (Attendance {attendance_source})
             </Typography>
@@ -777,4 +785,3 @@ StudentSuccessTracker.propTypes = {
 };
 
 export default withStyles(styles)(StudentSuccessTracker);
-
