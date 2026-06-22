@@ -12,13 +12,6 @@ module.exports = {
       configuration: {
         client: [
           {
-            key: "excellent_performance_color_code",
-            label: "Hex color code for excellent performance",
-            type: "text",
-            require: false,
-            default: "#079C34",
-          },
-          {
             key: "attendance_source",
             label: "Attendance Source(banner/moodle)",
             type: "text",
@@ -31,6 +24,13 @@ module.exports = {
             type: "text",
             require: false,
             default: "banner" 
+          },
+          {
+            key: "excellent_performance_color_code",
+            label: "Hex color code for excellent performance",
+            type: "text",
+            require: false,
+            default: "#079C34",
           },
           {
             key: "satisfactory_performance_color_code",
@@ -73,20 +73,6 @@ module.exports = {
             type: "text",
             require: true,
             default: "60",
-          },
-          {
-            key: "student_term_courses_pipeline",
-            label: "Serverless API name for student term courses",
-            type: "text",
-            require: true,
-            default: "pansoft-x-get-student-term-courses",
-          },
-          {
-            key: "student_gpa_recommendation_pipeline",
-            label: "Serverless API name for student GPA recommendation",
-            type: "text",
-            require: true,
-            default: "pansoft-x-get-student-gpa-recommendation",
           },
           {
             key: "student_gpa_recommendation_pipeline",
