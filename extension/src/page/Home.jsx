@@ -60,6 +60,7 @@ const MySuccessTrackerTable = () => {
     get_student_course_grades_moodle,
     get_student_course_grades_banner,
     show_unrolled_grades,
+    display_historical_terms_number,
   } = cardConfiguration;
 
   const [loadingRecommendation, setLoadingRecommendation] = useState(false);
@@ -290,7 +291,21 @@ const MySuccessTrackerTable = () => {
     const allTermCodes = Object.keys(datav2.termData);
     const filteredTerms = allTermCodes.sort((a, b) => a.localeCompare(b));
 
-    const newTermCodesResult = filteredTerms.map((tc) => ({
+    const latestTc = filteredTerms[filteredTerms.length - 1];
+    setLatestTermCode(latestTc);
+
+    let limitedTermCodes = filteredTerms;
+    if (
+      display_historical_terms_number &&
+      display_historical_terms_number !== "all"
+    ) {
+      const historicalCount = parseInt(display_historical_terms_number, 10);
+      if (!isNaN(historicalCount)) {
+        limitedTermCodes = filteredTerms.slice(-(historicalCount + 1));
+      }
+    }
+
+    const newTermCodesResult = limitedTermCodes.map((tc) => ({
       termCode: tc,
       term: datav2.termData[tc]?.termName || tc,
       bannerId: datav2.bannerId,
@@ -299,12 +314,13 @@ const MySuccessTrackerTable = () => {
     setTermCodesResult(newTermCodesResult);
     setTermData(newTermCodesResult.map((t) => t.term));
 
-    const latestTc = filteredTerms[filteredTerms.length - 1];
-    setLatestTermCode(latestTc);
-
     if (!cardTermApplied) {
       setCardTermApplied(true);
-      if (termCodeFromCard && datav2.termData[termCodeFromCard]) {
+      if (
+        termCodeFromCard &&
+        datav2.termData[termCodeFromCard] &&
+        limitedTermCodes.includes(termCodeFromCard)
+      ) {
         setCurrentTermCode(termCodeFromCard);
         setCurrentTerm(
           datav2.termData[termCodeFromCard]?.termName || termCodeFromCard,
@@ -314,7 +330,7 @@ const MySuccessTrackerTable = () => {
         setCurrentTerm(datav2.termData[latestTc]?.termName || latestTc);
       }
     }
-  }, [datav2]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [datav2, display_historical_terms_number]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── GPA, academic standing, delta — derived from datav2 only ── */
   useEffect(() => {

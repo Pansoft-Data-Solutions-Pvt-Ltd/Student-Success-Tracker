@@ -12,6 +12,13 @@ module.exports = {
       configuration: {
         client: [
           {
+            key: "display_historical_terms_number",
+            label: "Number of historical terms to display",
+            type: "text",
+            require: false,
+            default: "all" 
+          },
+          {
             key: "show_unrolled_grades",
             label: "Show Unrolled Grades(yes/no)",
             type: "text",

@@ -431,6 +431,7 @@ const StudentSuccessTracker = ({ classes }) => {
     get_student_course_attendance_banner,
     get_student_course_attendance_moodle,
     attendance_source,
+    display_historical_terms_number,
   } = configuration;
 
   const parsed_exc_perf = parseFloat(
@@ -539,13 +540,26 @@ const StudentSuccessTracker = ({ classes }) => {
   /* ── Terms list ── */
   const all_terms = useMemo(() => {
     if (!datav2?.termData) return [];
-    return Object.keys(datav2.termData)
-      .sort((a, b) => a.localeCompare(b))
-      .map((tc) => ({
-        termCode: tc,
-        termName: datav2.termData[tc]?.termName || tc,
-      }));
-  }, [datav2]);
+    const sortedCodes = Object.keys(datav2.termData).sort((a, b) =>
+      a.localeCompare(b),
+    );
+
+    let limitedCodes = sortedCodes;
+    if (
+      display_historical_terms_number &&
+      display_historical_terms_number !== "all"
+    ) {
+      const historicalCount = parseInt(display_historical_terms_number, 10);
+      if (!isNaN(historicalCount)) {
+        limitedCodes = sortedCodes.slice(-(historicalCount + 1));
+      }
+    }
+
+    return limitedCodes.map((tc) => ({
+      termCode: tc,
+      termName: datav2.termData[tc]?.termName || tc,
+    }));
+  }, [datav2, display_historical_terms_number]);
 
   useEffect(() => {
     if (all_terms.length > 0 && !selected_term_code)
