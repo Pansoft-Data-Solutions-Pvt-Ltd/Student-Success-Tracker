@@ -12,6 +12,13 @@ module.exports = {
       configuration: {
         client: [
           {
+            key: "show_unrolled_grades",
+            label: "Show Unrolled Grades(yes/no)",
+            type: "text",
+            require: false,
+            default: "yes" 
+          },
+          {
             key: "attendance_source",
             label: "Attendance Source(banner/moodle)",
             type: "text",

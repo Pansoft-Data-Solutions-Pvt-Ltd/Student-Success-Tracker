@@ -59,6 +59,7 @@ const MySuccessTrackerTable = () => {
     get_student_course_attendance_moodle,
     get_student_course_grades_moodle,
     get_student_course_grades_banner,
+    show_unrolled_grades,
   } = cardConfiguration;
 
   const [loadingRecommendation, setLoadingRecommendation] = useState(false);
@@ -379,6 +380,9 @@ const MySuccessTrackerTable = () => {
     const grdLookup =
       grade_source === "banner" ? bannerGradeLookup : moodleGradeLookup;
 
+    const isLatestTermSelected = currentTermCode === latestTermCode;
+    const hideGrades = isLatestTermSelected && show_unrolled_grades === "no";
+
     const mappedCourses = courses.map((course) => {
       const rawAtt = attLookup[course.crn];
       const parsedAtt =
@@ -391,11 +395,11 @@ const MySuccessTrackerTable = () => {
         courseTitle: course.courseTitle || "-",
         attendancePercentage:
           parsedAtt !== null && !isNaN(parsedAtt) ? parsedAtt : null,
-        grade: gradeInfo?.grade || "-",
+        grade: hideGrades ? "-" : gradeInfo?.grade || "-",
         // credit: gradeInfo?.creditHours || "-",
         credit: course?.credits || "-",
         gradeMode: gradeInfo?.gradeMode || "-",
-        gradeComponents: gradeInfo?.gradeComponents || [],
+        gradeComponents: hideGrades ? [] : gradeInfo?.gradeComponents || [],
       };
     });
 
@@ -403,6 +407,8 @@ const MySuccessTrackerTable = () => {
   }, [
     datav2,
     currentTermCode,
+    latestTermCode,
+    show_unrolled_grades,
     attendance_source,
     bannerAttendanceData,
     moodleAttendanceLookup,
