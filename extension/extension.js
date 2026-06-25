@@ -20,7 +20,7 @@ module.exports = {
           },
           {
             key: "show_unrolled_grades",
-            label: "Show Unrolled Grades(yes/no)",
+            label: "Show Latest Term Grades(yes/no)",
             type: "text",
             require: false,
             default: "yes" 
