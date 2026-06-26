@@ -177,7 +177,7 @@ const AttendanceCircle = ({ value, color, size = 32 }) => {
       height={size}
       viewBox={`0 0 ${size} ${size}`}
       style={{ flexShrink: 0 }}
-      aria-label={`Attendance: ${label}`}
+      aria-label={`Absence: ${label}`}
     >
       <circle
         cx={size / 2}
@@ -230,6 +230,33 @@ const hexToRgba = (hex = "#000000", alpha = 0.1) => {
   const g = parseInt(h.substring(2, 4), 16);
   const b = parseInt(h.substring(4, 6), 16);
   return `rgba(${r},${g},${b},${alpha})`;
+};
+
+/* ─────────────────────────────────────────────
+   Absence warning helper — same 3-tier logic as CourseDataView.jsx,
+   reading the same warning1 / warning2 / red_flag config keys so both
+   components stay in sync if thresholds are changed in card config.
+   attendancePercentage IS already the absence % (e.g. 21.28 = 21.28% absent).
+   Only returns what the ring here needs (no badge label/rowTint usage).
+───────────────────────────────────────────── */
+const getAttendanceWarning = (absencePct, thresholds) => {
+  if (absencePct === null || absencePct === undefined || isNaN(absencePct)) {
+    return null;
+  }
+  const val = Number(absencePct);
+  const { warning1, warning2, redFlag, w1Color, w2Color, rfColor } = thresholds;
+
+  if (val >= redFlag) {
+    return { level: "red_flag", label: "Red Flag", circleColor: rfColor, color: rfColor };
+  }
+  if (val >= warning2) {
+    return { level: "warning2", label: "Warning 2", circleColor: w2Color, color: w2Color };
+  }
+  if (val >= warning1) {
+    return { level: "warning1", label: "Warning 1", circleColor: w1Color, color: w1Color };
+  }
+  // Below all thresholds — good, green
+  return { level: "ok", label: null, circleColor: "#22C55E", color: "#16A34A" };
 };
 
 /* ─────────────────────────────────────────────
@@ -425,13 +452,17 @@ const StudentSuccessTracker = ({ classes }) => {
     poor_performance_color_code,
     minimum_threshold_for_excellent_performance,
     minimum_threshold_for_satisfactory_performance,
-    minimum_threshold_for_excellent_attendance,
-    minimum_threshold_for_satisfactory_attendance,
     student_term_courses_pipeline_v2,
     get_student_course_attendance_banner,
     get_student_course_attendance_moodle,
     attendance_source,
     display_historical_terms_number,
+    warning1,
+    warning2,
+    red_flag,
+    warning1_color,
+    warning2_color,
+    red_flag_color,
   } = configuration;
 
   const parsed_exc_perf = parseFloat(
@@ -440,19 +471,22 @@ const StudentSuccessTracker = ({ classes }) => {
   const parsed_sat_perf = parseFloat(
     minimum_threshold_for_satisfactory_performance,
   );
-  const parsed_exc_att = parseFloat(minimum_threshold_for_excellent_attendance);
-  const parsed_sat_att = parseFloat(
-    minimum_threshold_for_satisfactory_attendance,
-  );
 
   if (parsed_exc_perf <= parsed_sat_perf)
     throw new Error(
       "Invalid performance configuration: excellent threshold must be greater than satisfactory threshold",
     );
-  if (parsed_exc_att <= parsed_sat_att)
-    throw new Error(
-      "Invalid attendance configuration: excellent threshold must be greater than satisfactory threshold",
-    );
+
+  /* ── Absence thresholds — same config keys as CourseDataView.jsx,
+     so both components stay in sync if these are changed in card config. ── */
+  const absenceThresholds = {
+    warning1: parseFloat(warning1) || 5,
+    warning2: parseFloat(warning2) || 10,
+    redFlag: parseFloat(red_flag) || 15,
+    w1Color: warning1_color || "#F59E0B", // amber
+    w2Color: warning2_color || "#F97316", // orange
+    rfColor: red_flag_color || "#EF4444", // red
+  };
 
   const get_gpa_color = (val) => {
     const v = parseFloat(val);
@@ -464,10 +498,8 @@ const StudentSuccessTracker = ({ classes }) => {
 
   const get_attendance_color = (val) => {
     const v = parseFloat(val);
-    if (isNaN(v)) return poor_performance_color_code;
-    if (v >= parsed_exc_att) return excellent_performance_color_code;
-    if (v >= parsed_sat_att) return satisfactory_performance_color_code;
-    return poor_performance_color_code;
+    const warning = getAttendanceWarning(v, absenceThresholds);
+    return warning ? warning.circleColor : poor_performance_color_code;
   };
 
   const [selected_term_code, set_selected_term_code] = useState(null);
@@ -727,7 +759,7 @@ const StudentSuccessTracker = ({ classes }) => {
                 textTransform: "capitalize",
               }}
             >
-              (Attendance {attendance_source})
+              (Absence {attendance_source})
             </Typography>
 
             {!loadingv2 && all_terms.length > 0 && (
