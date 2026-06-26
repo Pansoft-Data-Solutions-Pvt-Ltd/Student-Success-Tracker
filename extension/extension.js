@@ -18,6 +18,27 @@ module.exports = {
             require: false,
             default: "all" 
           },
+           {
+  key: "warning1",
+  label: "Warning Level 1 - Absence threshold (%)",
+  type: "text",
+  require: false,
+  default: "5",
+},
+{
+  key: "warning2",
+  label: "Warning Level 2 - Absence threshold (%)",
+  type: "text",
+  require: false,
+  default: "10",
+},
+{
+  key: "red_flag",
+  label: "Red Flag - Absence threshold (%)",
+  type: "text",
+  require: false,
+  default: "15",
+},
           {
             key: "show_unrolled_grades",
             label: "Show Latest Term Grades(yes/no)",
@@ -39,6 +60,27 @@ module.exports = {
             require: false,
             default: "banner" 
           },
+          {
+  key: "warning1_color",
+  label: "Warning Level 1 color (hex)",
+  type: "text",
+  require: false,
+  default: "#f5e50b",
+},
+{
+  key: "warning2_color",
+  label: "Warning Level 2 color (hex)",
+  type: "text",
+  require: false,
+  default: "#F97316",
+},
+{
+  key: "red_flag_color",
+  label: "Red Flag color (hex)",
+  type: "text",
+  require: false,
+  default: "#EF4444",
+},
           {
             key: "excellent_performance_color_code",
             label: "Hex color code for excellent performance",
