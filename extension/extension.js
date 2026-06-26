@@ -131,6 +131,13 @@ module.exports = {
             default: "60",
           },
           {
+  key: "get_student_course_attendance_banner",
+  label: "Serverless API name for get student attendance banner",
+  type: "text",
+  require: true,
+  default: "pansoft-x-get-student-course-absence-banner", // updated
+},
+          {
             key: "student_gpa_recommendation_pipeline",
             label: "Serverless API name for student GPA recommendation",
             type: "text",

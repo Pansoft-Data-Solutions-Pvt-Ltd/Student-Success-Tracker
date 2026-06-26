@@ -490,7 +490,15 @@ const StudentSuccessTracker = ({ classes }) => {
       ?.map((c) => c.crn)
       .join(",") ?? "";
 
-  /* ── Attendance: Banner (only when attendance_source === "banner") ── */
+  /* Only fire dependent fetches once pidm/term/crns are actually ready,
+     to avoid premature calls like pidm=undefined&termCode=null&crns= */
+  const hasValidAttendanceParams = !!pidm && !!selected_term_code && !!crns;
+
+  /* ── Attendance: Banner (only when attendance_source === "banner") ──
+     get_student_course_attendance_banner points at
+     "pansoft-x-get-student-course-absence-banner", which returns a FLAT object:
+     { "20005": "23.81", "20018": "22.22", ... }  (crn → absence % as string)
+  */
   const { data: bannerAttendanceData, loading: bannerAttendanceLoading } =
     useFetch(
       authenticatedEthosFetch,
@@ -498,7 +506,7 @@ const StudentSuccessTracker = ({ classes }) => {
       null,
       get_student_course_attendance_banner,
       { pidm, termCode: selected_term_code, crns },
-      attendance_source === "banner",
+      attendance_source === "banner" && hasValidAttendanceParams,
     );
 
   /* ── Attendance: Moodle (only when attendance_source === "moodle") ── */
@@ -515,8 +523,19 @@ const StudentSuccessTracker = ({ classes }) => {
         termCode: selected_term_code,
         crns,
       },
-      attendance_source === "moodle",
+      attendance_source === "moodle" && hasValidAttendanceParams,
     );
+
+  /* ── Banner: flat { crn: "23.81" } object → crn → percentage (number) ── */
+  const bannerAttendanceLookup = useMemo(() => {
+    if (!bannerAttendanceData || typeof bannerAttendanceData !== "object")
+      return {};
+    return Object.entries(bannerAttendanceData).reduce((acc, [crn, val]) => {
+      const pct = parseFloat(val);
+      acc[String(crn)] = isNaN(pct) ? NaN : pct;
+      return acc;
+    }, {});
+  }, [bannerAttendanceData]);
 
   /* ── Moodle: flatten gradebooks into crn → percentage lookup ── */
   const moodleAttendanceLookup = useMemo(() => {
@@ -524,7 +543,7 @@ const StudentSuccessTracker = ({ classes }) => {
     return moodleAttendanceData.gradebooks.reduce((acc, entry) => {
       // percentage comes as "70.00 %" — parseFloat handles the trailing " %" cleanly
       const pct = parseFloat(entry.attendance?.[0]?.percentage);
-      acc[entry.crn] = isNaN(pct) ? NaN : pct;
+      acc[String(entry.crn)] = isNaN(pct) ? NaN : pct;
       return acc;
     }, {});
   }, [moodleAttendanceData]);
@@ -588,17 +607,17 @@ const StudentSuccessTracker = ({ classes }) => {
     const courses = datav2.termData[selected_term_code]?.courses ?? [];
     const lookup =
       attendance_source === "banner"
-        ? (bannerAttendanceData ?? {})
+        ? bannerAttendanceLookup
         : moodleAttendanceLookup;
     return courses.map((course) => ({
       ...course,
-      attendancePercentage: lookup[course.crn] ?? NaN,
+      attendancePercentage: lookup[String(course.crn)] ?? NaN,
     }));
   }, [
     datav2,
     selected_term_code,
     attendance_source,
-    bannerAttendanceData,
+    bannerAttendanceLookup,
     moodleAttendanceLookup,
   ]);
 
