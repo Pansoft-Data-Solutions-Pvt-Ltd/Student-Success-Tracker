@@ -160,65 +160,42 @@ CornerWave.propTypes = {
 };
 
 /* ─────────────────────────────────────────────
-   Attendance ring SVG
+   Attendance pill badge — replaces the old ring.
+   `color` is always passed in from get_attendance_color(),
+   which is built entirely from card config
+   (warning1_color / warning2_color / red_flag_color /
+   poor_performance_color_code). Nothing is hardcoded here.
 ───────────────────────────────────────────── */
-const AttendanceCircle = ({ value, color, size = 32 }) => {
-  const stroke = 1.5;
-  const radius = (size - stroke * 2) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const pct = isNaN(value) ? 0 : Math.min(100, Math.max(0, value));
-  const dashOffset = circumference - (pct / 100) * circumference;
-  const label = isNaN(value) ? "N/A" : `${value}%`;
-  const fontSize = value >= 100 ? "0.42rem" : "0.50rem";
+const AttendancePill = ({ value, color }) => {
+  const label = isNaN(value) ? "N/A" : `${value}% absent`;
 
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox={`0 0 ${size} ${size}`}
-      style={{ flexShrink: 0 }}
+    <span
+      style={{
+        flexShrink: 0,
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        minWidth: "96px",
+        padding: "0.3rem 0.5rem",
+        borderRadius: "999px",
+        background: hexToRgba(color, 0.1),
+        color,
+        fontSize: "0.7rem",
+        fontWeight: 700,
+        whiteSpace: "nowrap",
+        lineHeight: 1,
+        textAlign: "center",
+      }}
       aria-label={`Absence: ${label}`}
     >
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke="#e5e7eb"
-        strokeWidth={stroke}
-      />
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke={color}
-        strokeWidth={stroke}
-        strokeDasharray={circumference}
-        strokeDashoffset={dashOffset}
-        strokeLinecap="round"
-        transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        style={{ transition: "stroke-dashoffset 0.5s ease" }}
-      />
-      <text
-        x="50%"
-        y="50%"
-        textAnchor="middle"
-        dominantBaseline="central"
-        fill={color}
-        fontSize={fontSize}
-        fontWeight="700"
-        fontFamily="inherit"
-      >
-        {label}
-      </text>
-    </svg>
+      {label}
+    </span>
   );
 };
-AttendanceCircle.propTypes = {
+AttendancePill.propTypes = {
   value: PropTypes.number.isRequired,
   color: PropTypes.string.isRequired,
-  size: PropTypes.number,
 };
 
 /* ─────────────────────────────────────────────
@@ -237,7 +214,11 @@ const hexToRgba = (hex = "#000000", alpha = 0.1) => {
    reading the same warning1 / warning2 / red_flag config keys so both
    components stay in sync if thresholds are changed in card config.
    attendancePercentage IS already the absence % (e.g. 21.28 = 21.28% absent).
-   Only returns what the ring here needs (no badge label/rowTint usage).
+   Colors (w1Color / w2Color / rfColor) come from absenceThresholds,
+   which itself is built from card config — no hardcoded hex here except
+   the neutral "ok" floor color, which is intentionally gray (not green)
+   per design — that one can also be lifted to config if you want it
+   configurable too.
 ───────────────────────────────────────────── */
 const getAttendanceWarning = (absencePct, thresholds) => {
   if (absencePct === null || absencePct === undefined || isNaN(absencePct)) {
@@ -255,8 +236,8 @@ const getAttendanceWarning = (absencePct, thresholds) => {
   if (val >= warning1) {
     return { level: "warning1", label: "Warning 1", circleColor: w1Color, color: w1Color };
   }
-  // Below all thresholds — good, green
-  return { level: "ok", label: null, circleColor: "#22C55E", color: "#16A34A" };
+  // Below all thresholds — neutral gray (no green here, per design)
+  return { level: "ok", label: null, circleColor: "#9ca3af", color: "#9ca3af" };
 };
 
 /* ─────────────────────────────────────────────
@@ -478,14 +459,15 @@ const StudentSuccessTracker = ({ classes }) => {
     );
 
   /* ── Absence thresholds — same config keys as CourseDataView.jsx,
-     so both components stay in sync if these are changed in card config. ── */
+     so both components stay in sync if these are changed in card config.
+     Colors here all flow straight from configuration — never hardcoded. ── */
   const absenceThresholds = {
     warning1: parseFloat(warning1) || 5,
     warning2: parseFloat(warning2) || 10,
     redFlag: parseFloat(red_flag) || 15,
-    w1Color: warning1_color || "#F59E0B", // amber
-    w2Color: warning2_color || "#F97316", // orange
-    rfColor: red_flag_color || "#EF4444", // red
+    w1Color: warning1_color || "#F59E0B", // fallback only if config key is missing
+    w2Color: warning2_color || "#F97316",
+    rfColor: red_flag_color || "#EF4444",
   };
 
   const get_gpa_color = (val) => {
@@ -815,10 +797,9 @@ const StudentSuccessTracker = ({ classes }) => {
                     >
                       {entry.courseTitle}
                     </Typography>
-                    <AttendanceCircle
+                    <AttendancePill
                       value={isNaN(parsed_pct) ? NaN : parsed_pct}
                       color={att_color}
-                      size={32}
                     />
                   </div>
                 );
