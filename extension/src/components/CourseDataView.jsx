@@ -9,9 +9,6 @@ import {
 import { useCardInfo } from "@ellucian/experience-extension-utils";
 
 // ── Attendance warning helper ─────────────────────────────────────────────────
-// attendancePercentage IS already the absence % (e.g. 21.28 = 21.28% absent)
-// No 100-minus flip needed.
-// Converts hex color to rgba string for bg/tint usage
 const hexToRgba = (hex, alpha) => {
   const h = hex.replace("#", "");
   const r = parseInt(h.substring(0, 2), 16);
@@ -28,7 +25,7 @@ const getAttendanceWarning = (absencePct, thresholds) => {
   if (val >= redFlag) {
     return {
       level: "red_flag",
-      label: "Red Flag",
+      label: "Eligible for Red Flag",
       circleColor: rfColor,
       color: rfColor,
       badgeBg: hexToRgba(rfColor, 0.12),
@@ -38,7 +35,7 @@ const getAttendanceWarning = (absencePct, thresholds) => {
   if (val >= warning2) {
     return {
       level: "warning2",
-      label: "Warning 2",
+      label: "Eligible for Warning 2",
       circleColor: w2Color,
       color: w2Color,
       badgeBg: hexToRgba(w2Color, 0.12),
@@ -48,14 +45,13 @@ const getAttendanceWarning = (absencePct, thresholds) => {
   if (val >= warning1) {
     return {
       level: "warning1",
-      label: "Warning 1",
+      label: "Eligible for Warning 1",
       circleColor: w1Color,
       color: w1Color,
       badgeBg: hexToRgba(w1Color, 0.12),
       rowTint: hexToRgba(w1Color, 0.06),
     };
   }
-  // Below all thresholds — good, green
   return {
     level: "ok",
     label: null,
@@ -66,35 +62,30 @@ const getAttendanceWarning = (absencePct, thresholds) => {
   };
 };
 
-// ── Circular Progress ─────────────────────────────────────────────────────────
-const CircularProgress = ({ percentage, color }) => {
-  const radius = 18;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
-
-  return (
-    <div style={{ position: "relative", width: 44, height: 44, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-      <svg width="44" height="44" style={{ transform: "rotate(-90deg)", position: "absolute" }}>
-        <circle cx="22" cy="22" r={radius} fill="none" stroke="#E5E7EB" strokeWidth="3.5" />
-        <circle
-          cx="22" cy="22" r={radius} fill="none"
-          stroke={color} strokeWidth="3.5"
-          strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
-          strokeLinecap="round"
-        />
-      </svg>
-      <Typography
-        variant="caption"
-        style={{ fontSize: "0.55rem", fontWeight: 700, color, lineHeight: 1, textAlign: "center", zIndex: 1 }}
-      >
-        {percentage}%
-      </Typography>
+// ── Horizontal Progress Bar ───────────────────────────────────────────────────
+const HorizontalProgress = ({ percentage, color }) => (
+  <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 160 }}>
+    <Typography
+      variant="caption"
+      style={{ fontSize: "0.8rem", fontWeight: 700, color, minWidth: 34, textAlign: "right" }}
+    >
+      {percentage}%
+    </Typography>
+    <div style={{ flex: 1, height: 8, borderRadius: 4, backgroundColor: "#E5E7EB", overflow: "hidden" }}>
+      <div
+        style={{
+          width: `${Math.min(Number(percentage), 100)}%`,
+          height: "100%",
+          backgroundColor: color,
+          borderRadius: 4,
+          transition: "width 0.4s ease",
+        }}
+      />
     </div>
-  );
-};
+  </div>
+);
 
-CircularProgress.propTypes = {
+HorizontalProgress.propTypes = {
   percentage: PropTypes.number.isRequired,
   color: PropTypes.string.isRequired,
 };
@@ -124,7 +115,6 @@ const WarningBadge = ({ warning }) => {
 };
 
 // ── Attendance Cell ───────────────────────────────────────────────────────────
-// Circle color + badge both driven by getAttendanceWarning, not getStatusColor
 const AttendanceCell = ({ absencePct, thresholds }) => {
   if (absencePct === null || absencePct === undefined) {
     return (
@@ -135,8 +125,8 @@ const AttendanceCell = ({ absencePct, thresholds }) => {
   }
   const warning = getAttendanceWarning(absencePct, thresholds);
   return (
-    <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 8 }}>
-      <CircularProgress
+    <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 10 }}>
+      <HorizontalProgress
         percentage={Number(absencePct)}
         color={warning ? warning.circleColor : "#22C55E"}
       />
@@ -269,9 +259,9 @@ const CourseDataView = ({ loadingCourseData, courseData, tableConfig, colors, is
     warning1: parseFloat(warning1)    || 5,
     warning2: parseFloat(warning2)    || 10,
     redFlag:  parseFloat(red_flag)    || 15,
-    w1Color:  warning1_color          || "#F59E0B",  // amber  — configurable
-    w2Color:  warning2_color          || "#F97316",  // orange — configurable
-    rfColor:  red_flag_color          || "#EF4444",  // red    — configurable
+    w1Color:  warning1_color          || "#F59E0B",
+    w2Color:  warning2_color          || "#F97316",
+    rfColor:  red_flag_color          || "#EF4444",
   };
 
   const toggleMobileRow = (key) =>
@@ -322,14 +312,12 @@ const CourseDataView = ({ loadingCourseData, courseData, tableConfig, colors, is
     {
       accessorKey: "attendancePercentage",
       header: `Absence (${attendance_source ?? ""})`,
-      size: 200,
+      size: 280,
       Cell: ({ row }) => (
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <AttendanceCell
-            absencePct={row.original.attendancePercentage}
-            thresholds={thresholds}
-          />
-        </div>
+        <AttendanceCell
+          absencePct={row.original.attendancePercentage}
+          thresholds={thresholds}
+        />
       ),
     },
   ];
@@ -360,7 +348,13 @@ const CourseDataView = ({ loadingCourseData, courseData, tableConfig, colors, is
                 fontWeight: 700,
                 fontSize: "1rem",
                 borderBottom: "1px solid #D1C4E9",
+                borderRight: "1px solid #D1C4E9",
                 textTransform: "capitalize",
+                "&:last-of-type": { borderRight: "none" },
+              },
+              "& .MuiTableBody-root .MuiTableCell-root": {
+                borderRight: "1px solid #E5E7EB",
+                "&:last-of-type": { borderRight: "none" },
               },
             }}
             renderDetailPanel={({ row }) => (

@@ -41,14 +41,6 @@ const AcademicStandingIcon = ({ color }) => (
 );
 AcademicStandingIcon.propTypes = { color: PropTypes.string.isRequired };
 
-const ProgramGpaIcon = ({ color }) => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="12" cy="8" r="4" stroke={color} strokeWidth="2"/>
-    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke={color} strokeWidth="2" strokeLinecap="round"/>
-  </svg>
-);
-ProgramGpaIcon.propTypes = { color: PropTypes.string.isRequired };
-
 /* ─── hex → rgba ─── */
 const hexToRgba = (hex = "#000000", alpha = 0.1) => {
   const h = hex.replace("#", "");
@@ -76,18 +68,15 @@ const GpaMetrics = ({
   academicStanding,
   previousAcademicStanding,
   academicStandingColor,
-  programGpa,
-  programGpaCircleColor,
 }) => {
   const displayedAcademicStanding =
     academicStanding || (isLatestTerm ? previousAcademicStanding : null) || "N/A";
 
-  /* ── Shared card style — pure white bg, colored border only ── */
+  /* ── Shared card style ── */
   const cardStyle = (accentColor) => ({
     flex: 1,
     position: "relative",
     overflow: "hidden",
-    /* fixed height so all 4 cards are identical */
     height: "130px",
     padding: "12px 14px",
     borderRadius: "12px",
@@ -96,11 +85,10 @@ const GpaMetrics = ({
     minWidth: 0,
     border: `1.5px solid ${hexToRgba(accentColor, 0.4)}`,
     boxShadow: "0 2px 8px rgba(0,0,0,0.07)",
-    background: "#ffffff",           /* ← pure white */
+    background: "#ffffff",
     boxSizing: "border-box",
   });
 
-  /* ── small icon pill ── */
   const iconPill = (accentColor) => ({
     display: "inline-flex",
     alignItems: "center",
@@ -112,18 +100,13 @@ const GpaMetrics = ({
     flexShrink: 0,
   });
 
-  /* ── Rows inside each card ──
-     Row 1 (top):    icon
-     Row 2 (middle): big value  ← flex:1 + center so it always lands in the same spot
-     Row 3 (bottom): footer text
-  */
   const topRow = { display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 };
 
   const midRow = {
-    flex: 1,                     /* takes all remaining vertical space */
+    flex: 1,
     display: "flex",
-    alignItems: "center",        /* vertical center */
-    justifyContent: "center",    /* horizontal center */
+    alignItems: "center",
+    justifyContent: "center",
     width: "100%",
   };
 
@@ -137,7 +120,6 @@ const GpaMetrics = ({
         <div style={cardStyle(gpaCircleColor)}>
           <CornerWave color={gpaCircleColor} />
 
-          {/* top: icon + title */}
           <div style={topRow}>
             <div style={iconPill(gpaCircleColor)}>
               <CumulativeIcon color={gpaCircleColor} />
@@ -147,7 +129,6 @@ const GpaMetrics = ({
             </Typography>
           </div>
 
-          {/* middle: big value — always centered */}
           <div style={midRow}>
             <Typography variant="h3" style={{
               fontSize: "2rem", fontWeight: 800,
@@ -158,7 +139,6 @@ const GpaMetrics = ({
             </Typography>
           </div>
 
-          {/* bottom: footer */}
           <div style={botRow}>
             {!isFirstTerm ? (
               isZeroDelta ? (
@@ -226,13 +206,11 @@ const GpaMetrics = ({
             <div style={iconPill(academicStandingColor)}>
               <AcademicStandingIcon color={academicStandingColor} />
             </div>
-            {/* title BLACK like other cards */}
             <Typography variant="body2" style={{ fontSize: "0.88rem", fontWeight: 700, color: "#111827", lineHeight: 1.2 }}>
               Academic Standing
             </Typography>
           </div>
 
-          {/* middle — same flex:1 centering, font scales with text length */}
           <div style={midRow}>
             <Typography variant="h3" style={{
               fontSize: displayedAcademicStanding.length > 16
@@ -241,7 +219,7 @@ const GpaMetrics = ({
                   ? "1.7rem"
                   : "2rem",
               fontWeight: 800,
-              color: academicStandingColor,   /* value keeps its dynamic color */
+              color: academicStandingColor,
               lineHeight: 1.15, margin: 0,
               textAlign: "center",
               wordBreak: "break-word",
@@ -252,46 +230,11 @@ const GpaMetrics = ({
           </div>
 
           <div style={botRow}>
-            {/* footer BLACK like other cards */}
             <Typography variant="body2" style={{ fontSize: "0.78rem", color: "#6B7280", fontWeight: 500 }}>
               ●{" "}
               {!academicStanding && isLatestTerm && previousAcademicStanding
                 ? "Based on previous term"
                 : "Current standing status"}
-            </Typography>
-          </div>
-        </div>
-
-        {/* ══ PROGRAM GPA ══ */}
-        <div style={cardStyle(programGpaCircleColor)}>
-          <CornerWave color={programGpaCircleColor} />
-
-          <div style={topRow}>
-            <div style={iconPill(programGpaCircleColor)}>
-              <ProgramGpaIcon color={programGpaCircleColor} />
-            </div>
-            <Typography variant="body2" style={{ fontSize: "0.88rem", fontWeight: 700, color: "#111827", lineHeight: 1.2 }}>
-              Program GPA
-            </Typography>
-          </div>
-
-          <div style={midRow}>
-            <Typography variant="h3" style={{
-              fontSize: "2rem", fontWeight: 800,
-              color: programGpaCircleColor,
-              lineHeight: 1, margin: 0, textAlign: "center",
-            }}>
-              {loadingTermInformation
-                ? "..."
-                : programGpa != null && !isNaN(programGpa)
-                  ? Number(programGpa).toFixed(2)
-                  : "N/A"}
-            </Typography>
-          </div>
-
-          <div style={botRow}>
-            <Typography variant="body2" style={{ fontSize: "0.78rem", color: "#6B7280", fontWeight: 500 }}>
-              ● Overall program performance
             </Typography>
           </div>
         </div>
@@ -321,14 +264,12 @@ GpaMetrics.propTypes = {
   academicStanding: PropTypes.string,
   previousAcademicStanding: PropTypes.string,
   academicStandingColor: PropTypes.string.isRequired,
-  programGpa: PropTypes.number,
-  programGpaCircleColor: PropTypes.string.isRequired,
   colors: PropTypes.object.isRequired,
   handleOpenModal: PropTypes.func,
 };
 
 GpaMetrics.defaultProps = {
-  previousAcademicStanding: null,
+  previousAcademicStanding: PropTypes.null,
 };
 
 export default GpaMetrics;
