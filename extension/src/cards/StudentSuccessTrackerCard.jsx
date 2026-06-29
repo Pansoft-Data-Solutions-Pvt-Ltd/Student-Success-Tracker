@@ -215,10 +215,8 @@ const hexToRgba = (hex = "#000000", alpha = 0.1) => {
    components stay in sync if thresholds are changed in card config.
    attendancePercentage IS already the absence % (e.g. 21.28 = 21.28% absent).
    Colors (w1Color / w2Color / rfColor) come from absenceThresholds,
-   which itself is built from card config — no hardcoded hex here except
-   the neutral "ok" floor color, which is intentionally gray (not green)
-   per design — that one can also be lifted to config if you want it
-   configurable too.
+   which itself is built from card config — the "ok" floor color below
+   is the only hardcoded value (green, signaling good attendance).
 ───────────────────────────────────────────── */
 const getAttendanceWarning = (absencePct, thresholds) => {
   if (absencePct === null || absencePct === undefined || isNaN(absencePct)) {
@@ -236,8 +234,8 @@ const getAttendanceWarning = (absencePct, thresholds) => {
   if (val >= warning1) {
     return { level: "warning1", label: "Warning 1", circleColor: w1Color, color: w1Color };
   }
-  // Below all thresholds — neutral gray (no green here, per design)
-  return { level: "ok", label: null, circleColor: "#9ca3af", color: "#9ca3af" };
+  // Below all thresholds — good, green
+  return { level: "ok", label: null, circleColor: "#22C55E", color: "#16A34A" };
 };
 
 /* ─────────────────────────────────────────────
