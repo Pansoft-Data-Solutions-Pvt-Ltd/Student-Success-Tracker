@@ -71,6 +71,61 @@ const isAchievable = (text) =>
   /possible|can achieve|achievable|yes/i.test(text) &&
   !/not possible|cannot|can't|not achieve|not achievable/i.test(text);
 
+// ─── PDF capture helpers ───────────────────────────────────────────────────────
+// Walk up from the element being captured and temporarily strip any
+// scroll/height clipping on ancestors (e.g. DialogContent's overflowY:"auto"
+// and the Dialog Paper's maxHeight:"90vh"/overflow:"hidden"). Without this,
+// html2canvas only captures whatever is currently within the scrolled
+// viewport of those ancestors, which is why only part of the result (e.g.
+// just the grades table) ends up in the PDF.
+const unclipAncestors = (el, maxLevels = 8) => {
+  const changed = [];
+  let node = el.parentElement;
+  let level = 0;
+  while (node && level < maxLevels) {
+    const computed = window.getComputedStyle(node);
+    const needsUnclip =
+      computed.overflowY === "auto" ||
+      computed.overflowY === "scroll" ||
+      computed.overflowX === "auto" ||
+      computed.overflowX === "scroll" ||
+      computed.overflow === "hidden" ||
+      computed.overflow === "auto" ||
+      computed.overflow === "scroll" ||
+      (computed.maxHeight !== "none" && computed.maxHeight !== "") ||
+      (computed.height !== "auto" && node.scrollHeight > node.clientHeight);
+
+    if (needsUnclip) {
+      changed.push({
+        node,
+        overflow: node.style.overflow,
+        overflowX: node.style.overflowX,
+        overflowY: node.style.overflowY,
+        maxHeight: node.style.maxHeight,
+        height: node.style.height,
+      });
+      node.style.overflow = "visible";
+      node.style.overflowX = "visible";
+      node.style.overflowY = "visible";
+      node.style.maxHeight = "none";
+      node.style.height = "auto";
+    }
+    node = node.parentElement;
+    level += 1;
+  }
+  return changed;
+};
+
+const restoreAncestors = (changed) => {
+  changed.forEach(({ node, overflow, overflowX, overflowY, maxHeight, height }) => {
+    node.style.overflow = overflow;
+    node.style.overflowX = overflowX;
+    node.style.overflowY = overflowY;
+    node.style.maxHeight = maxHeight;
+    node.style.height = height;
+  });
+};
+
 // ─── Grade Badge (pill shape) ─────────────────────────────────────────────────
 const GradeBadge = ({ grade }) => {
   const isA = grade?.startsWith("A");
@@ -269,12 +324,36 @@ const TargetGpaModal = ({
   const handleCustomChange = (e) => { setCustomInput(e.target.value); setSelectedPreset(null); };
 
   // ── PDF Download ──────────────────────────────────────────────────────────
+  // NOTE: resultRef sits inside DialogContent (overflowY:"auto") which sits
+  // inside the Dialog's Paper (maxHeight:"90vh", overflow:"hidden"). Left as-is,
+  // html2canvas only "sees" whatever is currently within the scrolled viewport
+  // of those ancestors — which is why previously only the grades table (the
+  // part usually in view when the button is clicked) ended up in the PDF.
+  // We temporarily unclip those ancestors, force a reflow, capture the FULL
+  // element, then restore everything.
   const downloadPdf = async () => {
     const element = resultRef.current;
     if (!element) return;
     setPdfLoading(true);
+
+    const changedAncestors = unclipAncestors(element);
+    if (element.parentElement) element.parentElement.scrollTop = 0;
+
+    // Wait for the browser to actually reflow with the unclipped layout
+    // before html2canvas measures/renders it.
+    await new Promise((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(resolve))
+    );
+
     try {
-      const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false });
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
+      });
       const A4_WIDTH_MM = 210, A4_HEIGHT_MM = 297, MARGIN_MM = 12;
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const printableWidth = A4_WIDTH_MM - MARGIN_MM * 2;
@@ -303,6 +382,7 @@ const TargetGpaModal = ({
     } catch (err) {
       console.error("PDF generation failed:", err);
     } finally {
+      restoreAncestors(changedAncestors);
       setPdfLoading(false);
     }
   };
