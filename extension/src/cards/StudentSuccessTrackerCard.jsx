@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import PropTypes from "prop-types";
 
 import {
@@ -10,133 +10,44 @@ import useFetch from "../hooks/useFetch.js";
 
 import { withStyles } from "@ellucian/react-design-system/core/styles";
 import { Typography } from "@ellucian/react-design-system/core";
+import { Icon } from "@ellucian/ds-icons/lib";
 
-const GradCapIcon = ({ color, size = 24 }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    aria-hidden="true"
-  >
-    <path
-      d="M12 3L1 9l11 6 9-4.91V17M5 13.18V17.18L12 21l7-3.82V13.18L12 17l-7-3.82z"
-      stroke={color}
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-GradCapIcon.propTypes = {
-  color: PropTypes.string.isRequired,
-  size: PropTypes.number,
-};
+/* ─────────────────────────────────────────────
+   Design tokens — pulled from the Ellucian Path
+   color guidelines. Keeping these in one place
+   means if the palette changes, this is the only
+   spot that needs updating.
+───────────────────────────────────────────── */
+const palette = {
+  // Neutrals
+  neutral600: "#151618",
+  neutral500: "#5B5E65",
+  neutral450: "#74767C",
+  neutral400: "#B2B3B7",
+  neutral300: "#D9D9D9",
+  neutral250: "#E9E9E9",
+  neutral200: "#F8F8F8",
+  neutral100: "#FFFFFF",
 
-const BarChartIcon = ({ color, size = 24 }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    aria-hidden="true"
-  >
-    <rect
-      x="3"
-      y="12"
-      width="4"
-      height="9"
-      rx="1"
-      stroke={color}
-      strokeWidth="1.8"
-    />
-    <rect
-      x="10"
-      y="7"
-      width="4"
-      height="14"
-      rx="1"
-      stroke={color}
-      strokeWidth="1.8"
-    />
-    <rect
-      x="17"
-      y="4"
-      width="4"
-      height="17"
-      rx="1"
-      stroke={color}
-      strokeWidth="1.8"
-    />
-  </svg>
-);
-BarChartIcon.propTypes = {
-  color: PropTypes.string.isRequired,
-  size: PropTypes.number,
-};
+  // Brand / CTA (Iris)
+  iris600: "#7100EB",
+  ctaIrisBase: "#320070", // cta-iris-800 (base)
+  ctaIrisHover: "#5300B2", // cta-iris-700 (hover)
+  ctaIrisActive: "#7100EB", // cta-iris-600 (active)
+  ctaIrisTint: "#F6F6FD",
 
-const CourseIcon = ({ color, size = 14 }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    aria-hidden="true"
-  >
-    <rect
-      x="4"
-      y="3"
-      width="14"
-      height="18"
-      rx="1.5"
-      stroke={color}
-      strokeWidth="1.8"
-      fill="none"
-    />
-    <line
-      x1="8"
-      y1="3"
-      x2="8"
-      y2="21"
-      stroke={color}
-      strokeWidth="1.8"
-      strokeLinecap="round"
-    />
-    <line
-      x1="11"
-      y1="8"
-      x2="16"
-      y2="8"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-    />
-    <line
-      x1="11"
-      y1="12"
-      x2="16"
-      y2="12"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-    />
-    <line
-      x1="11"
-      y1="16"
-      x2="14"
-      y2="16"
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-    />
-  </svg>
-);
-CourseIcon.propTypes = {
-  color: PropTypes.string.isRequired,
-  size: PropTypes.number,
+  // Alert semantics
+  alertSuccessFill: "#00AF69",
+  alertSuccessText: "#00804D",
+  alertWarningFill: "#EFC728", // == saffron-600
+  alertWarningText: "#8A6A00",
+  alertErrorFill: "#D42828",
+  alertErrorText: "#D42828",
+  alertNeutralFill: "#51ABFF",
+  alertNeutralText: "#2874BB",
+
+  // Tertiary chart color used for the mid-tier attendance warning
+  tangerine600: "#FF8C3A",
 };
 
 /* ─────────────────────────────────────────────
@@ -160,11 +71,13 @@ CornerWave.propTypes = {
 };
 
 /* ─────────────────────────────────────────────
-   Attendance pill badge — replaces the old ring.
-   `color` is always passed in from get_attendance_color(),
-   which is built entirely from card config
-   (warning1_color / warning2_color / red_flag_color /
-   poor_performance_color_code). Nothing is hardcoded here.
+   Attendance pill badge — `color` is always passed
+   in from get_attendance_color(), which is built
+   entirely from card config (warning1_color /
+   warning2_color / red_flag_color /
+   poor_performance_color_code), falling back to the
+   design-system alert palette above. Nothing here
+   is hardcoded outside of `palette`.
 ───────────────────────────────────────────── */
 const AttendancePill = ({ value, color }) => {
   const label = isNaN(value) ? "N/A" : `${value}% absent`;
@@ -176,7 +89,7 @@ const AttendancePill = ({ value, color }) => {
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
-        minWidth: "96px",
+        minWidth: "88px",
         padding: "0.3rem 0.5rem",
         borderRadius: "999px",
         background: hexToRgba(color, 0.1),
@@ -214,9 +127,10 @@ const hexToRgba = (hex = "#000000", alpha = 0.1) => {
    reading the same warning1 / warning2 / red_flag config keys so both
    components stay in sync if thresholds are changed in card config.
    attendancePercentage IS already the absence % (e.g. 21.28 = 21.28% absent).
-   Colors (w1Color / w2Color / rfColor) come from absenceThresholds,
-   which itself is built from card config — the "ok" floor color below
-   is the only hardcoded value (green, signaling good attendance).
+   Colors (w1Color / w2Color / rfColor) come from absenceThresholds, which
+   itself is built from card config, falling back to the design-system
+   alert palette (saffron/tangerine/error-red) when config values are
+   missing — the "ok" floor color is the design-system success fill.
 ───────────────────────────────────────────── */
 const getAttendanceWarning = (absencePct, thresholds) => {
   if (absencePct === null || absencePct === undefined || isNaN(absencePct)) {
@@ -234,12 +148,24 @@ const getAttendanceWarning = (absencePct, thresholds) => {
   if (val >= warning1) {
     return { level: "warning1", label: "Warning 1", circleColor: w1Color, color: w1Color };
   }
-  // Below all thresholds — good, green
-  return { level: "ok", label: null, circleColor: "#22C55E", color: "#16A34A" };
+  // Below all thresholds — good, design-system success color
+  return {
+    level: "ok",
+    label: null,
+    circleColor: palette.alertSuccessFill,
+    color: palette.alertSuccessText,
+  };
 };
 
 /* ─────────────────────────────────────────────
    Styles
+   Breakpoints used:
+     - down("md"): stack GPA column above attendance column
+     - down("sm"): tighten spacing/typography for phones,
+       lay the two GPA boxes out side-by-side to use the
+       freed-up horizontal space efficiently
+     - down("xs")/custom max-width: further compress for
+       very narrow card placements
 ───────────────────────────────────────────── */
 const styles = (theme) => ({
   card: {
@@ -251,6 +177,9 @@ const styles = (theme) => ({
     width: "100%",
     height: "100%",
     boxSizing: "border-box",
+    [theme.breakpoints.down("sm")]: {
+      padding: "0.1rem 0.5rem 0.4rem",
+    },
   },
   cardBody: {
     flex: 1,
@@ -261,6 +190,7 @@ const styles = (theme) => ({
     minHeight: 0,
     [theme.breakpoints.down("md")]: {
       flexDirection: "column",
+      overflowY: "auto",
     },
   },
   gpaCol: {
@@ -270,6 +200,18 @@ const styles = (theme) => ({
     gap: "0.4rem",
     minWidth: 0,
     height: "100%",
+    [theme.breakpoints.down("md")]: {
+      flex: "0 0 auto",
+      width: "100%",
+      height: "auto",
+      // Side-by-side on narrower/stacked layouts so the two GPA
+      // boxes share the freed-up horizontal space instead of
+      // stacking twice as tall.
+      flexDirection: "row",
+    },
+    [theme.breakpoints.down("xs")]: {
+      gap: "0.3rem",
+    },
   },
   gpaBox: {
     position: "relative",
@@ -279,11 +221,16 @@ const styles = (theme) => ({
     flexDirection: "column",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    background: "#ffffff",
+    background: palette.neutral100,
     boxShadow: "0 1px 6px rgba(0,0,0,0.07)",
     flex: 1,
     overflow: "hidden",
     minHeight: 0,
+    minWidth: 0,
+    [theme.breakpoints.down("sm")]: {
+      padding: "0.45rem 0.55rem",
+      borderRadius: "10px",
+    },
   },
   iconBox: {
     display: "flex",
@@ -294,20 +241,30 @@ const styles = (theme) => ({
     borderRadius: "50%",
     flexShrink: 0,
     zIndex: 1,
+    [theme.breakpoints.down("sm")]: {
+      width: "28px",
+      height: "28px",
+    },
   },
   gpaTitle: {
     fontSize: "0.62rem",
-    color: "#6b7280",
+    color: palette.neutral500,
     fontWeight: 500,
     lineHeight: 1.2,
     zIndex: 1,
+    [theme.breakpoints.down("sm")]: {
+      fontSize: "0.58rem",
+    },
   },
   gpaNumber: {
     fontSize: "1.45rem",
     fontWeight: 700,
     lineHeight: 1.1,
-    color: "#1e1b4b",
+    color: palette.neutral600,
     zIndex: 1,
+    [theme.breakpoints.down("sm")]: {
+      fontSize: "1.15rem",
+    },
   },
   gpaRule: {
     height: "2.5px",
@@ -315,6 +272,7 @@ const styles = (theme) => ({
     borderRadius: "2px",
     flexShrink: 0,
     zIndex: 1,
+    background: palette.iris600,
   },
   attCol: {
     flex: "1 1 62%",
@@ -322,35 +280,123 @@ const styles = (theme) => ({
     flexDirection: "column",
     minWidth: 0,
     overflow: "hidden",
+    [theme.breakpoints.down("md")]: {
+      flex: "1 1 auto",
+    },
   },
   attHeader: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
+    gap: "0.5rem",
     marginBottom: "0.3rem",
     flexShrink: 0,
+    flexWrap: "wrap",
   },
-  termSelect: {
-    appearance: "none",
-    WebkitAppearance: "none",
-    MozAppearance: "none",
-    background: "#fff",
-    border: "1px solid #c9cdd6",
+  attHeaderTitle: {
+    fontSize: "0.72rem",
+    fontWeight: 700,
+    color: palette.neutral600,
+    textTransform: "capitalize",
+    minWidth: 0,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    [theme.breakpoints.down("sm")]: {
+      fontSize: "0.66rem",
+    },
+  },
+  /* ── Custom term dropdown (replaces native <select> so the open
+     list's highlight/selected colors are fully styleable — native
+     <select> popups are OS-rendered and ignore CSS for that part) ── */
+  termDropdownWrap: {
+    position: "relative",
+    flexShrink: 0,
+  },
+  termDropdownButton: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "0.4rem",
+    background: palette.neutral100,
+    border: `1px solid ${palette.neutral300}`,
     borderRadius: "6px",
-    padding: "0.18rem 1.6rem 0.18rem 0.55rem",
+    padding: "0.18rem 0.5rem 0.18rem 0.55rem",
     fontSize: "0.75rem",
     fontWeight: 600,
-    color: "#333",
+    color: palette.ctaIrisBase,
     fontFamily: "inherit",
     cursor: "pointer",
     outline: "none",
-    backgroundImage:
-      "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 16 16'%3E%3Cpath d='M4 6L8 10L12 6' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E\")",
-    backgroundRepeat: "no-repeat",
-    backgroundPosition: "right 0.4rem center",
+    maxWidth: "150px",
+    minWidth: 0,
     "&:focus": {
-      borderColor: "#3d0d6e",
-      boxShadow: "0 0 0 2px rgba(61,13,110,0.15)",
+      borderColor: palette.ctaIrisBase,
+      boxShadow: `0 0 0 2px ${hexToRgba(palette.ctaIrisBase, 0.15)}`,
+    },
+    [theme.breakpoints.down("sm")]: {
+      fontSize: "0.68rem",
+      maxWidth: "120px",
+      padding: "0.16rem 0.45rem 0.16rem 0.45rem",
+    },
+  },
+  termDropdownButtonLabel: {
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    minWidth: 0,
+  },
+  termDropdownChevron: {
+    flexShrink: 0,
+    display: "flex",
+    color: palette.ctaIrisBase,
+    transition: "transform 0.15s ease",
+  },
+  termDropdownChevronOpen: {
+    transform: "rotate(180deg)",
+  },
+  termDropdownMenu: {
+    position: "absolute",
+    top: "calc(100% + 4px)",
+    right: 0,
+    minWidth: "100%",
+    maxHeight: "220px",
+    overflowY: "auto",
+    background: palette.neutral100,
+    border: `1px solid ${palette.neutral300}`,
+    borderRadius: "8px",
+    boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+    zIndex: 10,
+    padding: "0.25rem",
+    listStyle: "none",
+    margin: 0,
+  },
+  termDropdownItem: {
+    padding: "0.4rem 0.6rem",
+    fontSize: "0.75rem",
+    fontWeight: 500,
+    color: palette.neutral600,
+    borderRadius: "6px",
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    "&:hover": {
+      background: palette.ctaIrisTint,
+      color: palette.ctaIrisBase,
+    },
+    "&:focus-visible": {
+      outline: `2px solid ${palette.ctaIrisBase}`,
+      outlineOffset: "-2px",
+    },
+  },
+  termDropdownItemSelected: {
+    background: palette.ctaIrisBase,
+    color: palette.neutral100,
+    fontWeight: 700,
+    "&:hover": {
+      background: palette.ctaIrisHover,
+      color: palette.neutral100,
     },
   },
   attList: {
@@ -365,7 +411,7 @@ const styles = (theme) => ({
     gap: "0.28rem",
     flex: 1,
     minHeight: 0,
-    borderBottom: "1px solid #f0f0f0",
+    borderBottom: `1px solid ${palette.neutral250}`,
     padding: "0.08rem 0",
     "&:last-child": {
       borderBottom: "none",
@@ -375,6 +421,7 @@ const styles = (theme) => ({
     flexShrink: 0,
     display: "flex",
     alignItems: "center",
+    color: palette.iris600,
   },
   courseName: {
     flex: 1,
@@ -384,7 +431,22 @@ const styles = (theme) => ({
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
     lineHeight: "1.2",
-    color: "#374151",
+    color: palette.neutral600,
+    fontWeight: 400,
+    [theme.breakpoints.down("sm")]: {
+      fontSize: "0.68rem",
+    },
+  },
+  attEmptyState: {
+    textAlign: "center",
+    padding: "1rem",
+    color: palette.neutral500,
+    fontSize: "0.8rem",
+  },
+  gpaUnavailable: {
+    fontSize: "0.55rem",
+    color: palette.neutral400,
+    zIndex: 1,
   },
   btnWrap: {
     flexShrink: 0,
@@ -395,8 +457,8 @@ const styles = (theme) => ({
     width: "100%",
     border: "none",
     borderRadius: "8px",
-    background: "#3d0d6e",
-    color: "#fff",
+    background: palette.ctaIrisBase,
+    color: palette.neutral100,
     fontSize: "0.80rem",
     fontWeight: 700,
     letterSpacing: "0.07em",
@@ -404,8 +466,12 @@ const styles = (theme) => ({
     padding: "0.58rem 0",
     cursor: "pointer",
     fontFamily: "inherit",
-    "&:hover": { background: "#2d0a52" },
-    "&:active": { background: "#1e0638" },
+    "&:hover": { background: palette.ctaIrisHover },
+    "&:active": { background: palette.ctaIrisActive },
+    [theme.breakpoints.down("sm")]: {
+      fontSize: "0.72rem",
+      padding: "0.5rem 0",
+    },
   },
 });
 
@@ -415,6 +481,115 @@ const styles = (theme) => ({
 const toTitleCase = (str) => {
   if (!str) return str;
   return str.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+};
+
+/* ─────────────────────────────────────────────
+   Custom term dropdown — a button + listbox instead of a native
+   <select>, so the open menu's item highlight/selected colors are
+   fully styleable (purple) instead of the OS-default blue.
+───────────────────────────────────────────── */
+const TermDropdown = ({ classes, terms, value, onChange }) => {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    const handleEscape = (e) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
+
+  const selectedTerm = terms.find((t) => t.termCode === value);
+
+  return (
+    <div className={classes.termDropdownWrap} ref={wrapRef}>
+      <button
+        type="button"
+        className={classes.termDropdownButton}
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((o) => !o);
+        }}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label="Select term"
+      >
+        <span className={classes.termDropdownButtonLabel}>
+          {selectedTerm ? toTitleCase(selectedTerm.termName) : "Select term"}
+        </span>
+        <span
+          className={`${classes.termDropdownChevron} ${
+            open ? classes.termDropdownChevronOpen : ""
+          }`}
+        >
+          <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M4 6L8 10L12 6"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+      </button>
+
+      {open && (
+        <ul className={classes.termDropdownMenu} role="listbox">
+          {terms.map((t) => {
+            const isSelected = t.termCode === value;
+            return (
+              <li
+                key={t.termCode}
+                role="option"
+                aria-selected={isSelected}
+                tabIndex={0}
+                className={`${classes.termDropdownItem} ${
+                  isSelected ? classes.termDropdownItemSelected : ""
+                }`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChange(t.termCode);
+                  setOpen(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onChange(t.termCode);
+                    setOpen(false);
+                  }
+                }}
+              >
+                {toTitleCase(t.termName)}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+};
+TermDropdown.propTypes = {
+  classes: PropTypes.object.isRequired,
+  terms: PropTypes.arrayOf(
+    PropTypes.shape({
+      termCode: PropTypes.string.isRequired,
+      termName: PropTypes.string,
+    }),
+  ).isRequired,
+  value: PropTypes.string,
+  onChange: PropTypes.func.isRequired,
 };
 
 /* ─────────────────────────────────────────────
@@ -458,14 +633,15 @@ const StudentSuccessTracker = ({ classes }) => {
 
   /* ── Absence thresholds — same config keys as CourseDataView.jsx,
      so both components stay in sync if these are changed in card config.
-     Colors here all flow straight from configuration — never hardcoded. ── */
+     Colors here all flow from configuration first, falling back to the
+     Ellucian design-system alert palette (never hardcoded ad-hoc hex). ── */
   const absenceThresholds = {
     warning1: parseFloat(warning1) || 5,
     warning2: parseFloat(warning2) || 10,
     redFlag: parseFloat(red_flag) || 15,
-    w1Color: warning1_color || "#F59E0B", // fallback only if config key is missing
-    w2Color: warning2_color || "#F97316",
-    rfColor: red_flag_color || "#EF4444",
+    w1Color: warning1_color || palette.alertWarningFill, // saffron-600
+    w2Color: warning2_color || palette.tangerine600,
+    rfColor: red_flag_color || palette.alertErrorFill,
   };
 
   const get_gpa_color = (val) => {
@@ -639,11 +815,6 @@ const StudentSuccessTracker = ({ classes }) => {
       ? get_gpa_color(program_gpa)
       : poor_performance_color_code;
 
-  const handle_term_change = (e) => {
-    e.stopPropagation();
-    set_selected_term_code(e.target.value);
-  };
-
   const handle_view_details = () => {
     navigateToPage({ route: "/", params: { termCode: selected_term_code } });
   };
@@ -678,16 +849,15 @@ const StudentSuccessTracker = ({ classes }) => {
               className={classes.iconBox}
               style={{ background: hexToRgba(gpa_color, 0.12) }}
             >
-              <GradCapIcon color={gpa_color} size={18} />
+              <span style={{ color: gpa_color, display: "flex" }}>
+                <Icon name="graduation" />
+              </span>
             </div>
             <Typography className={classes.gpaTitle}>Cumulative GPA</Typography>
             <Typography className={classes.gpaNumber}>
               {loadingv2 ? "—" : current_gpa.toFixed(2)}
             </Typography>
-            <div
-              className={classes.gpaRule}
-              style={{ background: "#1e1b4b" }}
-            />
+            <div className={classes.gpaRule} />
           </div>
 
           {/* Program GPA */}
@@ -703,7 +873,9 @@ const StudentSuccessTracker = ({ classes }) => {
               className={classes.iconBox}
               style={{ background: hexToRgba(prog_color, 0.12) }}
             >
-              <BarChartIcon color={prog_color} size={18} />
+              <span style={{ color: prog_color, display: "flex" }}>
+                <Icon name="bar-chart" />
+              </span>
             </div>
             <Typography className={classes.gpaTitle}>Program GPA</Typography>
             <Typography className={classes.gpaNumber}>
@@ -713,14 +885,9 @@ const StudentSuccessTracker = ({ classes }) => {
                   ? program_gpa.toFixed(2)
                   : "N/A"}
             </Typography>
-            <div
-              className={classes.gpaRule}
-              style={{ background: "#1e1b4b" }}
-            />
+            <div className={classes.gpaRule} />
             {!loadingv2 && program_gpa === null && (
-              <Typography
-                style={{ fontSize: "0.55rem", color: "#9ca3af", zIndex: 1 }}
-              >
+              <Typography className={classes.gpaUnavailable}>
                 Not available
               </Typography>
             )}
@@ -730,41 +897,26 @@ const StudentSuccessTracker = ({ classes }) => {
         {/* ─── Right: Attendance ─── */}
         <div className={classes.attCol}>
           <div className={classes.attHeader}>
-            <Typography
-              variant="h5"
-              style={{
-                fontSize: "0.72rem",
-                fontWeight: 700,
-                color: "#111827",
-                textTransform: "capitalize",
-              }}
-            >
+            <Typography variant="h5" className={classes.attHeaderTitle}>
               (Absence {attendance_source})
             </Typography>
 
             {!loadingv2 && all_terms.length > 0 && (
-              <select
-                className={classes.termSelect}
-                value={selected_term_code || ""}
-                onChange={handle_term_change}
-                onClick={(e) => e.stopPropagation()}
-                aria-label="Select term"
-              >
-                {all_terms.map((t) => (
-                  <option key={t.termCode} value={t.termCode}>
-                    {toTitleCase(t.termName)}
-                  </option>
-                ))}
-              </select>
+              <TermDropdown
+                classes={classes}
+                terms={all_terms}
+                value={selected_term_code}
+                onChange={(termCode) => set_selected_term_code(termCode)}
+              />
             )}
           </div>
 
           {isLoading ? (
-            <Typography style={{ textAlign: "center", padding: "1rem" }}>
+            <Typography className={classes.attEmptyState}>
               Loading attendance data...
             </Typography>
           ) : displayed_attendance.length === 0 ? (
-            <Typography style={{ textAlign: "center", padding: "1rem" }}>
+            <Typography className={classes.attEmptyState}>
               No attendance data available
             </Typography>
           ) : (
@@ -775,23 +927,12 @@ const StudentSuccessTracker = ({ classes }) => {
                 return (
                   <div key={index} className={classes.attRow}>
                     <div className={classes.courseIconWrap}>
-                      <CourseIcon color="#6B21A8" size={14} />
+                      <Icon name="course" />
                     </div>
                     <Typography
                       variant="body3"
                       title={entry.courseTitle}
                       className={classes.courseName}
-                      style={{
-                        flex: 1,
-                        fontSize: "0.75rem",
-                        color: "#374151",
-                        fontWeight: 400,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        lineHeight: 1.2,
-                        minWidth: 0,
-                      }}
                     >
                       {entry.courseTitle}
                     </Typography>
