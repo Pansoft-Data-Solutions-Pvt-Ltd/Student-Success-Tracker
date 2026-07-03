@@ -8,7 +8,6 @@ import {
 } from "@ellucian/react-design-system/core";
 import { useCardInfo } from "@ellucian/experience-extension-utils";
 
-// ── Attendance warning helper ─────────────────────────────────────────────────
 const hexToRgba = (hex, alpha) => {
   const h = hex.replace("#", "");
   const r = parseInt(h.substring(0, 2), 16);
@@ -62,16 +61,38 @@ const getAttendanceWarning = (absencePct, thresholds) => {
   };
 };
 
-// ── Horizontal Progress Bar ───────────────────────────────────────────────────
+// Fixed dimensions so every row's number, bar, and badge line up
+// and are the same size regardless of label/value length.
+const ATT_PCT_WIDTH = 52;
+const ATT_BAR_WIDTH = 90;
+const ATT_BADGE_WIDTH = 168;
+
 const HorizontalProgress = ({ percentage, color }) => (
-  <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 160 }}>
+  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
     <Typography
       variant="caption"
-      style={{ fontSize: "0.8rem", fontWeight: 700, color, minWidth: 34, textAlign: "right" }}
+      style={{
+        fontSize: "0.8rem",
+        fontWeight: 700,
+        color,
+        width: ATT_PCT_WIDTH,
+        flexShrink: 0,
+        textAlign: "right",
+        fontVariantNumeric: "tabular-nums",
+      }}
     >
       {percentage}%
     </Typography>
-    <div style={{ flex: 1, height: 8, borderRadius: 4, backgroundColor: "#E5E7EB", overflow: "hidden" }}>
+    <div
+      style={{
+        width: ATT_BAR_WIDTH,
+        flexShrink: 0,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: "#E5E7EB",
+        overflow: "hidden",
+      }}
+    >
       <div
         style={{
           width: `${Math.min(Number(percentage), 100)}%`,
@@ -90,7 +111,6 @@ HorizontalProgress.propTypes = {
   color: PropTypes.string.isRequired,
 };
 
-// ── Warning Badge ─────────────────────────────────────────────────────────────
 const WarningBadge = ({ warning }) => {
   if (!warning || !warning.label) return null;
   return (
@@ -103,8 +123,15 @@ const WarningBadge = ({ warning }) => {
         backgroundColor: warning.badgeBg,
         borderRadius: 6,
         padding: "2px 6px",
+        width: ATT_BADGE_WIDTH,
+        flexShrink: 0,
+        boxSizing: "border-box",
         whiteSpace: "nowrap",
-        display: "inline-block",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
         lineHeight: 1.4,
         border: `1px solid ${warning.color}33`,
       }}
@@ -114,7 +141,6 @@ const WarningBadge = ({ warning }) => {
   );
 };
 
-// ── Attendance Cell ───────────────────────────────────────────────────────────
 const AttendanceCell = ({ absencePct, thresholds }) => {
   if (absencePct === null || absencePct === undefined) {
     return (
@@ -135,7 +161,6 @@ const AttendanceCell = ({ absencePct, thresholds }) => {
   );
 };
 
-// ── Grade Circle ──────────────────────────────────────────────────────────────
 const GradeCircle = ({ value }) => (
   <div style={{
     width: 140, height: 140, borderRadius: "50%",
@@ -154,7 +179,6 @@ const GradeCircle = ({ value }) => (
 
 GradeCircle.propTypes = { value: PropTypes.string };
 
-// ── Grade Breakdown Panel ─────────────────────────────────────────────────────
 const GradeBreakdownPanel = ({ gradeComponents, gradeSource, overallGrade }) => {
   const isMoodle = gradeSource?.toLowerCase() === "moodle";
   const items = gradeComponents ?? [];
@@ -239,7 +263,6 @@ GradeBreakdownPanel.propTypes = {
   overallGrade: PropTypes.string,
 };
 
-// ── Main Component ────────────────────────────────────────────────────────────
 const CourseDataView = ({ loadingCourseData, courseData, tableConfig, colors, isCurrentTerm }) => {
   const [expandedMobileRows, setExpandedMobileRows] = useState({});
 
@@ -311,7 +334,7 @@ const CourseDataView = ({ loadingCourseData, courseData, tableConfig, colors, is
     },
     {
       accessorKey: "attendancePercentage",
-      header: `Absence (${attendance_source ?? ""})`,
+      header: `Absence %(${attendance_source ?? ""})`,
       size: 280,
       Cell: ({ row }) => (
         <AttendanceCell

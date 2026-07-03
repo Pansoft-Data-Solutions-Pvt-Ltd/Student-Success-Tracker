@@ -12,14 +12,7 @@ import { withStyles } from "@ellucian/react-design-system/core/styles";
 import { Typography } from "@ellucian/react-design-system/core";
 import { Icon } from "@ellucian/ds-icons/lib";
 
-/* ─────────────────────────────────────────────
-   Design tokens — pulled from the Ellucian Path
-   color guidelines. Keeping these in one place
-   means if the palette changes, this is the only
-   spot that needs updating.
-───────────────────────────────────────────── */
 const palette = {
-  // Neutrals
   neutral600: "#151618",
   neutral500: "#5B5E65",
   neutral450: "#74767C",
@@ -29,30 +22,24 @@ const palette = {
   neutral200: "#F8F8F8",
   neutral100: "#FFFFFF",
 
-  // Brand / CTA (Iris)
   iris600: "#7100EB",
-  ctaIrisBase: "#320070", // cta-iris-800 (base)
-  ctaIrisHover: "#5300B2", // cta-iris-700 (hover)
-  ctaIrisActive: "#7100EB", // cta-iris-600 (active)
+  ctaIrisBase: "#320070",
+  ctaIrisHover: "#5300B2",
+  ctaIrisActive: "#7100EB",
   ctaIrisTint: "#F6F6FD",
 
-  // Alert semantics
   alertSuccessFill: "#00AF69",
   alertSuccessText: "#00804D",
-  alertWarningFill: "#EFC728", // == saffron-600
+  alertWarningFill: "#EFC728",
   alertWarningText: "#8A6A00",
   alertErrorFill: "#D42828",
   alertErrorText: "#D42828",
   alertNeutralFill: "#51ABFF",
   alertNeutralText: "#2874BB",
 
-  // Tertiary chart color used for the mid-tier attendance warning
   tangerine600: "#FF8C3A",
 };
 
-/* ─────────────────────────────────────────────
-   Corner wave — color tinted based on performance
-───────────────────────────────────────────── */
 const CornerWave = ({ color }) => (
   <svg
     width="60"
@@ -70,15 +57,6 @@ CornerWave.propTypes = {
   color: PropTypes.string.isRequired,
 };
 
-/* ─────────────────────────────────────────────
-   Attendance pill badge — `color` is always passed
-   in from get_attendance_color(), which is built
-   entirely from card config (warning1_color /
-   warning2_color / red_flag_color /
-   poor_performance_color_code), falling back to the
-   design-system alert palette above. Nothing here
-   is hardcoded outside of `palette`.
-───────────────────────────────────────────── */
 const AttendancePill = ({ value, color }) => {
   const label = isNaN(value) ? "N/A" : `${value}% absent`;
 
@@ -89,12 +67,12 @@ const AttendancePill = ({ value, color }) => {
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
-        minWidth: "88px",
-        padding: "0.3rem 0.5rem",
+        width: "86px",
+        padding: "0.28rem 0.3rem",
         borderRadius: "999px",
         background: hexToRgba(color, 0.1),
         color,
-        fontSize: "0.7rem",
+        fontSize: "0.66rem",
         fontWeight: 700,
         whiteSpace: "nowrap",
         lineHeight: 1,
@@ -111,9 +89,6 @@ AttendancePill.propTypes = {
   color: PropTypes.string.isRequired,
 };
 
-/* ─────────────────────────────────────────────
-   hex → rgba helper for tints
-───────────────────────────────────────────── */
 const hexToRgba = (hex = "#000000", alpha = 0.1) => {
   const h = hex.replace("#", "");
   const r = parseInt(h.substring(0, 2), 16);
@@ -122,16 +97,6 @@ const hexToRgba = (hex = "#000000", alpha = 0.1) => {
   return `rgba(${r},${g},${b},${alpha})`;
 };
 
-/* ─────────────────────────────────────────────
-   Absence warning helper — same 3-tier logic as CourseDataView.jsx,
-   reading the same warning1 / warning2 / red_flag config keys so both
-   components stay in sync if thresholds are changed in card config.
-   attendancePercentage IS already the absence % (e.g. 21.28 = 21.28% absent).
-   Colors (w1Color / w2Color / rfColor) come from absenceThresholds, which
-   itself is built from card config, falling back to the design-system
-   alert palette (saffron/tangerine/error-red) when config values are
-   missing — the "ok" floor color is the design-system success fill.
-───────────────────────────────────────────── */
 const getAttendanceWarning = (absencePct, thresholds) => {
   if (absencePct === null || absencePct === undefined || isNaN(absencePct)) {
     return null;
@@ -148,7 +113,6 @@ const getAttendanceWarning = (absencePct, thresholds) => {
   if (val >= warning1) {
     return { level: "warning1", label: "Warning 1", circleColor: w1Color, color: w1Color };
   }
-  // Below all thresholds — good, design-system success color
   return {
     level: "ok",
     label: null,
@@ -157,16 +121,6 @@ const getAttendanceWarning = (absencePct, thresholds) => {
   };
 };
 
-/* ─────────────────────────────────────────────
-   Styles
-   Breakpoints used:
-     - down("md"): stack GPA column above attendance column
-     - down("sm"): tighten spacing/typography for phones,
-       lay the two GPA boxes out side-by-side to use the
-       freed-up horizontal space efficiently
-     - down("xs")/custom max-width: further compress for
-       very narrow card placements
-───────────────────────────────────────────── */
 const styles = (theme) => ({
   card: {
     padding: "0.1rem 0.7rem 0.4rem",
@@ -194,7 +148,7 @@ const styles = (theme) => ({
     },
   },
   gpaCol: {
-    flex: "0 0 38%",
+    flex: "0 0 28%",
     display: "flex",
     flexDirection: "column",
     gap: "0.4rem",
@@ -204,9 +158,6 @@ const styles = (theme) => ({
       flex: "0 0 auto",
       width: "100%",
       height: "auto",
-      // Side-by-side on narrower/stacked layouts so the two GPA
-      // boxes share the freed-up horizontal space instead of
-      // stacking twice as tall.
       flexDirection: "row",
     },
     [theme.breakpoints.down("xs")]: {
@@ -216,7 +167,7 @@ const styles = (theme) => ({
   gpaBox: {
     position: "relative",
     borderRadius: "12px",
-    padding: "0.55rem 0.65rem",
+    padding: "0.55rem 0.5rem",
     display: "flex",
     flexDirection: "column",
     alignItems: "flex-start",
@@ -228,7 +179,7 @@ const styles = (theme) => ({
     minHeight: 0,
     minWidth: 0,
     [theme.breakpoints.down("sm")]: {
-      padding: "0.45rem 0.55rem",
+      padding: "0.45rem 0.45rem",
       borderRadius: "10px",
     },
   },
@@ -275,7 +226,7 @@ const styles = (theme) => ({
     background: palette.iris600,
   },
   attCol: {
-    flex: "1 1 62%",
+    flex: "1 1 72%",
     display: "flex",
     flexDirection: "column",
     minWidth: 0,
@@ -297,7 +248,6 @@ const styles = (theme) => ({
     fontSize: "0.72rem",
     fontWeight: 700,
     color: palette.neutral600,
-    textTransform: "capitalize",
     minWidth: 0,
     overflow: "hidden",
     textOverflow: "ellipsis",
@@ -306,9 +256,6 @@ const styles = (theme) => ({
       fontSize: "0.66rem",
     },
   },
-  /* ── Custom term dropdown (replaces native <select> so the open
-     list's highlight/selected colors are fully styleable — native
-     <select> popups are OS-rendered and ignore CSS for that part) ── */
   termDropdownWrap: {
     position: "relative",
     flexShrink: 0,
@@ -317,11 +264,11 @@ const styles = (theme) => ({
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: "0.4rem",
+    gap: "0.35rem",
     background: palette.neutral100,
     border: `1px solid ${palette.neutral300}`,
-    borderRadius: "6px",
-    padding: "0.18rem 0.5rem 0.18rem 0.55rem",
+    borderRadius: "999px",
+    padding: "0.3rem 0.7rem",
     fontSize: "0.75rem",
     fontWeight: 600,
     color: palette.ctaIrisBase,
@@ -337,7 +284,7 @@ const styles = (theme) => ({
     [theme.breakpoints.down("sm")]: {
       fontSize: "0.68rem",
       maxWidth: "120px",
-      padding: "0.16rem 0.45rem 0.16rem 0.45rem",
+      padding: "0.24rem 0.6rem",
     },
   },
   termDropdownButtonLabel: {
@@ -349,8 +296,13 @@ const styles = (theme) => ({
   termDropdownChevron: {
     flexShrink: 0,
     display: "flex",
+    alignItems: "center",
     color: palette.ctaIrisBase,
     transition: "transform 0.15s ease",
+    "& svg": {
+      width: "12px",
+      height: "12px",
+    },
   },
   termDropdownChevronOpen: {
     transform: "rotate(180deg)",
@@ -408,7 +360,7 @@ const styles = (theme) => ({
   attRow: {
     display: "flex",
     alignItems: "center",
-    gap: "0.28rem",
+    gap: "0.4rem",
     flex: 1,
     minHeight: 0,
     borderBottom: `1px solid ${palette.neutral250}`,
@@ -433,6 +385,7 @@ const styles = (theme) => ({
     lineHeight: "1.2",
     color: palette.neutral600,
     fontWeight: 400,
+    cursor: "default",
     [theme.breakpoints.down("sm")]: {
       fontSize: "0.68rem",
     },
@@ -475,19 +428,11 @@ const styles = (theme) => ({
   },
 });
 
-/* ─────────────────────────────────────────────
-   Helper
-───────────────────────────────────────────── */
 const toTitleCase = (str) => {
   if (!str) return str;
   return str.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 };
 
-/* ─────────────────────────────────────────────
-   Custom term dropdown — a button + listbox instead of a native
-   <select>, so the open menu's item highlight/selected colors are
-   fully styleable (purple) instead of the OS-default blue.
-───────────────────────────────────────────── */
 const TermDropdown = ({ classes, terms, value, onChange }) => {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
@@ -532,15 +477,7 @@ const TermDropdown = ({ classes, terms, value, onChange }) => {
             open ? classes.termDropdownChevronOpen : ""
           }`}
         >
-          <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
-            <path
-              d="M4 6L8 10L12 6"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          <Icon name="chevron-down" />
         </span>
       </button>
 
@@ -592,9 +529,6 @@ TermDropdown.propTypes = {
   onChange: PropTypes.func.isRequired,
 };
 
-/* ─────────────────────────────────────────────
-   Component
-───────────────────────────────────────────── */
 const StudentSuccessTracker = ({ classes }) => {
   const { authenticatedEthosFetch } = useData();
   const { cardId, configuration } = useCardInfo();
@@ -631,15 +565,11 @@ const StudentSuccessTracker = ({ classes }) => {
       "Invalid performance configuration: excellent threshold must be greater than satisfactory threshold",
     );
 
-  /* ── Absence thresholds — same config keys as CourseDataView.jsx,
-     so both components stay in sync if these are changed in card config.
-     Colors here all flow from configuration first, falling back to the
-     Ellucian design-system alert palette (never hardcoded ad-hoc hex). ── */
   const absenceThresholds = {
     warning1: parseFloat(warning1) || 5,
     warning2: parseFloat(warning2) || 10,
     redFlag: parseFloat(red_flag) || 15,
-    w1Color: warning1_color || palette.alertWarningFill, // saffron-600
+    w1Color: warning1_color || palette.alertWarningFill,
     w2Color: warning2_color || palette.tangerine600,
     rfColor: red_flag_color || palette.alertErrorFill,
   };
@@ -662,7 +592,6 @@ const StudentSuccessTracker = ({ classes }) => {
   const [current_gpa, set_current_gpa] = useState(0);
   const [program_gpa, set_program_gpa] = useState(null);
 
-  /* ── Primary data ── */
   const { data: datav2, loading: loadingv2 } = useFetch(
     authenticatedEthosFetch,
     cardId,
@@ -671,22 +600,14 @@ const StudentSuccessTracker = ({ classes }) => {
     {},
   );
 
-  /* ── Derive attendance query params from datav2 + selected term ── */
   const pidm = datav2?.termData?.[selected_term_code]?.pidm;
   const crns =
     datav2?.termData?.[selected_term_code]?.courses
       ?.map((c) => c.crn)
       .join(",") ?? "";
 
-  /* Only fire dependent fetches once pidm/term/crns are actually ready,
-     to avoid premature calls like pidm=undefined&termCode=null&crns= */
   const hasValidAttendanceParams = !!pidm && !!selected_term_code && !!crns;
 
-  /* ── Attendance: Banner (only when attendance_source === "banner") ──
-     get_student_course_attendance_banner points at
-     "pansoft-x-get-student-course-absence-banner", which returns a FLAT object:
-     { "20005": "23.81", "20018": "22.22", ... }  (crn → absence % as string)
-  */
   const { data: bannerAttendanceData, loading: bannerAttendanceLoading } =
     useFetch(
       authenticatedEthosFetch,
@@ -697,7 +618,6 @@ const StudentSuccessTracker = ({ classes }) => {
       attendance_source === "banner" && hasValidAttendanceParams,
     );
 
-  /* ── Attendance: Moodle (only when attendance_source === "moodle") ── */
   const { data: moodleAttendanceData, loading: moodleAttendanceLoading } =
     useFetch(
       authenticatedEthosFetch,
@@ -714,7 +634,6 @@ const StudentSuccessTracker = ({ classes }) => {
       attendance_source === "moodle" && hasValidAttendanceParams,
     );
 
-  /* ── Banner: flat { crn: "23.81" } object → crn → percentage (number) ── */
   const bannerAttendanceLookup = useMemo(() => {
     if (!bannerAttendanceData || typeof bannerAttendanceData !== "object")
       return {};
@@ -725,18 +644,15 @@ const StudentSuccessTracker = ({ classes }) => {
     }, {});
   }, [bannerAttendanceData]);
 
-  /* ── Moodle: flatten gradebooks into crn → percentage lookup ── */
   const moodleAttendanceLookup = useMemo(() => {
     if (!moodleAttendanceData?.gradebooks) return {};
     return moodleAttendanceData.gradebooks.reduce((acc, entry) => {
-      // percentage comes as "70.00 %" — parseFloat handles the trailing " %" cleanly
       const pct = parseFloat(entry.attendance?.[0]?.percentage);
       acc[String(entry.crn)] = isNaN(pct) ? NaN : pct;
       return acc;
     }, {});
   }, [moodleAttendanceData]);
 
-  /* ── Combined loading state ── */
   const attendanceLoading =
     attendance_source === "banner"
       ? bannerAttendanceLoading
@@ -744,7 +660,6 @@ const StudentSuccessTracker = ({ classes }) => {
 
   const isLoading = loadingv2 || attendanceLoading;
 
-  /* ── Terms list ── */
   const all_terms = useMemo(() => {
     if (!datav2?.termData) return [];
     const sortedCodes = Object.keys(datav2.termData).sort((a, b) =>
@@ -785,11 +700,9 @@ const StudentSuccessTracker = ({ classes }) => {
     const cGpa = parseFloat(termInfo.cumulative_gpa);
     set_current_gpa(!isNaN(cGpa) ? cGpa : 0);
     const pGpa = parseFloat(datav2.programGpa);
-    // treat 0 and NaN both as unavailable
     set_program_gpa(pGpa > 0 ? pGpa : null);
   }, [datav2, selected_term_code]);
 
-  /* ── Courses with attendance merged in ── */
   const displayed_attendance = useMemo(() => {
     if (!datav2?.termData || !selected_term_code) return [];
     const courses = datav2.termData[selected_term_code]?.courses ?? [];
@@ -834,9 +747,7 @@ const StudentSuccessTracker = ({ classes }) => {
       style={{ cursor: "pointer" }}
     >
       <div className={classes.cardBody}>
-        {/* ─── Left: GPA boxes ─── */}
         <div className={classes.gpaCol}>
-          {/* Cumulative GPA */}
           <div
             className={classes.gpaBox}
             style={{
@@ -860,7 +771,6 @@ const StudentSuccessTracker = ({ classes }) => {
             <div className={classes.gpaRule} />
           </div>
 
-          {/* Program GPA */}
           <div
             className={classes.gpaBox}
             style={{
@@ -894,11 +804,10 @@ const StudentSuccessTracker = ({ classes }) => {
           </div>
         </div>
 
-        {/* ─── Right: Attendance ─── */}
         <div className={classes.attCol}>
           <div className={classes.attHeader}>
             <Typography variant="h5" className={classes.attHeaderTitle}>
-              (Absence {attendance_source})
+              Absence %({toTitleCase(attendance_source)})
             </Typography>
 
             {!loadingv2 && all_terms.length > 0 && (
@@ -948,7 +857,6 @@ const StudentSuccessTracker = ({ classes }) => {
         </div>
       </div>
 
-      {/* ══════════ VIEW DETAILS ══════════ */}
       <div className={classes.btnWrap}>
         <button
           type="button"
