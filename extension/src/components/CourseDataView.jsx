@@ -334,7 +334,7 @@ const CourseDataView = ({ loadingCourseData, courseData, tableConfig, colors, is
     },
     {
       accessorKey: "attendancePercentage",
-      header: `Absence %(${attendance_source ?? ""})`,
+      header: `Absence % (${attendance_source ?? ""})`,
       size: 280,
       Cell: ({ row }) => (
         <AttendanceCell

@@ -58,7 +58,8 @@ CornerWave.propTypes = {
 };
 
 const AttendancePill = ({ value, color }) => {
-  const label = isNaN(value) ? "N/A" : `${value}% absent`;
+  const isValid = !isNaN(value);
+  const numberText = isValid ? `${value}%` : "N/A";
 
   return (
     <span
@@ -66,7 +67,7 @@ const AttendancePill = ({ value, color }) => {
         flexShrink: 0,
         display: "inline-flex",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: "flex-start",
         width: "86px",
         padding: "0.28rem 0.3rem",
         borderRadius: "999px",
@@ -76,11 +77,19 @@ const AttendancePill = ({ value, color }) => {
         fontWeight: 700,
         whiteSpace: "nowrap",
         lineHeight: 1,
-        textAlign: "center",
       }}
-      aria-label={`Absence: ${label}`}
+      aria-label={`Absence: ${numberText}${isValid ? " absent" : ""}`}
     >
-      {label}
+      <span
+        style={{
+          flex: "0 0 34px",
+          textAlign: "right",
+          marginRight: "0.25rem",
+        }}
+      >
+        {numberText}
+      </span>
+      {isValid && <span>absent</span>}
     </span>
   );
 };
@@ -807,7 +816,7 @@ const StudentSuccessTracker = ({ classes }) => {
         <div className={classes.attCol}>
           <div className={classes.attHeader}>
             <Typography variant="h5" className={classes.attHeaderTitle}>
-              Absence %({toTitleCase(attendance_source)})
+              Absence % ({toTitleCase(attendance_source)})
             </Typography>
 
             {!loadingv2 && all_terms.length > 0 && (
