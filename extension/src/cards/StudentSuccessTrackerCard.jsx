@@ -540,7 +540,19 @@ TermDropdown.propTypes = {
 
 const StudentSuccessTracker = ({ classes }) => {
   const { authenticatedEthosFetch } = useData();
-  const { cardId, configuration } = useCardInfo();
+  const cardInfo = useCardInfo();
+  const { cardId } = cardInfo;
+
+  // FIX: `useCardInfo()` does not reliably expose a `configuration` key —
+  // it exposes `cardConfiguration`. The previous code did:
+  //   const { cardId, configuration } = useCardInfo();
+  // which left `configuration` as `undefined`, and the very next
+  // destructure (`const { excellent_performance_color_code, ... } = configuration`)
+  // threw "Cannot read properties of undefined (reading
+  // 'excellent_performance_color_code')" on first render.
+  // Always fall back to an empty object so downstream destructuring is safe.
+  const configuration = cardInfo?.cardConfiguration ?? cardInfo?.configuration ?? {};
+
   const { navigateToPage } = useCardControl();
 
   const {
@@ -569,10 +581,21 @@ const StudentSuccessTracker = ({ classes }) => {
     minimum_threshold_for_satisfactory_performance,
   );
 
-  if (parsed_exc_perf <= parsed_sat_perf)
+  // Only enforce this invariant once config has actually loaded — otherwise
+  // both values are NaN on the very first render and NaN <= NaN is false,
+  // which is harmless, but we guard explicitly for clarity/safety.
+  const configurationReady = !!(cardInfo?.cardConfiguration ?? cardInfo?.configuration);
+
+  if (
+    configurationReady &&
+    !isNaN(parsed_exc_perf) &&
+    !isNaN(parsed_sat_perf) &&
+    parsed_exc_perf <= parsed_sat_perf
+  ) {
     throw new Error(
       "Invalid performance configuration: excellent threshold must be greater than satisfactory threshold",
     );
+  }
 
   const absenceThresholds = {
     warning1: parseFloat(warning1) || 5,
@@ -599,7 +622,7 @@ const StudentSuccessTracker = ({ classes }) => {
 
   const [selected_term_code, set_selected_term_code] = useState(null);
   const [current_gpa, set_current_gpa] = useState(0);
-  const [program_gpa, set_program_gpa] = useState(null);
+  const [term_gpa, set_term_gpa] = useState(null);
 
   const { data: datav2, loading: loadingv2 } = useFetch(
     authenticatedEthosFetch,
@@ -708,8 +731,10 @@ const StudentSuccessTracker = ({ classes }) => {
     if (!termInfo) return;
     const cGpa = parseFloat(termInfo.cumulative_gpa);
     set_current_gpa(!isNaN(cGpa) ? cGpa : 0);
-    const pGpa = parseFloat(datav2.programGpa);
-    set_program_gpa(pGpa > 0 ? pGpa : null);
+    // FIX: use the same camelCase field + gpa_available gate as the working
+    // Home.jsx / table view, instead of the non-existent `term_gpa` field.
+    const tGpa = termInfo.gpa_available ? parseFloat(termInfo.termGpa) : NaN;
+    set_term_gpa(!isNaN(tGpa) ? tGpa : null);
   }, [datav2, selected_term_code]);
 
   const displayed_attendance = useMemo(() => {
@@ -732,14 +757,25 @@ const StudentSuccessTracker = ({ classes }) => {
   ]);
 
   const gpa_color = get_gpa_color(current_gpa);
-  const prog_color =
-    program_gpa !== null
-      ? get_gpa_color(program_gpa)
+  const term_gpa_color =
+    term_gpa !== null
+      ? get_gpa_color(term_gpa)
       : poor_performance_color_code;
 
   const handle_view_details = () => {
     navigateToPage({ route: "/", params: { termCode: selected_term_code } });
   };
+
+  // FIX: don't render anything that depends on `configuration` until it has
+  // actually loaded. This mirrors the working version and prevents any
+  // future config-dependent code added here from crashing on first render.
+  if (!configurationReady) {
+    return (
+      <div className={classes.card}>
+        <Typography className={classes.attEmptyState}>Loading...</Typography>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -783,29 +819,29 @@ const StudentSuccessTracker = ({ classes }) => {
           <div
             className={classes.gpaBox}
             style={{
-              border: `1.5px solid ${hexToRgba(prog_color, 0.4)}`,
-              background: hexToRgba(prog_color, 0.04),
+              border: `1.5px solid ${hexToRgba(term_gpa_color, 0.4)}`,
+              background: hexToRgba(term_gpa_color, 0.04),
             }}
           >
-            <CornerWave color={prog_color} />
+            <CornerWave color={term_gpa_color} />
             <div
               className={classes.iconBox}
-              style={{ background: hexToRgba(prog_color, 0.12) }}
+              style={{ background: hexToRgba(term_gpa_color, 0.12) }}
             >
-              <span style={{ color: prog_color, display: "flex" }}>
+              <span style={{ color: term_gpa_color, display: "flex" }}>
                 <Icon name="bar-chart" />
               </span>
             </div>
-            <Typography className={classes.gpaTitle}>Program GPA</Typography>
+            <Typography className={classes.gpaTitle}>Term GPA</Typography>
             <Typography className={classes.gpaNumber}>
               {loadingv2
                 ? "—"
-                : program_gpa !== null
-                  ? program_gpa.toFixed(2)
+                : term_gpa !== null
+                  ? term_gpa.toFixed(2)
                   : "N/A"}
             </Typography>
             <div className={classes.gpaRule} />
-            {!loadingv2 && program_gpa === null && (
+            {!loadingv2 && term_gpa === null && (
               <Typography className={classes.gpaUnavailable}>
                 Not available
               </Typography>

@@ -198,8 +198,8 @@ DonutChart.propTypes = {
 DonutChart.defaultProps = { aCount: 0, bCount: 0, total: 0 };
 
 // ─── Generate preset GPA options ──────────────────────────────────────────────
-const generatePresets = (programGpa, maxAchievableGpa, scaleMax) => {
-  const min = parseFloat(programGpa) || 0;
+const generatePresets = (cumGpa, maxAchievableGpa, scaleMax) => {
+  const min = parseFloat(cumGpa) || 0;
   const max = parseFloat(maxAchievableGpa) || parseFloat(scaleMax) || 4.0;
   const range = max - min;
   if (range <= 0) return [];
@@ -214,9 +214,9 @@ const generatePresets = (programGpa, maxAchievableGpa, scaleMax) => {
 };
 
 // ─── Max GPA Ring (input screen) ─────────────────────────────────────────────
-const MaxGpaRing = ({ maxGpa, programGpa, scaleMax }) => {
+const MaxGpaRing = ({ maxGpa, cumGpa, scaleMax }) => {
   const scale = parseFloat(scaleMax) || 4.0;
-  const current = parseFloat(programGpa) || 0;
+  const current = parseFloat(cumGpa) || 0;
   const max = parseFloat(maxGpa) || scale;
   const RADIUS = 26;
   const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
@@ -242,8 +242,8 @@ const MaxGpaRing = ({ maxGpa, programGpa, scaleMax }) => {
     </div>
   );
 };
-MaxGpaRing.propTypes = { maxGpa: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), programGpa: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), scaleMax: PropTypes.oneOfType([PropTypes.string, PropTypes.number]) };
-MaxGpaRing.defaultProps = { maxGpa: null, programGpa: 0, scaleMax: 4.0 };
+MaxGpaRing.propTypes = { maxGpa: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), cumGpa: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), scaleMax: PropTypes.oneOfType([PropTypes.string, PropTypes.number]) };
+MaxGpaRing.defaultProps = { maxGpa: null, cumGpa: 0, scaleMax: 4.0 };
 
 // ─── Sparkle AI Icon ─────────────────────────────────────────────────────────
 // Exported so other components (e.g. Home.jsx) can reuse the exact same icon
@@ -274,7 +274,7 @@ const TargetGpaModal = ({
   loading,
   result,
   maxGpa,
-  programGpa,
+  cumGpa,
   targetGpa: targetGpaProp,
   maxAchievableGpa,
 }) => {
@@ -286,7 +286,7 @@ const TargetGpaModal = ({
   const resultRef = React.useRef(null);
 
   const scaleMax = parseFloat(maxGpa) || 4.0;
-  const parsedProgramGpa = parseFloat(programGpa) || 0;
+  const parsedCumGpa = parseFloat(cumGpa) || 0;
   const parsedMaxAchievable = parseFloat(maxAchievableGpa) || scaleMax;
   const inputScreenMaxGpa = maxAchievableGpa || maxGpa;
 
@@ -294,8 +294,8 @@ const TargetGpaModal = ({
   const activeNumeric = parseFloat(activeValue);
 
   const presets = useMemo(
-    () => generatePresets(parsedProgramGpa, parsedMaxAchievable, scaleMax),
-    [parsedProgramGpa, parsedMaxAchievable, scaleMax]
+    () => generatePresets(parsedCumGpa, parsedMaxAchievable, scaleMax),
+    [parsedCumGpa, parsedMaxAchievable, scaleMax]
   );
 
   const handleClose = () => {
@@ -306,15 +306,15 @@ const TargetGpaModal = ({
   };
 
   const isOutOfRange = !isNaN(activeNumeric) && (activeNumeric < 0 || activeNumeric > scaleMax);
-  const isBelowOrEqualProgram = !isNaN(activeNumeric) && activeNumeric <= parsedProgramGpa;
+  const isBelowOrEqualCum = !isNaN(activeNumeric) && activeNumeric <= parsedCumGpa;
   const isAboveMaxAchievable = !isNaN(activeNumeric) && !isNaN(parsedMaxAchievable) && activeNumeric > parsedMaxAchievable;
-  const hasError = Boolean(activeValue && (isOutOfRange || isBelowOrEqualProgram || isAboveMaxAchievable));
+  const hasError = Boolean(activeValue && (isOutOfRange || isBelowOrEqualCum || isAboveMaxAchievable));
 
   const getHelperText = () => {
     if (!activeValue) return "";
     if (isOutOfRange) return `Please enter a GPA between 0 and ${scaleMax}`;
     if (isAboveMaxAchievable) return `Target GPA cannot exceed your Maximum Achievable GPA of ${parsedMaxAchievable.toFixed(2)}`;
-    if (isBelowOrEqualProgram) return `Target GPA must be greater than your current Program GPA of ${parsedProgramGpa.toFixed(2)}`;
+    if (isBelowOrEqualCum) return `Target GPA must be greater than your current CGPA of ${parsedCumGpa.toFixed(2)}`;
     return "";
   };
 
@@ -465,19 +465,19 @@ const TargetGpaModal = ({
                   <div style={{ width: 28, height: 28, borderRadius: "50%", backgroundColor: "#ede9fe", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="#7c3aed"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm-1 13.99L5 13.5v4L12 21l7-3.5v-4l-6 3.49z" /></svg>
                   </div>
-                  <Typography variant="body2" style={{ color: "#7c3aed", fontWeight: 700, fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.8px", margin: 0 }}>Current Program GPA</Typography>
+                  <Typography variant="body2" style={{ color: "#7c3aed", fontWeight: 700, fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.8px", margin: 0 }}>Current CGPA</Typography>
                 </div>
                 <Typography variant="body2" style={{ color: "#5b21b6", fontWeight: 900, fontSize: "32px", lineHeight: 1, margin: 0 }}>
-                  {parsedProgramGpa != null && !isNaN(parsedProgramGpa) ? parsedProgramGpa.toFixed(2) : "N/A"}
+                  {parsedCumGpa != null && !isNaN(parsedCumGpa) ? parsedCumGpa.toFixed(2) : "N/A"}
                 </Typography>
                 <Typography variant="body2" style={{ color: "#7c3aed", fontSize: "11px", marginTop: "4px" }}>Your current performance</Typography>
               </div>
-              {inputScreenMaxGpa && <MaxGpaRing maxGpa={inputScreenMaxGpa} programGpa={programGpa} scaleMax={maxGpa} />}
+              {inputScreenMaxGpa && <MaxGpaRing maxGpa={inputScreenMaxGpa} cumGpa={cumGpa} scaleMax={maxGpa} />}
             </div>
             <Typography variant="body1" style={{ fontWeight: 700, color: "#111827", fontSize: "14px", marginBottom: "10px" }}>Choose your target GPA</Typography>
             <Typography variant="body2" style={{ color: "#6b7280", fontSize: "11.5px", marginBottom: "12px" }}>
-              Target GPA must be greater than your current Program GPA of{" "}
-              <strong style={{ color: "#5b21b6" }}>{parsedProgramGpa.toFixed(2)}</strong>
+              Target GPA must be greater than your current CGPA of{" "}
+              <strong style={{ color: "#5b21b6" }}>{parsedCumGpa.toFixed(2)}</strong>
               {" "}and less than max achievable GPA of{" "}
               <strong style={{ color: "#16a34a" }}>{parsedMaxAchievable.toFixed(2)}</strong>
             </Typography>
@@ -498,10 +498,10 @@ const TargetGpaModal = ({
                 <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
                   <EditIcon style={{ color: "#9ca3af", fontSize: "16px" }} />
                 </span>
-                <input type="number" step="0.01" min={parsedProgramGpa} max={parsedMaxAchievable} value={customInput} onChange={handleCustomChange} placeholder="Enter custom GPA"
+                <input type="number" step="0.01" min={parsedCumGpa} max={parsedMaxAchievable} value={customInput} onChange={handleCustomChange} placeholder="Enter custom GPA"
                   style={{ width: "100%", padding: "11px 100px 11px 36px", borderRadius: "8px", border: hasError && customInput !== "" ? "1.5px solid #ef4444" : "1.5px solid #d1d5db", fontSize: "14px", color: "#374151", outline: "none", backgroundColor: "#fff", boxSizing: "border-box", fontFamily: "inherit" }} />
                 <span style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", fontSize: "12px", color: "#9ca3af", pointerEvents: "none" }}>
-                  {parsedProgramGpa.toFixed(2)} – {parsedMaxAchievable.toFixed(2)}
+                  {parsedCumGpa.toFixed(2)} – {parsedMaxAchievable.toFixed(2)}
                 </span>
               </div>
               {hasError && customInput !== "" && helperText && (
@@ -570,7 +570,7 @@ const TargetGpaModal = ({
                 <Typography variant="body2" style={{ color: "#6b7280", fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px" }}>Current CGPA</Typography>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
                   <Typography variant="body1" style={{ color: "#111827", fontWeight: 800, fontSize: "26px", lineHeight: 1 }}>
-                    {parsedProgramGpa.toFixed(2)}
+                    {parsedCumGpa.toFixed(2)}
                   </Typography>
                   <svg viewBox="0 0 24 24" width="18" height="18" fill="#7c3aed" style={{ marginTop: "2px" }}>
                     <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm-1 13.99L5 13.5v4L12 21l7-3.5v-4l-6 3.49z" />
@@ -825,7 +825,7 @@ TargetGpaModal.propTypes = {
   loading: PropTypes.bool,
   result: PropTypes.shape({ maxAchievableGpa: PropTypes.string, data: PropTypes.string }),
   maxGpa: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  programGpa: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  cumGpa: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   targetGpa: PropTypes.string,
   maxAchievableGpa: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
@@ -834,7 +834,7 @@ TargetGpaModal.defaultProps = {
   loading: false,
   result: null,
   maxGpa: "4.0",
-  programGpa: null,
+  cumGpa: null,
   targetGpa: null,
   maxAchievableGpa: null,
 };

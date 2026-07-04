@@ -1,12 +1,32 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Typography } from "@ellucian/react-design-system/core";
-import DoubleChevronIcon from "./DoubleChevron";
 
-/* ─── Corner Wave ─── */
+// ─── Palette ───────────────────────────────────────────────────────────────
+const palette = {
+  neutral600: "#151618",
+  neutral500: "#5B5E65",
+  neutral300: "#D9D9D9",
+  neutral250: "#E9E9E9",
+  neutral100: "#FFFFFF",
+  iris600: "#7100EB",
+};
+
+const hexToRgba = (hex = "#000000", alpha = 0.1) => {
+  const h = (hex || "#000000").replace("#", "");
+  const r = parseInt(h.substring(0, 2), 16);
+  const g = parseInt(h.substring(2, 4), 16);
+  const b = parseInt(h.substring(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+};
+
+// ─── Corner wave decoration (matches StudentSuccessTrackerCard.jsx) ─────────
 const CornerWave = ({ color }) => (
   <svg
-    width="60" height="50" viewBox="0 0 60 50" fill="none"
+    width="60"
+    height="50"
+    viewBox="0 0 60 50"
+    fill="none"
     xmlns="http://www.w3.org/2000/svg"
     style={{ position: "absolute", bottom: 0, right: 0, pointerEvents: "none" }}
     aria-hidden="true"
@@ -16,260 +36,266 @@ const CornerWave = ({ color }) => (
 );
 CornerWave.propTypes = { color: PropTypes.string.isRequired };
 
-/* ─── Icons — tiny outline, color prop ─── */
-const CumulativeIcon = ({ color }) => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-      stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+// ─── Small inline icons (no external icon lib dependency here) ─────────────
+const LayersIcon = ({ color }) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2 2 7l10 5 10-5-10-5Z" fill={color} />
+    <path d="M2 12l10 5 10-5" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M2 17l10 5 10-5" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
-CumulativeIcon.propTypes = { color: PropTypes.string.isRequired };
+LayersIcon.propTypes = { color: PropTypes.string };
+LayersIcon.defaultProps = { color: "#000" };
 
-const TermGpaIcon = ({ color }) => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="3" y="4" width="18" height="18" rx="2" stroke={color} strokeWidth="2"/>
-    <path d="M16 2v4M8 2v4M3 10h18" stroke={color} strokeWidth="2" strokeLinecap="round"/>
+const CalendarIcon = ({ color }) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="3" y="5" width="18" height="16" rx="2" stroke={color} strokeWidth="2" />
+    <path d="M3 10h18" stroke={color} strokeWidth="2" />
+    <path d="M8 3v4M16 3v4" stroke={color} strokeWidth="2" strokeLinecap="round" />
   </svg>
 );
-TermGpaIcon.propTypes = { color: PropTypes.string.isRequired };
+CalendarIcon.propTypes = { color: PropTypes.string };
+CalendarIcon.defaultProps = { color: "#000" };
 
-const AcademicStandingIcon = ({ color }) => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
-      stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+const ShieldIcon = ({ color }) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M12 2 4 5v6c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V5l-8-3Z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinejoin="round"
+    />
   </svg>
 );
-AcademicStandingIcon.propTypes = { color: PropTypes.string.isRequired };
+ShieldIcon.propTypes = { color: PropTypes.string };
+ShieldIcon.defaultProps = { color: "#000" };
 
-/* ─── hex → rgba ─── */
-const hexToRgba = (hex = "#000000", alpha = 0.1) => {
-  const h = hex.replace("#", "");
-  const r = parseInt(h.substring(0, 2), 16);
-  const g = parseInt(h.substring(2, 4), 16);
-  const b = parseInt(h.substring(4, 6), 16);
-  return `rgba(${r},${g},${b},${alpha})`;
+// ─── One metric card (Cumulative GPA / Term GPA / Academic Standing / etc.) ─
+const MetricCard = ({ icon, title, value, valueColor, caption, accentColor }) => (
+  <div
+    style={{
+      position: "relative",
+      flex: 1,
+      minWidth: 0,
+      height: "100%",
+      boxSizing: "border-box",
+      borderRadius: "12px",
+      border: `1.5px solid ${hexToRgba(accentColor, 0.35)}`,
+      background: hexToRgba(accentColor, 0.03),
+      padding: "14px 18px 16px",
+      overflow: "hidden",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "space-between",
+      gap: "6px",
+    }}
+  >
+    <CornerWave color={accentColor} />
+    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", zIndex: 1 }}>
+        {icon}
+        <Typography
+          style={{
+            margin: 0,
+            fontSize: "0.85rem",
+            fontWeight: 700,
+            color: palette.neutral600,
+          }}
+        >
+          {title}
+        </Typography>
+      </div>
+
+      <Typography
+        style={{
+          margin: 0,
+          fontSize: "1.7rem",
+          fontWeight: 800,
+          color: valueColor,
+          lineHeight: 1.15,
+          zIndex: 1,
+        }}
+      >
+        {value}
+      </Typography>
+    </div>
+
+    {caption && (
+      <Typography
+        style={{
+          margin: 0,
+          fontSize: "0.72rem",
+          color: palette.neutral500,
+          zIndex: 1,
+          display: "flex",
+          alignItems: "center",
+          gap: "5px",
+        }}
+      >
+        <span style={{ fontSize: "0.9em" }}>•</span> {caption}
+      </Typography>
+    )}
+  </div>
+);
+MetricCard.propTypes = {
+  icon: PropTypes.node.isRequired,
+  title: PropTypes.string.isRequired,
+  value: PropTypes.node.isRequired,
+  valueColor: PropTypes.string.isRequired,
+  caption: PropTypes.string,
+  accentColor: PropTypes.string.isRequired,
 };
+MetricCard.defaultProps = { caption: null };
 
-/* ══════════════════════════════════════════════════
-   GpaMetrics
-══════════════════════════════════════════════════ */
+// ─── Main component ──────────────────────────────────────────────────────────
 const GpaMetrics = ({
   loadingTermInformation,
   isFirstTerm,
+  isFirstTermFlag,
   isZeroDelta,
   isPositive,
-  deltaColor,
   gpaDelta,
   gpaCircleColor,
   currentGpa,
   termGpaCircleColor,
   termGpa,
-  isLatestTerm,
+  colors,
   academicStanding,
   previousAcademicStanding,
   academicStandingColor,
 }) => {
-  const displayedAcademicStanding =
-    academicStanding || (isLatestTerm ? previousAcademicStanding : null) || "N/A";
+  const showFirstTermNote = isFirstTerm || isFirstTermFlag;
 
-  /* ── Shared card style ── */
-  const cardStyle = (accentColor) => ({
-    flex: 1,
-    position: "relative",
-    overflow: "hidden",
-    height: "130px",
-    padding: "12px 14px",
-    borderRadius: "12px",
-    display: "flex",
-    flexDirection: "column",
-    minWidth: 0,
-    border: `1.5px solid ${hexToRgba(accentColor, 0.4)}`,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.07)",
-    background: "#ffffff",
-    boxSizing: "border-box",
-  });
+  // ── Cumulative GPA caption ──
+  let cumulativeCaption = "Same as last term";
+  if (!showFirstTermNote && !isZeroDelta) {
+    const delta = Math.abs(Number(gpaDelta) || 0).toFixed(2);
+    cumulativeCaption = isPositive
+      ? `Up ${delta} from last term`
+      : `Down ${delta} from last term`;
+  } else if (showFirstTermNote) {
+    cumulativeCaption = "First recorded term";
+  }
 
-  const iconPill = (accentColor) => ({
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: 26,
-    height: 26,
-    borderRadius: "50%",
-    background: hexToRgba(accentColor, 0.12),
-    flexShrink: 0,
-  });
+  // ── Academic standing caption + value ──
+  const usingCurrentStanding = !!academicStanding;
+  const resolvedStanding = academicStanding || previousAcademicStanding;
+  const standingCaption = usingCurrentStanding
+    ? "Based on current term"
+    : "Based on previous term";
 
-  const topRow = { display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 };
-
-  const midRow = {
-    flex: 1,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-  };
-
-  const botRow = { flexShrink: 0 };
+  const termGpaDisplay =
+    !loadingTermInformation && termGpa !== null && termGpa !== undefined && termGpa !== "N/A" && !isNaN(termGpa)
+      ? Number(termGpa).toFixed(2)
+      : "N/A";
 
   return (
-    <div className="gpa-cards-column">
-      <div style={{ display: "flex", gap: "12px", alignItems: "stretch" }}>
+    <div
+      style={{
+        flex: 3,
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "stretch",
+        gap: "14px",
+        minWidth: 0,
+      }}
+    >
+      <MetricCard
+        icon={<LayersIcon color={gpaCircleColor || colors?.ON_TRACK} />}
+        title="Cumulative GPA"
+        value={loadingTermInformation ? "—" : Number(currentGpa || 0).toFixed(2)}
+        valueColor={gpaCircleColor || colors?.ON_TRACK}
+        caption={loadingTermInformation ? null : cumulativeCaption}
+        accentColor={gpaCircleColor || colors?.ON_TRACK}
+      />
 
-        {/* ══ CUMULATIVE GPA ══ */}
-        <div style={cardStyle(gpaCircleColor)}>
-          <CornerWave color={gpaCircleColor} />
+      <MetricCard
+        icon={<CalendarIcon color={termGpaCircleColor || colors?.ON_TRACK} />}
+        title="Term GPA"
+        value={termGpaDisplay}
+        valueColor={termGpaCircleColor || colors?.ON_TRACK}
+        caption={loadingTermInformation ? null : "Current term performance"}
+        accentColor={termGpaCircleColor || colors?.ON_TRACK}
+      />
 
-          <div style={topRow}>
-            <div style={iconPill(gpaCircleColor)}>
-              <CumulativeIcon color={gpaCircleColor} />
-            </div>
-            <Typography variant="body2" style={{ fontSize: "0.88rem", fontWeight: 700, color: "#111827", lineHeight: 1.2 }}>
-              Cumulative GPA
-            </Typography>
-          </div>
-
-          <div style={midRow}>
-            <Typography variant="h3" style={{
-              fontSize: "2rem", fontWeight: 800,
-              color: gpaCircleColor,
-              lineHeight: 1, margin: 0, textAlign: "center",
-            }}>
-              {loadingTermInformation ? "..." : currentGpa}
-            </Typography>
-          </div>
-
-          <div style={botRow}>
-            {!isFirstTerm ? (
-              isZeroDelta ? (
-                <Typography variant="body2" style={{ fontSize: "0.78rem", color: "#6B7280", fontWeight: 500 }}>
-                  ● Same as Last Term
-                </Typography>
-              ) : (
-                <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
-                  <DoubleChevronIcon orientation={isPositive ? "up" : "down"} size={11} backgroundColor={deltaColor} />
-                  <Typography variant="body2" style={{ fontSize: "0.78rem", color: deltaColor, fontWeight: 700 }}>
-                    {gpaDelta != null ? Number(gpaDelta).toFixed(2) : gpaDelta}
-                  </Typography>
-                  <Typography variant="body2" style={{ fontSize: "0.78rem", color: "#6B7280", fontWeight: 500 }}>
-                    From Last Term
-                  </Typography>
-                </div>
-              )
-            ) : (
-              <Typography variant="body2" style={{ fontSize: "0.78rem", color: "#6B7280", fontWeight: 500 }}>
-                ● First term
-              </Typography>
-            )}
-          </div>
-        </div>
-
-        {/* ══ TERM GPA ══ */}
-        <div style={cardStyle(termGpaCircleColor)}>
-          <CornerWave color={termGpaCircleColor} />
-
-          <div style={topRow}>
-            <div style={iconPill(termGpaCircleColor)}>
-              <TermGpaIcon color={termGpaCircleColor} />
-            </div>
-            <Typography variant="body2" style={{ fontSize: "0.88rem", fontWeight: 700, color: "#111827", lineHeight: 1.2 }}>
-              Term GPA
-            </Typography>
-          </div>
-
-          <div style={midRow}>
-            <Typography variant="h3" style={{
-              fontSize: "2rem", fontWeight: 800,
-              color: termGpaCircleColor,
-              lineHeight: 1, margin: 0, textAlign: "center",
-            }}>
-              {loadingTermInformation
-                ? "..."
-                : termGpa != null && !isNaN(termGpa)
-                  ? Number(termGpa).toFixed(2)
-                  : "N/A"}
-            </Typography>
-          </div>
-
-          <div style={botRow}>
-            <Typography variant="body2" style={{ fontSize: "0.78rem", color: "#6B7280", fontWeight: 500 }}>
-              ● Current term performance
-            </Typography>
-          </div>
-        </div>
-
-        {/* ══ ACADEMIC STANDING ══ */}
-        <div style={cardStyle(academicStandingColor)}>
-          <CornerWave color={academicStandingColor} />
-
-          <div style={topRow}>
-            <div style={iconPill(academicStandingColor)}>
-              <AcademicStandingIcon color={academicStandingColor} />
-            </div>
-            <Typography variant="body2" style={{ fontSize: "0.88rem", fontWeight: 700, color: "#111827", lineHeight: 1.2 }}>
-              Academic Standing
-            </Typography>
-          </div>
-
-          <div style={midRow}>
-            <Typography variant="h3" style={{
-              fontSize: displayedAcademicStanding.length > 16
-                ? "1.05rem"
-                : displayedAcademicStanding.length > 9
-                  ? "1.7rem"
-                  : "2rem",
-              fontWeight: 800,
-              color: academicStandingColor,
-              lineHeight: 1.15, margin: 0,
-              textAlign: "center",
-              wordBreak: "break-word",
-              width: "100%",
-            }}>
-              {loadingTermInformation ? "..." : displayedAcademicStanding}
-            </Typography>
-          </div>
-
-          <div style={botRow}>
-            <Typography variant="body2" style={{ fontSize: "0.78rem", color: "#6B7280", fontWeight: 500 }}>
-              ●{" "}
-              {!academicStanding && isLatestTerm && previousAcademicStanding
-                ? "Based on previous term"
-                : "Current standing status"}
-            </Typography>
-          </div>
-        </div>
-
-      </div>
+      <MetricCard
+        icon={<ShieldIcon color={academicStandingColor || colors?.ON_TRACK} />}
+        title="Academic Standing"
+        value={loadingTermInformation ? "—" : resolvedStanding || "N/A"}
+        valueColor={academicStandingColor || colors?.ON_TRACK}
+        caption={loadingTermInformation || !resolvedStanding ? null : standingCaption}
+        accentColor={academicStandingColor || colors?.ON_TRACK}
+      />
     </div>
   );
 };
 
 GpaMetrics.propTypes = {
-  fetchGpaRecommendation: PropTypes.func.isRequired,
-  loadingRecommendation: PropTypes.bool,
-  recommendationResult: PropTypes.string,
-  recommendationError: PropTypes.string,
-  loadingTermInformation: PropTypes.bool.isRequired,
-  isFirstTerm: PropTypes.bool.isRequired,
-  isFirstTermFlag: PropTypes.bool.isRequired,
-  isZeroDelta: PropTypes.bool.isRequired,
-  isPositive: PropTypes.bool.isRequired,
-  deltaColor: PropTypes.string.isRequired,
-  gpaDelta: PropTypes.number,
-  gpaCircleColor: PropTypes.string.isRequired,
-  currentGpa: PropTypes.number.isRequired,
-  termGpaCircleColor: PropTypes.string.isRequired,
+  loadingTermInformation: PropTypes.bool,
+  isFirstTerm: PropTypes.bool,
+  isFirstTermFlag: PropTypes.bool,
+  isZeroDelta: PropTypes.bool,
+  isPositive: PropTypes.bool,
+  deltaColor: PropTypes.string,
+  gpaDelta: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  gpaCircleColor: PropTypes.string,
+  currentGpa: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  termGpaCircleColor: PropTypes.string,
   termGpa: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  isLatestTerm: PropTypes.bool.isRequired,
+  isLatestTerm: PropTypes.bool,
+  diffAttendance: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  isZeroAttendanceDiff: PropTypes.bool,
+  isPositiveAttendanceDiff: PropTypes.bool,
+  attendanceDiffColor: PropTypes.string,
+  attendanceCircleColor: PropTypes.string,
+  avgAttendance: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  colors: PropTypes.shape({
+    ON_TRACK: PropTypes.string,
+    NEEDS_ATTENTION: PropTypes.string,
+    CRITICAL: PropTypes.string,
+  }),
+  handleOpenModal: PropTypes.func,
   academicStanding: PropTypes.string,
   previousAcademicStanding: PropTypes.string,
-  academicStandingColor: PropTypes.string.isRequired,
-  colors: PropTypes.object.isRequired,
-  handleOpenModal: PropTypes.func,
+  academicStandingColor: PropTypes.string,
+  programGpa: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  programGpaCircleColor: PropTypes.string,
+  fetchGpaRecommendation: PropTypes.func,
+  loadingRecommendation: PropTypes.bool,
+  recommendationResult: PropTypes.object,
+  recommendationError: PropTypes.string,
 };
 
 GpaMetrics.defaultProps = {
-  previousAcademicStanding: PropTypes.null,
+  loadingTermInformation: false,
+  isFirstTerm: false,
+  isFirstTermFlag: false,
+  isZeroDelta: true,
+  isPositive: true,
+  deltaColor: palette.iris600,
+  gpaDelta: 0,
+  gpaCircleColor: palette.iris600,
+  currentGpa: 0,
+  termGpaCircleColor: palette.iris600,
+  termGpa: null,
+  isLatestTerm: false,
+  diffAttendance: null,
+  isZeroAttendanceDiff: true,
+  isPositiveAttendanceDiff: false,
+  attendanceDiffColor: palette.iris600,
+  attendanceCircleColor: palette.iris600,
+  avgAttendance: null,
+  colors: { ON_TRACK: "#079C34", NEEDS_ATTENTION: "#F5A327", CRITICAL: "#F54927" },
+  handleOpenModal: () => {},
+  academicStanding: null,
+  previousAcademicStanding: null,
+  academicStandingColor: palette.iris600,
+  programGpa: null,
+  programGpaCircleColor: palette.iris600,
+  fetchGpaRecommendation: () => {},
+  loadingRecommendation: false,
+  recommendationResult: null,
+  recommendationError: null,
 };
 
 export default GpaMetrics;

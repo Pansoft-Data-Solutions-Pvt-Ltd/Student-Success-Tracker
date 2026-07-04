@@ -737,7 +737,7 @@ const MySuccessTrackerTable = () => {
               loading={loadingRecommendation}
               result={recommendationResult}
               maxGpa={max_gpa}
-              currentGpa={currentGpa}
+              cumGpa={currentGpa}
               programGpa={programGpa}
               maxAchievableGpa={datav2?.maxAchievableGpa}
             />
