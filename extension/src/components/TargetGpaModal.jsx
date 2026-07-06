@@ -511,6 +511,11 @@ const TargetGpaModal = ({
                 <Typography variant="body2" style={{ color: "#ef4444", fontSize: "11.5px", marginTop: "5px", marginLeft: "2px" }}>{helperText}</Typography>
               )}
             </div>
+
+            {/* ── Disclaimer (input screen) ── */}
+            <Typography variant="body2" style={{ marginTop: "16px", textAlign: "center", fontSize: "11px", color: "#9ca3af", lineHeight: 1.5 }}>
+               GPA recommendations are calculated using core subjects only and do not include elective courses. The recommended grades and maximum achievable GPA are estimated values provided for guidance purposes only and may differ from official GPA calculations.
+            </Typography>
           </>
         )}
 
