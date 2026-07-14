@@ -102,6 +102,13 @@ module.exports = {
             require: false,
             default: "#F54927",
           },
+           {
+            key: "attendance-source",
+            label: "attendance source",
+            type: "text",
+            require: false,
+            
+          },
           {
             key: "minimum_threshold_for_excellent_performance",
             label: "Minimum threshold for excellent performance",
@@ -129,6 +136,13 @@ module.exports = {
             type: "text",
             require: true,
             default: "60",
+          },
+          {
+            key: "attendance_source",
+            label: "Attendance Source",
+            type: "text",
+            require: true,
+            default: "colleague",
           },
           {
   key: "get_student_course_attendance_banner",
