@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import PropTypes from "prop-types";
 
 import {
@@ -8,534 +8,314 @@ import {
 } from "@ellucian/experience-extension-utils";
 import useFetch from "../hooks/useFetch.js";
 
+import {
+  Button,
+  Card,
+  CardContent,
+  Dropdown,
+  DropdownItem,
+  Typography,
+} from "@ellucian/react-design-system/core";
+import {
+  colorTextAlertSuccess,
+  colorBackgroundAlertSuccess,
+  colorTextAlertWarning,
+  colorBackgroundAlertWarning,
+  colorTextAlertError,
+  colorBackgroundAlertError,
+  colorTextAlertNeutral,
+  colorBackgroundAlertNeutral,
+  colorFillAlertSuccess,
+  colorFillAlertWarning,
+  colorFillAlertError,
+  colorFillAlertNeutral,
+  colorTextSecondary,
+  colorTextPrimary,
+  colorBackgroundDivider,
+  colorBrandPrimary,
+  borderRadiusCircle,
+  borderRadiusLarge,
+  borderRadiusXLarge,
+} from "@ellucian/react-design-system/core/styles/tokens";
 import { withStyles } from "@ellucian/react-design-system/core/styles";
-import { Typography } from "@ellucian/react-design-system/core";
 import { Icon } from "@ellucian/ds-icons/lib";
-
-const palette = {
-  neutral600: "#151618",
-  neutral500: "#5B5E65",
-  neutral450: "#74767C",
-  neutral400: "#B2B3B7",
-  neutral300: "#D9D9D9",
-  neutral250: "#E9E9E9",
-  neutral200: "#F8F8F8",
-  neutral100: "#FFFFFF",
-
-  iris600: "#7100EB",
-  ctaIrisBase: "#320070",
-  ctaIrisHover: "#5300B2",
-  ctaIrisActive: "#7100EB",
-  ctaIrisTint: "#F6F6FD",
-
-  alertSuccessFill: "#00AF69",
-  alertSuccessText: "#00804D",
-  alertWarningFill: "#EFC728",
-  alertWarningText: "#8A6A00",
-  alertErrorFill: "#D42828",
-  alertErrorText: "#D42828",
-  alertNeutralFill: "#51ABFF",
-  alertNeutralText: "#2874BB",
-
-  tangerine600: "#FF8C3A",
-};
-
-const CornerWave = ({ color }) => (
-  <svg
-    width="60"
-    height="50"
-    viewBox="0 0 60 50"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    style={{ position: "absolute", bottom: 0, right: 0, pointerEvents: "none" }}
-    aria-hidden="true"
-  >
-    <path d="M60 50 L0 50 Q35 45 60 0 Z" fill={color} opacity="0.15" />
-  </svg>
-);
-CornerWave.propTypes = {
-  color: PropTypes.string.isRequired,
-};
-
-const AttendancePill = ({ value, color }) => {
-  const isValid = !isNaN(value);
-  const numberText = isValid ? `${value}%` : "N/A";
-
-  return (
-    <span
-      style={{
-        flexShrink: 0,
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "flex-start",
-        width: "86px",
-        padding: "0.28rem 0.3rem",
-        borderRadius: "999px",
-        background: hexToRgba(color, 0.1),
-        color,
-        fontSize: "0.66rem",
-        fontWeight: 700,
-        whiteSpace: "nowrap",
-        lineHeight: 1,
-      }}
-      aria-label={`Absence: ${numberText}${isValid ? " absent" : ""}`}
-    >
-      <span
-        style={{
-          flex: "0 0 34px",
-          textAlign: "right",
-          marginRight: "0.25rem",
-        }}
-      >
-        {numberText}
-      </span>
-      {isValid && <span>absent</span>}
-    </span>
-  );
-};
-AttendancePill.propTypes = {
-  value: PropTypes.number.isRequired,
-  color: PropTypes.string.isRequired,
-};
-
-const hexToRgba = (hex = "#000000", alpha = 0.1) => {
-  const h = hex.replace("#", "");
-  const r = parseInt(h.substring(0, 2), 16);
-  const g = parseInt(h.substring(2, 4), 16);
-  const b = parseInt(h.substring(4, 6), 16);
-  return `rgba(${r},${g},${b},${alpha})`;
-};
-
-const getAttendanceWarning = (absencePct, thresholds) => {
-  if (absencePct === null || absencePct === undefined || isNaN(absencePct)) {
-    return null;
-  }
-  const val = Number(absencePct);
-  const { warning1, warning2, redFlag, w1Color, w2Color, rfColor } = thresholds;
-
-  if (val >= redFlag) {
-    return { level: "red_flag", label: "Red Flag", circleColor: rfColor, color: rfColor };
-  }
-  if (val >= warning2) {
-    return { level: "warning2", label: "Warning 2", circleColor: w2Color, color: w2Color };
-  }
-  if (val >= warning1) {
-    return { level: "warning1", label: "Warning 1", circleColor: w1Color, color: w1Color };
-  }
-  return {
-    level: "ok",
-    label: null,
-    circleColor: palette.alertSuccessFill,
-    color: palette.alertSuccessText,
-  };
-};
-
-const styles = (theme) => ({
-  card: {
-    padding: "0.1rem 0.7rem 0.4rem",
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.4rem",
-    overflow: "hidden",
-    width: "100%",
-    height: "100%",
-    boxSizing: "border-box",
-    [theme.breakpoints.down("sm")]: {
-      padding: "0.1rem 0.5rem 0.4rem",
-    },
-  },
-  cardBody: {
-    flex: 1,
-    display: "flex",
-    flexDirection: "row",
-    gap: "0.5rem",
-    overflow: "hidden",
-    minHeight: 0,
-    [theme.breakpoints.down("md")]: {
-      flexDirection: "column",
-      overflowY: "auto",
-    },
-  },
-  gpaCol: {
-    flex: "0 0 28%",
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.4rem",
-    minWidth: 0,
-    height: "100%",
-    [theme.breakpoints.down("md")]: {
-      flex: "0 0 auto",
-      width: "100%",
-      height: "auto",
-      flexDirection: "row",
-    },
-    [theme.breakpoints.down("xs")]: {
-      gap: "0.3rem",
-    },
-  },
-  gpaBox: {
-    position: "relative",
-    borderRadius: "12px",
-    padding: "0.55rem 0.5rem",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    background: palette.neutral100,
-    boxShadow: "0 1px 6px rgba(0,0,0,0.07)",
-    flex: 1,
-    overflow: "hidden",
-    minHeight: 0,
-    minWidth: 0,
-    [theme.breakpoints.down("sm")]: {
-      padding: "0.45rem 0.45rem",
-      borderRadius: "10px",
-    },
-  },
-  iconBox: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "34px",
-    height: "34px",
-    borderRadius: "50%",
-    flexShrink: 0,
-    zIndex: 1,
-    [theme.breakpoints.down("sm")]: {
-      width: "28px",
-      height: "28px",
-    },
-  },
-  gpaTitle: {
-    fontSize: "0.62rem",
-    color: palette.neutral500,
-    fontWeight: 500,
-    lineHeight: 1.2,
-    zIndex: 1,
-    [theme.breakpoints.down("sm")]: {
-      fontSize: "0.58rem",
-    },
-  },
-  gpaNumber: {
-    fontSize: "1.45rem",
-    fontWeight: 700,
-    lineHeight: 1.1,
-    color: palette.neutral600,
-    zIndex: 1,
-    [theme.breakpoints.down("sm")]: {
-      fontSize: "1.15rem",
-    },
-  },
-  gpaRule: {
-    height: "2.5px",
-    width: "42%",
-    borderRadius: "2px",
-    flexShrink: 0,
-    zIndex: 1,
-    background: palette.iris600,
-  },
-  attCol: {
-    flex: "1 1 72%",
-    display: "flex",
-    flexDirection: "column",
-    minWidth: 0,
-    overflow: "hidden",
-    [theme.breakpoints.down("md")]: {
-      flex: "1 1 auto",
-    },
-  },
-  attHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: "0.5rem",
-    marginBottom: "0.3rem",
-    flexShrink: 0,
-    flexWrap: "wrap",
-  },
-  attHeaderTitle: {
-    fontSize: "0.72rem",
-    fontWeight: 700,
-    color: palette.neutral600,
-    minWidth: 0,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-    [theme.breakpoints.down("sm")]: {
-      fontSize: "0.66rem",
-    },
-  },
-  termDropdownWrap: {
-    position: "relative",
-    flexShrink: 0,
-  },
-  termDropdownButton: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: "0.35rem",
-    background: palette.neutral100,
-    border: `1px solid ${palette.neutral300}`,
-    borderRadius: "999px",
-    padding: "0.3rem 0.7rem",
-    fontSize: "0.75rem",
-    fontWeight: 600,
-    color: palette.ctaIrisBase,
-    fontFamily: "inherit",
-    cursor: "pointer",
-    outline: "none",
-    maxWidth: "150px",
-    minWidth: 0,
-    "&:focus": {
-      borderColor: palette.ctaIrisBase,
-      boxShadow: `0 0 0 2px ${hexToRgba(palette.ctaIrisBase, 0.15)}`,
-    },
-    [theme.breakpoints.down("sm")]: {
-      fontSize: "0.68rem",
-      maxWidth: "120px",
-      padding: "0.24rem 0.6rem",
-    },
-  },
-  termDropdownButtonLabel: {
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-    minWidth: 0,
-  },
-  termDropdownChevron: {
-    flexShrink: 0,
-    display: "flex",
-    alignItems: "center",
-    color: palette.ctaIrisBase,
-    transition: "transform 0.15s ease",
-    "& svg": {
-      width: "12px",
-      height: "12px",
-    },
-  },
-  termDropdownChevronOpen: {
-    transform: "rotate(180deg)",
-  },
-  termDropdownMenu: {
-    position: "absolute",
-    top: "calc(100% + 4px)",
-    right: 0,
-    minWidth: "100%",
-    maxHeight: "220px",
-    overflowY: "auto",
-    background: palette.neutral100,
-    border: `1px solid ${palette.neutral300}`,
-    borderRadius: "8px",
-    boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
-    zIndex: 10,
-    padding: "0.25rem",
-    listStyle: "none",
-    margin: 0,
-  },
-  termDropdownItem: {
-    padding: "0.4rem 0.6rem",
-    fontSize: "0.75rem",
-    fontWeight: 500,
-    color: palette.neutral600,
-    borderRadius: "6px",
-    cursor: "pointer",
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    "&:hover": {
-      background: palette.ctaIrisTint,
-      color: palette.ctaIrisBase,
-    },
-    "&:focus-visible": {
-      outline: `2px solid ${palette.ctaIrisBase}`,
-      outlineOffset: "-2px",
-    },
-  },
-  termDropdownItemSelected: {
-    background: palette.ctaIrisBase,
-    color: palette.neutral100,
-    fontWeight: 700,
-    "&:hover": {
-      background: palette.ctaIrisHover,
-      color: palette.neutral100,
-    },
-  },
-  attList: {
-    flex: 1,
-    display: "flex",
-    flexDirection: "column",
-    overflow: "hidden",
-  },
-  attRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.4rem",
-    flex: 1,
-    minHeight: 0,
-    borderBottom: `1px solid ${palette.neutral250}`,
-    padding: "0.08rem 0",
-    "&:last-child": {
-      borderBottom: "none",
-    },
-  },
-  courseIconWrap: {
-    flexShrink: 0,
-    display: "flex",
-    alignItems: "center",
-    color: palette.iris600,
-  },
-  courseName: {
-    flex: 1,
-    fontSize: "0.75rem",
-    minWidth: 0,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-    lineHeight: "1.2",
-    color: palette.neutral600,
-    fontWeight: 400,
-    cursor: "default",
-    [theme.breakpoints.down("sm")]: {
-      fontSize: "0.68rem",
-    },
-  },
-  attEmptyState: {
-    textAlign: "center",
-    padding: "1rem",
-    color: palette.neutral500,
-    fontSize: "0.8rem",
-  },
-  gpaUnavailable: {
-    fontSize: "0.55rem",
-    color: palette.neutral400,
-    zIndex: 1,
-  },
-  btnWrap: {
-    flexShrink: 0,
-    paddingTop: "0.35rem",
-  },
-  viewBtn: {
-    display: "block",
-    width: "100%",
-    border: "none",
-    borderRadius: "8px",
-    background: palette.ctaIrisBase,
-    color: palette.neutral100,
-    fontSize: "0.80rem",
-    fontWeight: 700,
-    letterSpacing: "0.07em",
-    textTransform: "uppercase",
-    padding: "0.58rem 0",
-    cursor: "pointer",
-    fontFamily: "inherit",
-    "&:hover": { background: palette.ctaIrisHover },
-    "&:active": { background: palette.ctaIrisActive },
-    [theme.breakpoints.down("sm")]: {
-      fontSize: "0.72rem",
-      padding: "0.5rem 0",
-    },
-  },
-});
 
 const toTitleCase = (str) => {
   if (!str) return str;
   return str.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 };
 
-const TermDropdown = ({ classes, terms, value, onChange }) => {
-  const [open, setOpen] = useState(false);
-  const wrapRef = useRef(null);
 
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) {
-        setOpen(false);
-      }
-    };
-    const handleEscape = (e) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleEscape);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, []);
-
-  const selectedTerm = terms.find((t) => t.termCode === value);
-
-  return (
-    <div className={classes.termDropdownWrap} ref={wrapRef}>
-      <button
-        type="button"
-        className={classes.termDropdownButton}
-        onClick={(e) => {
-          e.stopPropagation();
-          setOpen((o) => !o);
-        }}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-label="Select term"
-      >
-        <span className={classes.termDropdownButtonLabel}>
-          {selectedTerm ? toTitleCase(selectedTerm.termName) : "Select term"}
-        </span>
-        <span
-          className={`${classes.termDropdownChevron} ${
-            open ? classes.termDropdownChevronOpen : ""
-          }`}
-        >
-          <Icon name="chevron-down" />
-        </span>
-      </button>
-
-      {open && (
-        <ul className={classes.termDropdownMenu} role="listbox">
-          {terms.map((t) => {
-            const isSelected = t.termCode === value;
-            return (
-              <li
-                key={t.termCode}
-                role="option"
-                aria-selected={isSelected}
-                tabIndex={0}
-                className={`${classes.termDropdownItem} ${
-                  isSelected ? classes.termDropdownItemSelected : ""
-                }`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onChange(t.termCode);
-                  setOpen(false);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onChange(t.termCode);
-                    setOpen(false);
-                  }
-                }}
-              >
-                {toTitleCase(t.termName)}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
-  );
+const alertTokens = {
+  success: {
+    text: colorTextAlertSuccess,
+    background: colorBackgroundAlertSuccess,
+    fill: colorFillAlertSuccess,
+  },
+  warning: {
+    text: colorTextAlertWarning,
+    background: colorBackgroundAlertWarning,
+    fill: colorFillAlertWarning,
+  },
+  error: {
+    text: colorTextAlertError,
+    background: colorBackgroundAlertError,
+    fill: colorFillAlertError,
+  },
+  neutral: {
+    text: colorTextAlertNeutral,
+    background: colorBackgroundAlertNeutral,
+    fill: colorFillAlertNeutral,
+  },
 };
-TermDropdown.propTypes = {
+
+const getGpaStatus = (val, excellentThreshold, satisfactoryThreshold) => {
+  const v = parseFloat(val);
+  if (isNaN(v)) return { status: "error", text: "N/A" };
+  if (v >= excellentThreshold) return { status: "success", text: "EXCELLENT" };
+  if (v >= satisfactoryThreshold) return { status: "warning", text: "SATISFACTORY" };
+  return { status: "error", text: "NEEDS IMPROVEMENT" };
+};
+
+
+const getAttendanceWarning = (absencePct, thresholds) => {
+  if (absencePct === null || absencePct === undefined || isNaN(absencePct)) {
+    return { status: "error", text: "N/A" };
+  }
+  const val = Number(absencePct);
+  const { warning1, warning2, redFlag } = thresholds;
+
+  if (val >= redFlag) return { status: "error", text: `${val}% absent` };
+  if (val >= warning2 || val >= warning1) return { status: "warning", text: `${val}% absent` };
+  return { status: "success", text: `${val}% absent` };
+};
+
+
+const buildStatusStyles = (tokens) => ({
+  pill: {
+    backgroundColor: tokens.background,
+    color: tokens.text,
+  },
+  iconBox: {
+    backgroundColor: tokens.fill,
+    color: "#FFFFFF", 
+  },
+  gpaBox: {
+    backgroundColor: tokens.background,
+    border: `1px solid ${tokens.text}33`,
+  },
+  numberText: {
+    color: tokens.text,
+  },
+});
+
+const styles = (theme) => {
+  const success = buildStatusStyles(alertTokens.success);
+  const warning = buildStatusStyles(alertTokens.warning);
+  const error = buildStatusStyles(alertTokens.error);
+  const neutral = buildStatusStyles(alertTokens.neutral);
+
+  return {
+    card: {
+      padding: theme.spacing(0.5, 2, 1.5),
+      display: "flex",
+      flexDirection: "column",
+      gap: theme.spacing(1),
+      overflow: "hidden",
+      width: "100%",
+      height: "100%",
+      boxSizing: "border-box",
+      [theme.breakpoints.down("sm")]: {
+        padding: theme.spacing(0.5, 1.5, 1.5),
+      },
+    },
+    cardBody: {
+      flex: 1,
+      display: "flex",
+      flexDirection: "row",
+      gap: theme.spacing(1.5),
+      overflow: "hidden",
+      minHeight: 0,
+      [theme.breakpoints.down("md")]: {
+        flexDirection: "column",
+        overflowY: "auto",
+      },
+    },
+    gpaCol: {
+      flex: "0 0 26%",
+      display: "flex",
+      flexDirection: "column",
+      gap: theme.spacing(0.75),
+      minWidth: 0,
+      height: "100%",
+      [theme.breakpoints.down("md")]: {
+        flex: "0 0 auto",
+        width: "100%",
+        height: "auto",
+        flexDirection: "row",
+        flexWrap: "wrap",
+      },
+    },
+    gpaBoxBase: {
+      borderRadius: borderRadiusLarge,
+      padding: theme.spacing(1, 1),
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "flex-start",
+      justifyContent: "space-between",
+      gap: theme.spacing(0.5),
+      flex: 1,
+      overflow: "hidden",
+      minHeight: 0,
+      minWidth: 0,
+    },
+    gpaBoxSuccess: success.gpaBox,
+    gpaBoxWarning: warning.gpaBox,
+    gpaBoxError: error.gpaBox,
+    gpaBoxNeutral: neutral.gpaBox,
+    iconBoxBase: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      width: theme.spacing(4),
+      height: theme.spacing(4),
+      borderRadius: borderRadiusCircle,
+      flexShrink: 0,
+    },
+    iconBoxSuccess: success.iconBox,
+    iconBoxWarning: warning.iconBox,
+    iconBoxError: error.iconBox,
+    iconBoxNeutral: neutral.iconBox,
+    gpaTitle: {
+      color: colorTextSecondary,
+    },
+    gpaNumber: {
+      lineHeight: 1.1,
+    },
+    gpaNumberSuccess: success.numberText,
+    gpaNumberWarning: warning.numberText,
+    gpaNumberError: error.numberText,
+    gpaNumberNeutral: neutral.numberText,
+    gpaUnavailable: {
+      color: alertTokens.error.text,
+      fontWeight: 700,
+    },
+    pillBase: {
+      display: "inline-flex",
+      alignItems: "center",
+      padding: theme.spacing(0.4, 1.25),
+      borderRadius: borderRadiusXLarge,
+      fontSize: "0.75rem",
+      fontWeight: 700,
+      letterSpacing: "0.02em",
+      whiteSpace: "nowrap",
+      lineHeight: 1.4,
+    },
+    pillSuccess: success.pill,
+    pillWarning: warning.pill,
+    pillError: error.pill,
+    pillNeutral: neutral.pill,
+    attCol: {
+      flex: "1 1 72%",
+      display: "flex",
+      flexDirection: "column",
+      minWidth: 0,
+      overflow: "hidden",
+    },
+    attColTitle: {
+      minWidth: 0,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
+      marginBottom: theme.spacing(0.5),
+      flexShrink: 0,
+    },
+    
+    termAndTitleRow: {
+      display: "flex",
+      alignItems: "center",
+      gap: theme.spacing(1.5),
+      marginBottom: theme.spacing(0.5),
+      flexShrink: 0,
+    },
+    termRow: {
+      flexShrink: 0,
+      width: "150px", 
+    },
+    attList: {
+      flex: 1,
+      display: "flex",
+      flexDirection: "column",
+      overflow: "hidden",
+    },
+    attRow: {
+      display: "flex",
+      alignItems: "center",
+      gap: theme.spacing(1),
+      flex: 1,
+      minHeight: 0,
+      padding: theme.spacing(0.5, 0),
+    },
+    rowDivider: {
+      height: "1px",
+      backgroundColor: colorBackgroundDivider,
+    },
+    courseIconWrap: {
+      flexShrink: 0,
+      display: "flex",
+      alignItems: "center",
+      color: colorBrandPrimary,
+    },
+    courseName: {
+      flex: 1,
+      minWidth: 0,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
+      color: colorTextPrimary,
+    },
+    attEmptyState: {
+      textAlign: "center",
+      padding: theme.spacing(2),
+      color: colorTextSecondary,
+    },
+    btnWrap: {
+      flexShrink: 0,
+      paddingTop: theme.spacing(0.5),
+    },
+    
+    cardRoot: {
+      boxShadow: "none",
+      border: "none",
+      backgroundColor: "transparent",
+      height: "100%",
+    },
+   
+    cardContentFullHeight: {
+      height: "100%",
+      display: "flex",
+      flexDirection: "column",
+    },
+    pillButton: {
+      borderRadius: borderRadiusXLarge,
+    },
+  };
+};
+
+const statusClass = (classes, prefix, status) => {
+  const suffix = status.charAt(0).toUpperCase() + status.slice(1);
+  return classes[`${prefix}${suffix}`];
+};
+
+
+const Pill = ({ classes, status, text }) => (
+  <span className={`${classes.pillBase} ${statusClass(classes, "pill", status)}`}>{text}</span>
+);
+
+Pill.propTypes = {
   classes: PropTypes.object.isRequired,
-  terms: PropTypes.arrayOf(
-    PropTypes.shape({
-      termCode: PropTypes.string.isRequired,
-      termName: PropTypes.string,
-    }),
-  ).isRequired,
-  value: PropTypes.string,
-  onChange: PropTypes.func.isRequired,
+  status: PropTypes.oneOf(["success", "warning", "error", "neutral"]).isRequired,
+  text: PropTypes.string.isRequired,
 };
 
 const StudentSuccessTracker = ({ classes }) => {
@@ -543,22 +323,12 @@ const StudentSuccessTracker = ({ classes }) => {
   const cardInfo = useCardInfo();
   const { cardId } = cardInfo;
 
-  // FIX: `useCardInfo()` does not reliably expose a `configuration` key —
-  // it exposes `cardConfiguration`. The previous code did:
-  //   const { cardId, configuration } = useCardInfo();
-  // which left `configuration` as `undefined`, and the very next
-  // destructure (`const { excellent_performance_color_code, ... } = configuration`)
-  // threw "Cannot read properties of undefined (reading
-  // 'excellent_performance_color_code')" on first render.
-  // Always fall back to an empty object so downstream destructuring is safe.
   const configuration = cardInfo?.cardConfiguration ?? cardInfo?.configuration ?? {};
+  const configurationReady = !!(cardInfo?.cardConfiguration ?? cardInfo?.configuration);
 
   const { navigateToPage } = useCardControl();
 
   const {
-    excellent_performance_color_code,
-    satisfactory_performance_color_code,
-    poor_performance_color_code,
     minimum_threshold_for_excellent_performance,
     minimum_threshold_for_satisfactory_performance,
     student_term_courses_pipeline_v2,
@@ -569,22 +339,10 @@ const StudentSuccessTracker = ({ classes }) => {
     warning1,
     warning2,
     red_flag,
-    warning1_color,
-    warning2_color,
-    red_flag_color,
   } = configuration;
 
-  const parsed_exc_perf = parseFloat(
-    minimum_threshold_for_excellent_performance,
-  );
-  const parsed_sat_perf = parseFloat(
-    minimum_threshold_for_satisfactory_performance,
-  );
-
-  // Only enforce this invariant once config has actually loaded — otherwise
-  // both values are NaN on the very first render and NaN <= NaN is false,
-  // which is harmless, but we guard explicitly for clarity/safety.
-  const configurationReady = !!(cardInfo?.cardConfiguration ?? cardInfo?.configuration);
+  const parsed_exc_perf = parseFloat(minimum_threshold_for_excellent_performance);
+  const parsed_sat_perf = parseFloat(minimum_threshold_for_satisfactory_performance);
 
   if (
     configurationReady &&
@@ -601,23 +359,6 @@ const StudentSuccessTracker = ({ classes }) => {
     warning1: parseFloat(warning1) || 5,
     warning2: parseFloat(warning2) || 10,
     redFlag: parseFloat(red_flag) || 15,
-    w1Color: warning1_color || palette.alertWarningFill,
-    w2Color: warning2_color || palette.tangerine600,
-    rfColor: red_flag_color || palette.alertErrorFill,
-  };
-
-  const get_gpa_color = (val) => {
-    const v = parseFloat(val);
-    if (isNaN(v)) return poor_performance_color_code;
-    if (v >= parsed_exc_perf) return excellent_performance_color_code;
-    if (v >= parsed_sat_perf) return satisfactory_performance_color_code;
-    return poor_performance_color_code;
-  };
-
-  const get_attendance_color = (val) => {
-    const v = parseFloat(val);
-    const warning = getAttendanceWarning(v, absenceThresholds);
-    return warning ? warning.circleColor : poor_performance_color_code;
   };
 
   const [selected_term_code, set_selected_term_code] = useState(null);
@@ -634,41 +375,36 @@ const StudentSuccessTracker = ({ classes }) => {
 
   const pidm = datav2?.termData?.[selected_term_code]?.pidm;
   const crns =
-    datav2?.termData?.[selected_term_code]?.courses
-      ?.map((c) => c.crn)
-      .join(",") ?? "";
+    datav2?.termData?.[selected_term_code]?.courses?.map((c) => c.crn).join(",") ?? "";
 
   const hasValidAttendanceParams = !!pidm && !!selected_term_code && !!crns;
 
-  const { data: bannerAttendanceData, loading: bannerAttendanceLoading } =
-    useFetch(
-      authenticatedEthosFetch,
-      cardId,
-      null,
-      get_student_course_attendance_banner,
-      { pidm, termCode: selected_term_code, crns },
-      attendance_source === "banner" && hasValidAttendanceParams,
-    );
+  const { data: bannerAttendanceData, loading: bannerAttendanceLoading } = useFetch(
+    authenticatedEthosFetch,
+    cardId,
+    null,
+    get_student_course_attendance_banner,
+    { pidm, termCode: selected_term_code, crns },
+    attendance_source === "banner" && hasValidAttendanceParams,
+  );
 
-  const { data: moodleAttendanceData, loading: moodleAttendanceLoading } =
-    useFetch(
-      authenticatedEthosFetch,
-      cardId,
-      null,
-      get_student_course_attendance_moodle,
-      {
-        moodleUrl: "https://vidyastu.com/webservice/rest/server.php",
-        moodleWsToken: "4d7dc29800b05b61dfd7f8c138e5885f",
-        pidm,
-        termCode: selected_term_code,
-        crns,
-      },
-      attendance_source === "moodle" && hasValidAttendanceParams,
-    );
+  const { data: moodleAttendanceData, loading: moodleAttendanceLoading } = useFetch(
+    authenticatedEthosFetch,
+    cardId,
+    null,
+    get_student_course_attendance_moodle,
+    {
+      moodleUrl: "https://vidyastu.com/webservice/rest/server.php",
+      moodleWsToken: "4d7dc29800b05b61dfd7f8c138e5885f",
+      pidm,
+      termCode: selected_term_code,
+      crns,
+    },
+    attendance_source === "moodle" && hasValidAttendanceParams,
+  );
 
   const bannerAttendanceLookup = useMemo(() => {
-    if (!bannerAttendanceData || typeof bannerAttendanceData !== "object")
-      return {};
+    if (!bannerAttendanceData || typeof bannerAttendanceData !== "object") return {};
     return Object.entries(bannerAttendanceData).reduce((acc, [crn, val]) => {
       const pct = parseFloat(val);
       acc[String(crn)] = isNaN(pct) ? NaN : pct;
@@ -686,23 +422,15 @@ const StudentSuccessTracker = ({ classes }) => {
   }, [moodleAttendanceData]);
 
   const attendanceLoading =
-    attendance_source === "banner"
-      ? bannerAttendanceLoading
-      : moodleAttendanceLoading;
-
+    attendance_source === "banner" ? bannerAttendanceLoading : moodleAttendanceLoading;
   const isLoading = loadingv2 || attendanceLoading;
 
   const all_terms = useMemo(() => {
     if (!datav2?.termData) return [];
-    const sortedCodes = Object.keys(datav2.termData).sort((a, b) =>
-      a.localeCompare(b),
-    );
+    const sortedCodes = Object.keys(datav2.termData).sort((a, b) => a.localeCompare(b));
 
     let limitedCodes = sortedCodes;
-    if (
-      display_historical_terms_number &&
-      display_historical_terms_number !== "all"
-    ) {
+    if (display_historical_terms_number && display_historical_terms_number !== "all") {
       const historicalCount = parseInt(display_historical_terms_number, 10);
       if (!isNaN(historicalCount)) {
         limitedCodes = sortedCodes.slice(-(historicalCount + 1));
@@ -716,13 +444,15 @@ const StudentSuccessTracker = ({ classes }) => {
   }, [datav2, display_historical_terms_number]);
 
   useEffect(() => {
-    if (all_terms.length > 0 && !selected_term_code)
+    if (all_terms.length > 0 && !selected_term_code) {
       set_selected_term_code(all_terms[all_terms.length - 1].termCode);
+    }
   }, [all_terms, selected_term_code]);
 
   useEffect(() => {
-    if (selected_term_code)
+    if (selected_term_code) {
       localStorage.setItem("sst_card_term_code", selected_term_code);
+    }
   }, [selected_term_code]);
 
   useEffect(() => {
@@ -731,8 +461,6 @@ const StudentSuccessTracker = ({ classes }) => {
     if (!termInfo) return;
     const cGpa = parseFloat(termInfo.cumulative_gpa);
     set_current_gpa(!isNaN(cGpa) ? cGpa : 0);
-    // FIX: use the same camelCase field + gpa_available gate as the working
-    // Home.jsx / table view, instead of the non-existent `term_gpa` field.
     const tGpa = termInfo.gpa_available ? parseFloat(termInfo.termGpa) : NaN;
     set_term_gpa(!isNaN(tGpa) ? tGpa : null);
   }, [datav2, selected_term_code]);
@@ -740,161 +468,151 @@ const StudentSuccessTracker = ({ classes }) => {
   const displayed_attendance = useMemo(() => {
     if (!datav2?.termData || !selected_term_code) return [];
     const courses = datav2.termData[selected_term_code]?.courses ?? [];
-    const lookup =
-      attendance_source === "banner"
-        ? bannerAttendanceLookup
-        : moodleAttendanceLookup;
+    const lookup = attendance_source === "banner" ? bannerAttendanceLookup : moodleAttendanceLookup;
     return courses.map((course) => ({
       ...course,
       attendancePercentage: lookup[String(course.crn)] ?? NaN,
     }));
-  }, [
-    datav2,
-    selected_term_code,
-    attendance_source,
-    bannerAttendanceLookup,
-    moodleAttendanceLookup,
-  ]);
+  }, [datav2, selected_term_code, attendance_source, bannerAttendanceLookup, moodleAttendanceLookup]);
 
-  const gpa_color = get_gpa_color(current_gpa);
-  const term_gpa_color =
+  const current_gpa_status = getGpaStatus(current_gpa, parsed_exc_perf, parsed_sat_perf);
+  const term_gpa_status =
     term_gpa !== null
-      ? get_gpa_color(term_gpa)
-      : poor_performance_color_code;
+      ? getGpaStatus(term_gpa, parsed_exc_perf, parsed_sat_perf)
+      : { status: "error", text: "N/A" };
 
   const handle_view_details = () => {
     navigateToPage({ route: "/", params: { termCode: selected_term_code } });
   };
 
-  // FIX: don't render anything that depends on `configuration` until it has
-  // actually loaded. This mirrors the working version and prevents any
-  // future config-dependent code added here from crashing on first render.
+  const handle_term_change = useCallback((event) => {
+    set_selected_term_code(event.target.value);
+  }, []);
+
   if (!configurationReady) {
     return (
-      <div className={classes.card}>
-        <Typography className={classes.attEmptyState}>Loading...</Typography>
-      </div>
+      <Card raised={false} spacingOptions={{ spacing: "none" }} classes={{ root: classes.cardRoot }}>
+        <CardContent className={classes.cardContentFullHeight}>
+          <div className={classes.card}>
+            <Typography variant="body1" className={classes.attEmptyState}>
+              Loading...
+            </Typography>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div
-      className={classes.card}
-      role="button"
-      tabIndex={0}
-      onClick={handle_view_details}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          handle_view_details();
-        }
-      }}
-      style={{ cursor: "pointer" }}
-    >
+    <Card raised={false} spacingOptions={{ spacing: "none" }} classes={{ root: classes.cardRoot }}>
+    <CardContent className={classes.cardContentFullHeight}>
+    <div className={classes.card}>
+      <div className={classes.termAndTitleRow}>
+        {!loadingv2 && all_terms.length > 0 && (
+          <div className={classes.termRow}>
+            <Dropdown
+              size="small"
+              id="sst-term-dropdown"
+              label="Term"
+              fullWidth
+              value={selected_term_code || ""}
+              onChange={handle_term_change}
+              MenuProps={{
+                PaperProps: {
+                  style: { maxHeight: 200 },
+                },
+              }}
+            >
+              {all_terms.map((t) => (
+                <DropdownItem
+                  key={t.termCode}
+                  label={toTitleCase(t.termName)}
+                  value={t.termCode}
+                />
+              ))}
+            </Dropdown>
+          </div>
+        )}
+        <Typography variant="h5" className={classes.attColTitle}>
+          Absence % ({toTitleCase(attendance_source)})
+        </Typography>
+      </div>
+
       <div className={classes.cardBody}>
         <div className={classes.gpaCol}>
-          <div
-            className={classes.gpaBox}
-            style={{
-              border: `1.5px solid ${hexToRgba(gpa_color, 0.4)}`,
-              background: hexToRgba(gpa_color, 0.04),
-            }}
-          >
-            <CornerWave color={gpa_color} />
-            <div
-              className={classes.iconBox}
-              style={{ background: hexToRgba(gpa_color, 0.12) }}
-            >
-              <span style={{ color: gpa_color, display: "flex" }}>
-                <Icon name="graduation" />
-              </span>
+          <div className={`${classes.gpaBoxBase} ${statusClass(classes, "gpaBox", current_gpa_status.status)}`}>
+            <div className={`${classes.iconBoxBase} ${statusClass(classes, "iconBox", current_gpa_status.status)}`}>
+              <Icon name="graduation" />
             </div>
-            <Typography className={classes.gpaTitle}>Cumulative GPA</Typography>
-            <Typography className={classes.gpaNumber}>
+            <Typography variant="body3" className={classes.gpaTitle}>
+              Cumulative GPA
+            </Typography>
+            <Typography
+              variant="h2"
+              className={`${classes.gpaNumber} ${
+                loadingv2 ? "" : statusClass(classes, "gpaNumber", current_gpa_status.status)
+              }`}
+            >
               {loadingv2 ? "—" : current_gpa.toFixed(2)}
             </Typography>
-            <div className={classes.gpaRule} />
           </div>
 
-          <div
-            className={classes.gpaBox}
-            style={{
-              border: `1.5px solid ${hexToRgba(term_gpa_color, 0.4)}`,
-              background: hexToRgba(term_gpa_color, 0.04),
-            }}
-          >
-            <CornerWave color={term_gpa_color} />
-            <div
-              className={classes.iconBox}
-              style={{ background: hexToRgba(term_gpa_color, 0.12) }}
-            >
-              <span style={{ color: term_gpa_color, display: "flex" }}>
-                <Icon name="bar-chart" />
-              </span>
+          <div className={`${classes.gpaBoxBase} ${statusClass(classes, "gpaBox", term_gpa_status.status)}`}>
+            <div className={`${classes.iconBoxBase} ${statusClass(classes, "iconBox", term_gpa_status.status)}`}>
+              <Icon name="bar-chart" />
             </div>
-            <Typography className={classes.gpaTitle}>Term GPA</Typography>
-            <Typography className={classes.gpaNumber}>
-              {loadingv2
-                ? "—"
-                : term_gpa !== null
-                  ? term_gpa.toFixed(2)
-                  : "N/A"}
+            <Typography variant="body3" className={classes.gpaTitle}>
+              Term GPA
             </Typography>
-            <div className={classes.gpaRule} />
-            {!loadingv2 && term_gpa === null && (
-              <Typography className={classes.gpaUnavailable}>
-                Not available
-              </Typography>
-            )}
+            <Typography
+              variant="h2"
+              className={`${classes.gpaNumber} ${
+                loadingv2
+                  ? ""
+                  : term_gpa === null
+                  ? classes.gpaUnavailable
+                  : statusClass(classes, "gpaNumber", term_gpa_status.status)
+              }`}
+            >
+              {loadingv2 ? "—" : term_gpa !== null ? term_gpa.toFixed(2) : "N/A"}
+            </Typography>
           </div>
         </div>
 
         <div className={classes.attCol}>
-          <div className={classes.attHeader}>
-            <Typography variant="h5" className={classes.attHeaderTitle}>
-              Absence % ({toTitleCase(attendance_source)})
-            </Typography>
-
-            {!loadingv2 && all_terms.length > 0 && (
-              <TermDropdown
-                classes={classes}
-                terms={all_terms}
-                value={selected_term_code}
-                onChange={(termCode) => set_selected_term_code(termCode)}
-              />
-            )}
-          </div>
 
           {isLoading ? (
-            <Typography className={classes.attEmptyState}>
+            <Typography variant="body2" className={classes.attEmptyState}>
               Loading attendance data...
             </Typography>
           ) : displayed_attendance.length === 0 ? (
-            <Typography className={classes.attEmptyState}>
+            <Typography variant="body2" className={classes.attEmptyState}>
               No attendance data available
             </Typography>
           ) : (
             <div className={classes.attList}>
               {displayed_attendance.map((entry, index) => {
                 const parsed_pct = parseFloat(entry.attendancePercentage);
-                const att_color = get_attendance_color(parsed_pct);
+                const warning = getAttendanceWarning(parsed_pct, absenceThresholds);
                 return (
-                  <div key={index} className={classes.attRow}>
-                    <div className={classes.courseIconWrap}>
-                      <Icon name="course" />
+                  <React.Fragment key={entry.crn ?? index}>
+                    <div className={classes.attRow}>
+                      <div className={classes.courseIconWrap}>
+                        <Icon name="course" />
+                      </div>
+                      <Typography
+                        variant="body3"
+                        title={entry.courseTitle}
+                        className={classes.courseName}
+                      >
+                        {entry.courseTitle}
+                      </Typography>
+                      <Pill classes={classes} status={warning.status} text={warning.text} />
                     </div>
-                    <Typography
-                      variant="body3"
-                      title={entry.courseTitle}
-                      className={classes.courseName}
-                    >
-                      {entry.courseTitle}
-                    </Typography>
-                    <AttendancePill
-                      value={isNaN(parsed_pct) ? NaN : parsed_pct}
-                      color={att_color}
-                    />
-                  </div>
+                    {index < displayed_attendance.length - 1 && (
+                      <div className={classes.rowDivider} />
+                    )}
+                  </React.Fragment>
                 );
               })}
             </div>
@@ -903,18 +621,13 @@ const StudentSuccessTracker = ({ classes }) => {
       </div>
 
       <div className={classes.btnWrap}>
-        <button
-          type="button"
-          className={classes.viewBtn}
-          onClick={(e) => {
-            e.stopPropagation();
-            handle_view_details();
-          }}
-        >
+        <Button fluid color="primary" className={classes.pillButton} onClick={handle_view_details}>
           View Details
-        </button>
+        </Button>
       </div>
     </div>
+    </CardContent>
+    </Card>
   );
 };
 
