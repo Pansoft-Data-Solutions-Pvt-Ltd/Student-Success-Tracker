@@ -29,10 +29,6 @@ import {
   colorFillAlertWarning,
   colorFillAlertError,
   colorFillAlertNeutral,
-  colorTextSecondary,
-  colorTextPrimary,
-  colorBackgroundDivider,
-  colorBrandPrimary,
   borderRadiusCircle,
   borderRadiusLarge,
   borderRadiusXLarge,
@@ -187,7 +183,7 @@ const styles = (theme) => {
     iconBoxError: error.iconBox,
     iconBoxNeutral: neutral.iconBox,
     gpaTitle: {
-      color: colorTextSecondary,
+      color: theme.palette.text.secondary,
     },
     gpaNumber: {
       lineHeight: 1.1,
@@ -233,14 +229,15 @@ const styles = (theme) => {
     
     termAndTitleRow: {
       display: "flex",
-      alignItems: "center",
-      gap: theme.spacing(1.5),
+      flexDirection: "column",
+      alignItems: "stretch",
+      gap: theme.spacing(0.75),
       marginBottom: theme.spacing(0.5),
       flexShrink: 0,
     },
     termRow: {
       flexShrink: 0,
-      width: "150px", 
+      width: "100%",
     },
     attList: {
       flex: 1,
@@ -258,13 +255,13 @@ const styles = (theme) => {
     },
     rowDivider: {
       height: "1px",
-      backgroundColor: colorBackgroundDivider,
+      backgroundColor: theme.palette.divider,
     },
     courseIconWrap: {
       flexShrink: 0,
       display: "flex",
       alignItems: "center",
-      color: colorBrandPrimary,
+      color: theme.palette.primary.main,
     },
     courseName: {
       flex: 1,
@@ -272,12 +269,12 @@ const styles = (theme) => {
       overflow: "hidden",
       textOverflow: "ellipsis",
       whiteSpace: "nowrap",
-      color: colorTextPrimary,
+      color: theme.palette.text.primary,
     },
     attEmptyState: {
       textAlign: "center",
       padding: theme.spacing(2),
-      color: colorTextSecondary,
+      color: theme.palette.text.secondary,
     },
     btnWrap: {
       flexShrink: 0,
@@ -533,9 +530,6 @@ const StudentSuccessTracker = ({ classes }) => {
             </Dropdown>
           </div>
         )}
-        <Typography variant="h5" className={classes.attColTitle}>
-          Absence % ({toTitleCase(attendance_source)})
-        </Typography>
       </div>
 
       <div className={classes.cardBody}>
@@ -580,6 +574,9 @@ const StudentSuccessTracker = ({ classes }) => {
         </div>
 
         <div className={classes.attCol}>
+          <Typography variant="h5" className={classes.attColTitle}>
+            Absence % ({toTitleCase(attendance_source)})
+          </Typography>
 
           {isLoading ? (
             <Typography variant="body2" className={classes.attEmptyState}>

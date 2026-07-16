@@ -2,9 +2,6 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Typography } from "@ellucian/react-design-system/core";
 import {
-  colorTextPrimary,
-  colorTextSecondary,
-  colorBackgroundDivider,
   colorBrandPrimary,
   colorFillAlertSuccess,
   colorFillAlertWarning,
@@ -63,7 +60,7 @@ const styles = (theme) => ({
     },
   },
   title: {
-    color: colorTextPrimary,
+    color: theme.palette.text.primary,
     fontWeight: 700,
   },
   value: {
@@ -72,7 +69,7 @@ const styles = (theme) => ({
     lineHeight: 1.15,
   },
   caption: {
-    color: colorTextSecondary,
+    color: theme.palette.text.secondary,
     display: "flex",
     alignItems: "center",
   },
@@ -82,7 +79,7 @@ const styles = (theme) => ({
   },
   divider: {
     height: "1px",
-    backgroundColor: colorBackgroundDivider,
+    backgroundColor: theme.palette.divider,
   },
 });
 

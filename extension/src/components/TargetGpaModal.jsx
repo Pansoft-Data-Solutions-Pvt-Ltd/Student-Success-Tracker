@@ -20,14 +20,11 @@ import {
   Divider,
 } from "@ellucian/react-design-system/core";
 import {
-  colorTextPrimary,
-  colorTextSecondary,
-  colorBackgroundDivider,
-  colorBrandPrimary,
   colorFillAlertSuccess,
   colorFillAlertWarning,
   colorFillAlertError,
 } from "@ellucian/react-design-system/core/styles/tokens";
+import { withStyles } from "@ellucian/react-design-system/core/styles";
 import { Icon } from "@ellucian/ds-icons/lib";
 
 const isAchievable = (text) =>
@@ -101,7 +98,7 @@ const GradeBadge = ({ grade }) => {
 GradeBadge.propTypes = { grade: PropTypes.string };
 GradeBadge.defaultProps = { grade: "" };
 
-const DonutChart = ({ aCount, bCount, total }) => {
+const DonutChart = ({ aCount, bCount, total, textPrimary, textSecondary, divider }) => {
   const aPercent = total > 0 ? aCount / total : 0;
   const bPercent = total > 0 ? bCount / total : 0;
 
@@ -116,7 +113,7 @@ const DonutChart = ({ aCount, bCount, total }) => {
   return (
     <div style={{ position: "relative", width: 110, height: 110, flexShrink: 0 }}>
       <svg width="110" height="110" viewBox="0 0 110 110">
-        <circle cx="55" cy="55" r={R} fill="none" stroke={colorBackgroundDivider} strokeWidth="12" />
+        <circle cx="55" cy="55" r={R} fill="none" stroke={divider} strokeWidth="12" />
         {aLen > 0 && (
           <circle cx="55" cy="55" r={R} fill="none" stroke={colorFillAlertSuccess} strokeWidth="12"
             strokeDasharray={`${aLen} ${CIRC}`} strokeDashoffset={0}
@@ -134,8 +131,8 @@ const DonutChart = ({ aCount, bCount, total }) => {
         alignItems: "center", justifyContent: "center",
         pointerEvents: "none",
       }}>
-        <span style={{ fontWeight: 800, fontSize: "20px", color: colorTextPrimary, lineHeight: 1 }}>{total}</span>
-        <span style={{ fontSize: "9px", color: colorTextSecondary, lineHeight: 1.3, textAlign: "center", marginTop: "3px" }}>Total<br />Courses</span>
+        <span style={{ fontWeight: 800, fontSize: "20px", color: textPrimary, lineHeight: 1 }}>{total}</span>
+        <span style={{ fontSize: "9px", color: textSecondary, lineHeight: 1.3, textAlign: "center", marginTop: "3px" }}>Total<br />Courses</span>
       </div>
     </div>
   );
@@ -145,6 +142,9 @@ DonutChart.propTypes = {
   aCount: PropTypes.number,
   bCount: PropTypes.number,
   total: PropTypes.number,
+  textPrimary: PropTypes.string.isRequired,
+  textSecondary: PropTypes.string.isRequired,
+  divider: PropTypes.string.isRequired,
 };
 DonutChart.defaultProps = { aCount: 0, bCount: 0, total: 0 };
 
@@ -163,7 +163,7 @@ const generatePresets = (cumGpa, maxAchievableGpa, scaleMax) => {
     .map((v) => parseFloat(v.toFixed(2)));
 };
 
-const MaxGpaRing = ({ maxGpa, cumGpa, scaleMax }) => {
+const MaxGpaRing = ({ maxGpa, cumGpa, scaleMax, brandPrimary }) => {
   const scale = parseFloat(scaleMax) || 4.0;
   const current = parseFloat(cumGpa) || 0;
   const max = parseFloat(maxGpa) || scale;
@@ -176,7 +176,7 @@ const MaxGpaRing = ({ maxGpa, cumGpa, scaleMax }) => {
       <div style={{ position: "relative", width: 64, height: 64, flexShrink: 0 }}>
         <svg width="64" height="64" viewBox="0 0 64 64">
           <circle cx="32" cy="32" r={RADIUS} fill="none" stroke={`${colorFillAlertSuccess}1A`} strokeWidth="5" />
-          <circle cx="32" cy="32" r={RADIUS} fill="none" stroke={`${colorBrandPrimary}66`} strokeWidth="5" strokeDasharray={CIRCUMFERENCE} strokeDashoffset={currentOffset} strokeLinecap="round" transform="rotate(-90 32 32)" />
+          <circle cx="32" cy="32" r={RADIUS} fill="none" stroke={`${brandPrimary}66`} strokeWidth="5" strokeDasharray={CIRCUMFERENCE} strokeDashoffset={currentOffset} strokeLinecap="round" transform="rotate(-90 32 32)" />
           <circle cx="32" cy="32" r={RADIUS} fill="none" stroke={colorFillAlertSuccess} strokeWidth="5" strokeDasharray={CIRCUMFERENCE} strokeDashoffset={maxOffset} strokeLinecap="round" transform="rotate(-90 32 32)" />
         </svg>
         <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -191,7 +191,7 @@ const MaxGpaRing = ({ maxGpa, cumGpa, scaleMax }) => {
     </div>
   );
 };
-MaxGpaRing.propTypes = { maxGpa: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), cumGpa: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), scaleMax: PropTypes.oneOfType([PropTypes.string, PropTypes.number]) };
+MaxGpaRing.propTypes = { maxGpa: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), cumGpa: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), scaleMax: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), brandPrimary: PropTypes.string.isRequired };
 MaxGpaRing.defaultProps = { maxGpa: null, cumGpa: 0, scaleMax: 4.0 };
 
 export const SparkleIcon = ({ size }) => (
@@ -222,7 +222,12 @@ const TargetGpaModal = ({
   cumGpa,
   targetGpa: targetGpaProp,
   maxAchievableGpa,
+  theme,
 }) => {
+  const colorTextPrimary = theme.palette.text.primary;
+  const colorTextSecondary = theme.palette.text.secondary;
+  const colorBackgroundDivider = theme.palette.divider;
+  const colorBrandPrimary = theme.palette.primary.main;
   const [selectedPreset, setSelectedPreset] = useState(null);
   const [customInput, setCustomInput] = useState("");
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -400,7 +405,7 @@ const TargetGpaModal = ({
                 </Typography>
                 <Typography variant="body2" style={{ color: colorBrandPrimary, fontSize: "11px", marginTop: "4px" }}>Your current performance</Typography>
               </div>
-              {inputScreenMaxGpa && <MaxGpaRing maxGpa={inputScreenMaxGpa} cumGpa={cumGpa} scaleMax={maxGpa} />}
+              {inputScreenMaxGpa && <MaxGpaRing maxGpa={inputScreenMaxGpa} cumGpa={cumGpa} scaleMax={maxGpa} brandPrimary={colorBrandPrimary} />}
             </div>
             <Typography variant="body1" style={{ fontWeight: 700, color: colorTextPrimary, fontSize: "14px", marginBottom: "10px" }}>Choose your target GPA</Typography>
             <Typography variant="body2" style={{ color: colorTextSecondary, fontSize: "11.5px", marginBottom: "12px" }}>
@@ -546,7 +551,14 @@ const TargetGpaModal = ({
                     Recommended Grade Distribution
                   </Typography>
 
-                  <DonutChart aCount={aGrades.length} bCount={bGrades.length} total={totalCourses} />
+                  <DonutChart
+                    aCount={aGrades.length}
+                    bCount={bGrades.length}
+                    total={totalCourses}
+                    textPrimary={colorTextPrimary}
+                    textSecondary={colorTextSecondary}
+                    divider={colorBackgroundDivider}
+                  />
 
                   <div style={{
                     display: "flex",
@@ -745,6 +757,7 @@ TargetGpaModal.propTypes = {
   cumGpa: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   targetGpa: PropTypes.string,
   maxAchievableGpa: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  theme: PropTypes.object.isRequired,
 };
 
 TargetGpaModal.defaultProps = {
@@ -756,4 +769,4 @@ TargetGpaModal.defaultProps = {
   maxAchievableGpa: null,
 };
 
-export default TargetGpaModal;
+export default withStyles({}, { withTheme: true })(TargetGpaModal);
