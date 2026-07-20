@@ -3,6 +3,12 @@ import PropTypes from "prop-types";
 import { Typography } from "@ellucian/react-design-system/core";
 import {
   colorBrandPrimary,
+  colorTextAlertSuccess,
+  colorBackgroundAlertSuccess,
+  colorTextAlertWarning,
+  colorBackgroundAlertWarning,
+  colorTextAlertError,
+  colorBackgroundAlertError,
   colorFillAlertSuccess,
   colorFillAlertWarning,
   colorFillAlertError,
@@ -12,6 +18,29 @@ import {
 import { withStyles } from "@ellucian/react-design-system/core/styles";
 import { Icon } from "@ellucian/ds-icons/lib";
 
+const metricAlertTokens = {
+  success: {
+    text: colorTextAlertSuccess,
+    background: colorBackgroundAlertSuccess,
+    fill: colorFillAlertSuccess,
+  },
+  warning: {
+    text: colorTextAlertWarning,
+    background: colorBackgroundAlertWarning,
+    fill: colorFillAlertWarning,
+  },
+  error: {
+    text: colorTextAlertError,
+    background: colorBackgroundAlertError,
+    fill: colorFillAlertError,
+  },
+};
+
+const getMetricTone = (accentColor, colors) => {
+  if (accentColor === colors?.CRITICAL) return "error";
+  if (accentColor === colors?.NEEDS_ATTENTION) return "warning";
+  return "success";
+};
 
 const styles = (theme) => ({
   row: {
@@ -83,16 +112,19 @@ const styles = (theme) => ({
   },
 });
 
-const MetricCard = ({ classes, iconName, title, value, valueColor, caption, accentColor }) => (
+const MetricCard = ({ classes, iconName, title, value, caption, tone }) => {
+  const alertColors = metricAlertTokens[tone];
+
+  return (
   <div
     className={classes.card}
     style={{
-      border: `1.5px solid ${accentColor}`,
-      backgroundColor: `${accentColor}0D`, 
+        border: `1px solid ${alertColors.text}33`,
+      backgroundColor: alertColors.background,
     }}
   >
     <div className={classes.headerRow}>
-      <div className={classes.iconCircle} style={{ backgroundColor: accentColor }}>
+      <div className={classes.iconCircle} style={{ backgroundColor: alertColors.fill }}>
         <Icon name={iconName} />
       </div>
       <Typography variant="body2" className={classes.title}>
@@ -100,7 +132,7 @@ const MetricCard = ({ classes, iconName, title, value, valueColor, caption, acce
       </Typography>
     </div>
 
-    <Typography variant="h3" className={classes.value} style={{ color: valueColor }}>
+    <Typography variant="h3" className={classes.value} style={{ color: alertColors.text }}>
       {value}
     </Typography>
 
@@ -111,15 +143,15 @@ const MetricCard = ({ classes, iconName, title, value, valueColor, caption, acce
       </Typography>
     )}
   </div>
-);
+  );
+};
 MetricCard.propTypes = {
   classes: PropTypes.object.isRequired,
   iconName: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,
   value: PropTypes.node.isRequired,
-  valueColor: PropTypes.string.isRequired,
   caption: PropTypes.string,
-  accentColor: PropTypes.string.isRequired,
+  tone: PropTypes.oneOf(["success", "warning", "error"]).isRequired,
 };
 MetricCard.defaultProps = { caption: null };
 
@@ -170,9 +202,8 @@ const GpaMetrics = ({
         iconName="graduation"
         title="Cumulative GPA"
         value={loadingTermInformation ? "—" : Number(currentGpa || 0).toFixed(2)}
-        valueColor={gpaCircleColor || colors?.ON_TRACK}
         caption={loadingTermInformation ? null : cumulativeCaption}
-        accentColor={gpaCircleColor || colors?.ON_TRACK}
+        tone={getMetricTone(gpaCircleColor || colors?.ON_TRACK, colors)}
       />
 
       <MetricCard
@@ -180,9 +211,8 @@ const GpaMetrics = ({
         iconName="bar-chart"
         title="Term GPA"
         value={termGpaDisplay}
-        valueColor={termGpaCircleColor || colors?.ON_TRACK}
         caption={loadingTermInformation ? null : "Current term performance"}
-        accentColor={termGpaCircleColor || colors?.ON_TRACK}
+        tone={getMetricTone(termGpaCircleColor || colors?.ON_TRACK, colors)}
       />
 
       <MetricCard
@@ -190,9 +220,8 @@ const GpaMetrics = ({
         iconName="course"
         title="Academic Standing"
         value={loadingTermInformation ? "—" : resolvedStanding || "N/A"}
-        valueColor={academicStandingColor || colors?.ON_TRACK}
         caption={loadingTermInformation || !resolvedStanding ? null : standingCaption}
-        accentColor={academicStandingColor || colors?.ON_TRACK}
+        tone={getMetricTone(academicStandingColor || colors?.ON_TRACK, colors)}
       />
     </div>
   );

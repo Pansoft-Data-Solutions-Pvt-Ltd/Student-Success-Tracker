@@ -523,7 +523,7 @@ const StudentSuccessTracker = ({ classes }) => {
               {all_terms.map((t) => (
                 <DropdownItem
                   key={t.termCode}
-                  label={toTitleCase(t.termName)}
+                  label={`${toTitleCase(t.termName)} (${t.termCode})`}
                   value={t.termCode}
                 />
               ))}

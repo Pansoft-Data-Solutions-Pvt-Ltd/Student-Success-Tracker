@@ -381,7 +381,7 @@ const TargetGpaModal = ({
           </div>
         </div>
         <IconButton onClick={handleClose} aria-label="Close">
-          <Icon name="close" style={{ color: colorBrandPrimary, fontSize: "18px" }} />
+          <Icon name="close" style={{ color: theme.palette.primary.contrastText, fontSize: "18px" }} />
         </IconButton>
       </div>
       <Divider />
