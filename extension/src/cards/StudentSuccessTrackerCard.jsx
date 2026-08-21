@@ -274,14 +274,14 @@ const styles = (theme) => {
         minHeight: "unset !important",
       },
       "& .MuiOutlinedInput-input, & .MuiSelect-select": {
-        padding: "4px 8px !important",
-        fontSize: "0.75rem !important",
+        padding: "8px 10px !important",
+        fontSize: "0.85rem !important",
         minHeight: "unset !important",
         lineHeight: 1.4,
       },
       "& .MuiSelect-icon": {
-        fontSize: "1.1rem",
-        right: "4px",
+        fontSize: "1.2rem",
+        right: "6px",
       },
       "& .MuiOutlinedInput-notchedOutline legend": {
         fontSize: "0.6rem",
@@ -299,9 +299,9 @@ const styles = (theme) => {
       "& .MuiMenuItem-root, & .MuiListItem-root, & .MuiButtonBase-root": {
         minHeight: "unset !important",
         height: "auto !important",
-        padding: "6px 10px !important",
-        fontSize: "0.75rem !important",
-        lineHeight: "1.3 !important",
+        padding: "10px 14px !important",
+        fontSize: "0.9rem !important",
+        lineHeight: "1.4 !important",
         whiteSpace: "nowrap",
         display: "flex",
         alignItems: "center",
@@ -316,13 +316,13 @@ const styles = (theme) => {
         marginBottom: "0 !important",
       },
       "& .MuiListItemText-primary, & .MuiListItemText-secondary": {
-        fontSize: "0.75rem !important",
-        lineHeight: "1.3 !important",
+        fontSize: "0.9rem !important",
+        lineHeight: "1.4 !important",
         margin: 0,
       },
       "& .MuiTypography-root": {
-        fontSize: "0.75rem !important",
-        lineHeight: "1.3 !important",
+        fontSize: "0.9rem !important",
+        lineHeight: "1.4 !important",
       },
       "& .MuiListItemIcon-root": {
         minWidth: "unset !important",
@@ -613,7 +613,7 @@ const StudentSuccessTracker = ({ classes }) => {
                         MenuProps={{
                           PaperProps: {
                             className: classes.termMenuPaper,
-                            style: { maxHeight: 220, minWidth: 175, width: "auto" },
+                            style: { maxHeight: 260, width: 280 },
                           },
                         }}
                       >
