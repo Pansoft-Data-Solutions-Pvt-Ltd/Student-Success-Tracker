@@ -219,14 +219,16 @@ const styles = (theme) => {
       overflow: "hidden",
     },
     attColTitle: {
+      marginBottom: theme.spacing(0.5),
+      flexShrink: 0,
+    },
+    attColTitleInline: {
+      flex: 1,
       minWidth: 0,
       overflow: "hidden",
       textOverflow: "ellipsis",
       whiteSpace: "nowrap",
-      marginBottom: theme.spacing(0.5),
-      flexShrink: 0,
     },
-    
     termAndTitleRow: {
       display: "flex",
       flexDirection: "column",
@@ -239,6 +241,95 @@ const styles = (theme) => {
       flexShrink: 0,
       width: "100%",
     },
+    termTable: {
+      borderCollapse: "collapse",
+      tableLayout: "fixed",
+      width: "100%",
+    },
+    termCell: {
+      width: "100%",
+      padding: 0,
+      verticalAlign: "top",
+    },
+
+    // ── Compact term dropdown wrapper ──────────────────────────────────
+    // Mirrors the approach used in StudentListing's `filterDropdown`:
+    // the Ellucian Dropdown doesn't expose width/height props directly,
+    // so we control sizing by wrapping it in a div and targeting the
+    // underlying MUI classes it renders internally.
+    termDropdownWrap: {
+      width: "100%",
+      "& .MuiFormControl-root": {
+        margin: 0,
+        width: "100%",
+      },
+      "& .MuiInputLabel-root": {
+        fontSize: "0.7rem !important",
+        transform: "translate(8px, 10px) scale(1)",
+      },
+      "& .MuiInputLabel-shrink": {
+        transform: "translate(8px, -6px) scale(0.75) !important",
+      },
+      "& .MuiOutlinedInput-root": {
+        minHeight: "unset !important",
+      },
+      "& .MuiOutlinedInput-input, & .MuiSelect-select": {
+        padding: "4px 8px !important",
+        fontSize: "0.75rem !important",
+        minHeight: "unset !important",
+        lineHeight: 1.4,
+      },
+      "& .MuiSelect-icon": {
+        fontSize: "1.1rem",
+        right: "4px",
+      },
+      "& .MuiOutlinedInput-notchedOutline legend": {
+        fontSize: "0.6rem",
+      },
+    },
+
+    // ── Compact term dropdown MENU (the popover list) ──────────────────
+    // This Paper renders in a portal outside termDropdownWrap, so it needs
+    // its own class passed via MenuProps.PaperProps.className.
+    termMenuPaper: {
+      "& .MuiList-root, & .MuiList-padding": {
+        paddingTop: "4px !important",
+        paddingBottom: "4px !important",
+      },
+      "& .MuiMenuItem-root, & .MuiListItem-root, & .MuiButtonBase-root": {
+        minHeight: "unset !important",
+        height: "auto !important",
+        padding: "6px 10px !important",
+        fontSize: "0.75rem !important",
+        lineHeight: "1.3 !important",
+        whiteSpace: "nowrap",
+        display: "flex",
+        alignItems: "center",
+      },
+      "& .MuiListItemText-root": {
+        margin: "0 !important",
+        display: "flex",
+        alignItems: "center",
+      },
+      "& .MuiListItemText-multiline": {
+        marginTop: "0 !important",
+        marginBottom: "0 !important",
+      },
+      "& .MuiListItemText-primary, & .MuiListItemText-secondary": {
+        fontSize: "0.75rem !important",
+        lineHeight: "1.3 !important",
+        margin: 0,
+      },
+      "& .MuiTypography-root": {
+        fontSize: "0.75rem !important",
+        lineHeight: "1.3 !important",
+      },
+      "& .MuiListItemIcon-root": {
+        minWidth: "unset !important",
+        marginRight: "6px",
+      },
+    },
+
     attList: {
       flex: 1,
       display: "flex",
@@ -280,14 +371,14 @@ const styles = (theme) => {
       flexShrink: 0,
       paddingTop: theme.spacing(0.5),
     },
-    
+
     cardRoot: {
       boxShadow: "none",
       border: "none",
       backgroundColor: "transparent",
       height: "100%",
     },
-   
+
     cardContentFullHeight: {
       height: "100%",
       display: "flex",
@@ -507,27 +598,38 @@ const StudentSuccessTracker = ({ classes }) => {
       <div className={classes.termAndTitleRow}>
         {!loadingv2 && all_terms.length > 0 && (
           <div className={classes.termRow}>
-            <Dropdown
-              size="small"
-              id="sst-term-dropdown"
-              label="Term"
-              fullWidth
-              value={selected_term_code || ""}
-              onChange={handle_term_change}
-              MenuProps={{
-                PaperProps: {
-                  style: { maxHeight: 200 },
-                },
-              }}
-            >
-              {all_terms.map((t) => (
-                <DropdownItem
-                  key={t.termCode}
-                  label={`${toTitleCase(t.termName)} (${t.termCode})`}
-                  value={t.termCode}
-                />
-              ))}
-            </Dropdown>
+            <table className={classes.termTable}>
+              <tbody>
+                <tr>
+                  <td className={classes.termCell}>
+                    <div className={classes.termDropdownWrap}>
+                      <Dropdown
+                        size="small"
+                        id="sst-term-dropdown"
+                        label="Term"
+                        fullWidth
+                        value={selected_term_code || ""}
+                        onChange={handle_term_change}
+                        MenuProps={{
+                          PaperProps: {
+                            className: classes.termMenuPaper,
+                            style: { maxHeight: 220, minWidth: 175, width: "auto" },
+                          },
+                        }}
+                      >
+                        {all_terms.map((t) => (
+                          <DropdownItem
+                            key={t.termCode}
+                            label={`${toTitleCase(t.termName)} (${t.termCode})`}
+                            value={t.termCode}
+                          />
+                        ))}
+                      </Dropdown>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         )}
       </div>
@@ -557,6 +659,7 @@ const StudentSuccessTracker = ({ classes }) => {
             </div>
             <Typography variant="body3" className={classes.gpaTitle}>
               Term GPA
+
             </Typography>
             <Typography
               variant="h2"
@@ -577,7 +680,6 @@ const StudentSuccessTracker = ({ classes }) => {
           <Typography variant="h5" className={classes.attColTitle}>
             Absence % ({toTitleCase(attendance_source)})
           </Typography>
-
           {isLoading ? (
             <Typography variant="body2" className={classes.attEmptyState}>
               Loading attendance data...

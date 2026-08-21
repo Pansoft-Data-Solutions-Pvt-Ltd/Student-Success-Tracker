@@ -6,6 +6,11 @@ import {
   Typography,
   Paper,
 } from "@ellucian/react-design-system/core";
+import {
+  iris600,
+  iris100,
+  colorTextNeutral100,
+} from "@ellucian/react-design-system/core/styles/tokens";
 import { useCardInfo } from "@ellucian/experience-extension-utils";
 
 const hexToRgba = (hex, alpha) => {
@@ -164,11 +169,11 @@ const AttendanceCell = ({ absencePct, thresholds }) => {
 const GradeCircle = ({ value }) => (
   <div style={{
     width: 140, height: 140, borderRadius: "50%",
-    border: "6px solid #7C3AED",
+    border: `6px solid ${iris600}`,
     display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-    backgroundColor: "#ffffff", boxShadow: "0 4px 16px rgba(124,58,237,0.15)",
+    backgroundColor: "#ffffff", boxShadow: `0 4px 16px ${hexToRgba(iris600, 0.15)}`,
   }}>
-    <Typography variant="body1" style={{ fontWeight: 700, color: "#3B1F6E", fontSize: "1.25rem", lineHeight: 1.2, textAlign: "center", wordBreak: "break-word", maxWidth: 110 }}>
+    <Typography variant="body1" style={{ fontWeight: 700, color: iris600, fontSize: "1.25rem", lineHeight: 1.2, textAlign: "center", wordBreak: "break-word", maxWidth: 110 }}>
       {value ?? "–"}
     </Typography>
     <Typography variant="caption" style={{ color: "#6B7280", fontSize: "0.7rem", marginTop: 4 }}>
@@ -188,20 +193,20 @@ const GradeBreakdownPanel = ({ gradeComponents, gradeSource, overallGrade }) => 
     borderBottom: "1px solid #f3f4f6", whiteSpace: "nowrap",
   };
   const headerCellStyle = {
-    ...cellStyle, fontWeight: 700, color: "#3B1F6E",
-    borderBottom: "2px solid #EDE9F6", backgroundColor: "transparent",
+    ...cellStyle, fontWeight: 700, color: iris600,
+    borderBottom: `2px solid ${iris100}`, backgroundColor: "transparent",
   };
 
   return (
     <div style={{ display: "flex", gap: 20, padding: "20px 24px", alignItems: "flex-start" }}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={iris600} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="20" x2="18" y2="10" />
             <line x1="12" y1="20" x2="12" y2="4" />
             <line x1="6" y1="20" x2="6" y2="14" />
           </svg>
-          <Typography variant="body1" style={{ fontWeight: 700, color: "#3B1F6E", fontSize: "1rem" }}>
+          <Typography variant="body1" style={{ fontWeight: 700, color: iris600, fontSize: "1rem" }}>
             Grade Breakdown
           </Typography>
         </div>
@@ -233,8 +238,8 @@ const GradeBreakdownPanel = ({ gradeComponents, gradeSource, overallGrade }) => 
                     {isMoodle && <td style={{ ...cellStyle, borderBottom: border }}>{item.max}</td>}
                     <td style={{ ...cellStyle, borderBottom: border }}>{parseInt(item.percentage)}</td>
                     <td style={{ ...cellStyle, borderBottom: border, width: "30%" }}>
-                      <div style={{ height: 8, borderRadius: 4, backgroundColor: "#EDE9F6", overflow: "hidden", minWidth: 80 }}>
-                        <div style={{ width: `${Math.min(pct, 100)}%`, height: "100%", backgroundColor: "#7C3AED", borderRadius: 4, transition: "width 0.4s ease" }} />
+                      <div style={{ height: 8, borderRadius: 4, backgroundColor: iris100, overflow: "hidden", minWidth: 80 }}>
+                        <div style={{ width: `${Math.min(pct, 100)}%`, height: "100%", backgroundColor: iris600, borderRadius: 4, transition: "width 0.4s ease" }} />
                       </div>
                     </td>
                   </tr>
@@ -246,8 +251,8 @@ const GradeBreakdownPanel = ({ gradeComponents, gradeSource, overallGrade }) => 
       </div>
 
       {items.length !== 0 && (
-        <div style={{ flexShrink: 0, width: 220, backgroundColor: "#faf8ff", border: "1px solid #EDE9F6", borderRadius: 12, padding: "20px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-          <Typography variant="body2" style={{ fontWeight: 700, color: "#3B1F6E", fontSize: "0.9rem" }}>
+        <div style={{ flexShrink: 0, width: 220, backgroundColor: "#faf8ff", border: `1px solid ${iris100}`, borderRadius: 12, padding: "20px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+          <Typography variant="body2" style={{ fontWeight: 700, color: iris600, fontSize: "0.9rem" }}>
             Overall Grade
           </Typography>
           <GradeCircle value={overallGrade} />
@@ -299,11 +304,11 @@ const CourseDataView = ({ loadingCourseData, courseData, tableConfig, colors, is
         const { subjectCode, courseNumber, courseTitle } = row.original;
         return (
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={iris600} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
               <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
               <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
             </svg>
-            <Typography variant="body2" style={{ fontWeight: 600, color: "#7C3AED", whiteSpace: "nowrap" }}>
+            <Typography variant="body2" style={{ fontWeight: 600, color: iris600, whiteSpace: "nowrap" }}>
               {subjectCode}-{courseNumber}
             </Typography>
             <Typography variant="body2" style={{ color: "#1F2937", textTransform: "capitalize" }}>
@@ -366,12 +371,12 @@ const CourseDataView = ({ loadingCourseData, courseData, tableConfig, colors, is
             }}
             sx={{
               "& .MuiTableHead-root .MuiTableCell-root": {
-                backgroundColor: "#EDE9F6",
-                color: "#3B1F6E",
+                backgroundColor: iris600,
+                color: `${colorTextNeutral100} !important`,
                 fontWeight: 700,
                 fontSize: "1rem",
-                borderBottom: "1px solid #D1C4E9",
-                borderRight: "1px solid #D1C4E9",
+                borderBottom: `1px solid ${iris600}`,
+                borderRight: `1px solid ${iris600}`,
                 textTransform: "capitalize",
                 "&:last-of-type": { borderRight: "none" },
               },
@@ -416,11 +421,11 @@ const CourseDataView = ({ loadingCourseData, courseData, tableConfig, colors, is
                 <div className="mobile-card-header">
                   <div className="mobile-card-title">
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={iris600} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
                         <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
                       </svg>
-                      <Typography variant="body1" style={{ fontWeight: 700, color: "#7C3AED" }}>
+                      <Typography variant="body1" style={{ fontWeight: 700, color: iris600 }}>
                         {row.subjectCode}-{row.courseNumber}
                       </Typography>
                     </div>
@@ -445,10 +450,10 @@ const CourseDataView = ({ loadingCourseData, courseData, tableConfig, colors, is
                   <>
                     <button
                       onClick={() => toggleMobileRow(rowKey)}
-                      style={{ marginTop: 10, width: "100%", background: "none", border: "none", padding: "6px 0 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 4, cursor: "pointer", color: "#7C3AED", fontSize: "0.8rem", fontWeight: 600, borderTop: "1px dashed #e5e7eb" }}
+                      style={{ marginTop: 10, width: "100%", background: "none", border: "none", padding: "6px 0 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 4, cursor: "pointer", color: iris600, fontSize: "0.8rem", fontWeight: 600, borderTop: "1px dashed #e5e7eb" }}
                     >
                       {isExpanded ? "Hide" : "Show"} grade breakdown
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={iris600} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
                         style={{ transform: isExpanded ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>
                         <polyline points="6 9 12 15 18 9" />
                       </svg>
